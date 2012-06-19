@@ -21,4 +21,14 @@ bool is_pump(void);
 void load_cwd(void);
 
 
+void list_dir(DIR *dir, int options);
+#define LPRM (1 << 1)
+#define LUSR (1 << 2)
+#define LGRP (1 << 3)
+#define LSIZ (1 << 4)
+#define LDAT (1 << 5)
+#define LNAM (1 << 6)
+#define LHID (1 << 7)
+
+
 #endif

@@ -34,6 +34,19 @@ void print_logic_usage(void)
 
 
 /**
+ * do_pump -- apply the logic across each file of the directory
+ */
+void do_pump(void)
+{
+        char path[1024];
+        int i;
+        DIR *dir;
+
+        dir = opendir("./");
+        list_dir(dir, LNAM);
+}
+
+/**
  * pump_init -- initialize a pump in the current working directory
  */
 void pump_init(void)
@@ -95,6 +108,9 @@ int main(int argc, char *argv[])
                         print_logic_usage();
                 else
                         pump_logic(argv[2]);
+        } 
+        else if (STRCMP(argv[1], "list")) {
+                do_pump();
         }
         return 0;
 }

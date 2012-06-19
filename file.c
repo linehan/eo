@@ -15,6 +15,8 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdarg.h>
+#include <locale.h>
+#include <langinfo.h>
 
 #include "file.h"
 #include "error.h"
@@ -102,5 +104,101 @@ bool is_pump(void)
                         bye("Cannot stat pump directory");
         }
         return true;
+}
+
+
+/**
+ * sperm -- return file permissions as a string e.g. 'drwxr-xr-x'
+ * @mode: the file mode value
+ */
+const char *sperm(__mode_t mode) 
+{
+        static char local_buf[16] = {0};
+        int i = 0;
+        
+        /* Directory or regular file */
+        local_buf[i] = (S_ISDIR(mode)) ? 'd' : '-'; i++;
+
+        /* User permissions */
+        local_buf[i] = ((mode & S_IRUSR)==S_IRUSR) ? 'r' : '-'; i++;
+        local_buf[i] = ((mode & S_IWUSR)==S_IWUSR) ? 'w' : '-'; i++;
+        local_buf[i] = ((mode & S_IXUSR)==S_IXUSR) ? 'x' : '-'; i++;
+
+        /* Group permissions */
+        local_buf[i] = ((mode & S_IRGRP)==S_IRGRP) ? 'r' : '-'; i++;
+        local_buf[i] = ((mode & S_IWGRP)==S_IWGRP) ? 'w' : '-'; i++;
+        local_buf[i] = ((mode & S_IXGRP)==S_IXGRP) ? 'x' : '-'; i++;
+
+        /* Other permissions */
+        local_buf[i] = ((mode & S_IROTH)==S_IROTH) ? 'r' : '-'; i++;
+        local_buf[i] = ((mode & S_IWOTH)==S_IWOTH) ? 'w' : '-'; i++;
+        local_buf[i] = ((mode & S_IXOTH)==S_IXOTH) ? 'x' : '-';
+
+        return local_buf;
+}
+
+
+void list_dir(DIR *dir, int options)
+{
+        struct stat   statbuf;
+        struct dirent *ep;
+        struct passwd *pwd;
+        struct group  *grp;
+        struct tm     *tm;
+        char date[256];
+
+        if (dir) {
+                while ((ep = readdir(dir)) != NULL) {
+                        if (stat(ep->d_name, &statbuf) == -1)
+                                continue;
+
+                        /* -- hidden files -- */
+                        if (!(options & LHID)) {
+                                if (ep->d_name[0] == '.')
+                                        continue;
+                        }
+
+                        /* -- permissions -- */
+                        if (options & LPRM)
+                                printf("%10.10s ", sperm(statbuf.st_mode));
+
+                        /* -- user -- */
+                        if (options & LUSR) { 
+                                if (pwd = getpwuid(statbuf.st_uid), pwd)
+                                        printf("%.8s ", pwd->pw_name);
+                                else
+                                        printf("%d ", statbuf.st_uid);
+                        }
+
+                        /* -- group -- */ 
+                        if (options & LGRP) {
+                                if (grp = getgrgid(statbuf.st_gid), grp)
+                                        printf("%-8.8s ", grp->gr_name);
+                                else
+                                        printf("%-8d ", statbuf.st_gid);
+                        }
+
+                        /* -- filesize -- */
+                        if (options & LSIZ)
+                                printf("%9jd ", (intmax_t)statbuf.st_size);
+
+                        /* -- date & time -- */
+                        if (options & LDAT) {
+                                tm = localtime(&statbuf.st_mtime);
+                                strftime(date, 256, nl_langinfo(D_T_FMT), tm);
+                                printf("%s ", date);
+                        }
+
+                        /* -- filename -- */
+                        if (options & LNAM) {
+                                printf("%s ", ep->d_name);
+                        }
+
+                        printf("\n");
+                }
+                closedir(dir);
+        } else {
+                bye("Couldn't open directory");
+        }
 }
 
