@@ -29,6 +29,10 @@ void list_dir(DIR *dir, int options);
 #define LDAT (1 << 5)
 #define LNAM (1 << 6)
 #define LHID (1 << 7)
+#define LDIR (1 << 8)
+#define LREG (1 << 9)
 
+int filecount(DIR *dir, int options);
+char *getfile(DIR *dir, int options);
 
 #endif

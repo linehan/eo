@@ -38,13 +38,25 @@ void print_logic_usage(void)
  */
 void do_pump(void)
 {
-        char path[1024];
-        int i;
         DIR *dir;
+        char *filename;
+        int num_files;
+        char execute[512];
+        char *logic=".pump/logic";
 
         dir = opendir("./");
-        list_dir(dir, LNAM);
+
+        for (filename  = getfile(dir, LREG);
+             filename != NULL;
+             filename  = getfile(NULL, LREG))
+        {
+                sprintf(execute, "./%s %s", logic, filename);
+                system(execute);
+        }
+
+        closedir(dir);
 }
+
 
 /**
  * pump_init -- initialize a pump in the current working directory
@@ -99,19 +111,21 @@ int main(int argc, char *argv[])
 {
         load_cwd();
 
-        if (!argv[1])
-                print_usage();
-        if (STRCMP(argv[1], "init"))
+        if (!argv[1]) {
+                if (is_pump())
+                        do_pump();
+                else
+                        print_usage();
+        }
+        else if (STRCMP(argv[1], "init")) {
                 pump_init();
+        }
         else if (STRCMP(argv[1], "logic")) {
                 if (!argv[2])
                         print_logic_usage();
                 else
                         pump_logic(argv[2]);
         } 
-        else if (STRCMP(argv[1], "list")) {
-                do_pump();
-        }
         return 0;
 }
 

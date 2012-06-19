@@ -138,6 +138,69 @@ const char *sperm(__mode_t mode)
 }
 
 
+int filecount(DIR *dir, int options)
+{
+        struct dirent *dirp;
+        struct stat dstat;
+        int n=0;
+
+        while ((dirp = readdir(dir)) != NULL) {
+                if (stat(dirp->d_name, &dstat) == -1)
+                        continue;
+
+                if (!(options & LHID)) {
+                        if (dirp->d_name[0] == '.')
+                                continue;
+                }
+                if ((options & LDIR)) {
+                        if (S_ISDIR(dstat.st_mode))
+                                n++;
+                }
+                if ((options & LREG)) {
+                        if (S_ISREG(dstat.st_mode))
+                                n++;
+                }
+        }
+
+        rewinddir(dir);
+        return n;
+}
+
+/**
+ * getfile -- like strtok
+ */
+char *getfile(DIR *dir, int options)
+{
+        struct dirent *dirp;
+        struct stat dstat;
+        static DIR *_dir;
+        int n=0;
+
+        if (dir != NULL)
+                _dir = dir;
+
+        while ((dirp = readdir(_dir)) != NULL) {
+                if (stat(dirp->d_name, &dstat) == -1)
+                        continue;
+
+                if (!(options & LHID)) {
+                        if (dirp->d_name[0] == '.')
+                                continue;
+                }
+                if ((options & LDIR)) {
+                        if (S_ISDIR(dstat.st_mode))
+                                return dirp->d_name;
+                }
+                if ((options & LREG)) {
+                        if (S_ISREG(dstat.st_mode))
+                                return dirp->d_name;
+                }
+        }
+        rewinddir(_dir);
+        return NULL;
+}
+
+
 void list_dir(DIR *dir, int options)
 {
         struct stat   statbuf;
@@ -196,9 +259,11 @@ void list_dir(DIR *dir, int options)
 
                         printf("\n");
                 }
-                closedir(dir);
+                rewinddir(dir);
         } else {
                 bye("Couldn't open directory");
         }
 }
+
+
 
