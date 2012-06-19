@@ -21,18 +21,16 @@
 #include "util.h"
 
 
+/* drwxr-xr-x */
 #define PUMP_DIR_MODE ((S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH))
-// permissions: drwxr-xr-x
-#define PUMP_DIR "./.pump" 
-#define PUMP_CONF "./.pump/config"
-#define PUMP_LOGIC "./.pump/logic"
 
-static const char *PUMP_PATH[]={
-        PUMP_DIR,
-        PUMP_CONF,
-        PUMP_LOGIC 
-};
 
+/* Pathnames indexed by file tag */
+#define PUMP_DIR   ".pump" 
+#define PUMP_CONF  ".pump/config"
+#define PUMP_LOGIC ".pump/logic"
+static const char *PUMP_PATH[]={ PUMP_DIR, PUMP_CONF, PUMP_LOGIC };
+static const char *filename[]={ "pump directory", "config", "logic" };
 
 
 /*void config_token(char *buf, const char *token)*/
@@ -40,20 +38,31 @@ static const char *PUMP_PATH[]={
         /*char buffer[1024];*/
 
 
-void pump_load(void)
+/**
+ * load_cwd -- fill out the current working directory (CWD)
+ */
+void load_cwd(void)
 {
-        /* Get current working directory */
         if (getcwd(CWD, 1024) == NULL)
                 bye("Could not stat working directory.");
 }
 
+
+/**
+ * make_pump_dir -- create the .pump directory to hold pump metadata
+ */
 void make_pump(void)
 {
-        /* Create the .pump directory */
         if (mkdir(PUMP_DIR, PUMP_DIR_MODE) == -1)
                 bye("Could not create pump directory.");
 }
 
+
+/**
+ * pump_open -- get a stream pointer to the file identified by 'tag'
+ * @tag : pump file identifier
+ * @mode: mode to open file with
+ */
 FILE *pump_open(enum files tag, const char *mode)
 {
         FILE *file;
@@ -65,6 +74,10 @@ FILE *pump_open(enum files tag, const char *mode)
 }
 
 
+/**
+ * pump_close -- close a stream pointer 
+ * @file: pump file stream pointer
+ */
 void pump_close(FILE *file)
 {
         if (fclose(file) == EOF)
@@ -72,15 +85,15 @@ void pump_close(FILE *file)
 }
 
 
-bool is_pump_directory(void)
+/**
+ * is_pump -- test if the current working directory is a pump
+ */
+bool is_pump(void)
 {
         static char pumpdir[1024];
         struct stat buffer;
 
-        if (CWD[0] == '\0')
-                pump_load();
-
-        sprintf(pumpdir, "%s/.pump", CWD);
+        sprintf(pumpdir, "%s/%s", CWD, PUMP_PATH[PUMPDIR]);
 
         if (stat(pumpdir, &buffer) == -1) {
                 if (errno == ENOENT)

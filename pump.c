@@ -25,65 +25,57 @@ void print_usage(void)
         printf("pump usage statement\n");
         exit(0);
 }
-
 void print_logic_usage(void)
 {
         printf("pump logic usage statement\n");
         exit(0);
 }
 
+
+/**
+ * pump_init -- initialize a pump in the current working directory
+ */
 void pump_init(void)
 {
-        FILE *conf;
+        FILE *config;
 
-        if (is_pump_directory())
+        if (is_pump()) 
                 bye("pump exists");
+        else
+                make_pump();
 
-        make_pump();
-        conf = pump_open(CONFIG, "w+");
+        config = pump_open(CONFIG, "w+");
 
-        /* Print the default configuration in config */
-        fprintf(conf, 
-                        "# --------------------------\n"
-                        "# default pump configuration\n"
-                        "# --------------------------\n"
-                        "\n"
-                        "# Full path of directory to be pumped\n"
-                        "basedir \"%s\"\n"
-                        "\n", 
-                CWD);
+        fprintf(config, CONFIG_BANNER CONFIG_BASEDIR, CWD);
 
-        pump_close(conf);
+        pump_close(config);
 }
 
+
+/**
+ * pump_logic -- specify the logic that will drive the pump
+ * @statement: the logic statement
+ */
 void pump_logic(const char *statement)
 {
         FILE *logic;
 
-        if (!is_pump_directory())
+        if (!is_pump()) 
                 bye("Not a pump directory");
 
         logic = pump_open(LOGIC, "w+");
-
-        /* Print the default configuration in config */
-        fprintf(logic, 
-                        "# --------------------------\n"
-                        "# pump logic\n"
-                        "# --------------------------\n"
-                        "\n"
-                        "\"%s\"\n"
-                        "\n", 
-                statement);
+        fprintf(logic, LOGIC_BANNER LOGIC_STATEMENT, statement);
 
         pump_close(logic);
 }
 
 
-
-
+/**
+ * main -- it's main
+ */
 int main(int argc, char *argv[]) 
 {
-        pump_load();
+        load_cwd();
 
         if (!argv[1])
                 print_usage();

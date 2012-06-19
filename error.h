@@ -3,10 +3,10 @@
 #include "util.h"
 
 
-#define bye(...) { if (VA_NUM_ARGS(__VA_ARGS__) == 1)  \
+#define bye(...) do { if (VA_NUM_ARGS(__VA_ARGS__) == 1)  \
                         abort_report(__VA_ARGS__, ""); \
                    else                                \
-                        abort_report(__VA_ARGS__);  }  \
+                        abort_report(__VA_ARGS__); } while(1) \
 
 #define ASSERT(x) if (!(x)) abort_report("Assert failed: " #x)
 
@@ -63,3 +63,4 @@ static char *emsg[]={
 #endif /* USE_ERRNO_H */
 
 #endif
+
