@@ -9,7 +9,7 @@ LDFLAGS=-pg
 #      gprof 
 #                                  
 
-SOURCES=pump.c file.c error.c
+SOURCES=file.c error.c sha256/sha2.c pump.c
 OBJECTS=$(SOURCES:.c=.o)
 
 EXECUTABLE=pump

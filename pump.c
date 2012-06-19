@@ -19,6 +19,7 @@
 #include "file.h"
 #include "error.h"
 #include "util.h"
+#include "sha256/sph_sha2.h"
 
 void print_usage(void)
 {
@@ -38,15 +39,23 @@ void print_logic_usage(void)
 void pump_init(void)
 {
         FILE *config;
+        unsigned char buf[32];
+        unsigned char hex[65];
+        sph_sha256_context context;
+
+        sph_sha256_init(&context);
+        sph_sha256(&context, CWD, strlen(CWD));
+        sph_sha256_close(&context, buf);
+
+        strtohex(hex, buf, 32);
 
         if (is_pump()) 
                 bye("pump exists");
-        else
-                make_pump();
+
+        make_pump();
 
         config = pump_open(CONFIG, "w+");
-
-        fprintf(config, CONFIG_BANNER CONFIG_BASEDIR, CWD);
+        fprintf(config, CONFIG_BANNER CONFIG_BASEDIR CONFIG_IDENT, CWD, hex);
 
         pump_close(config);
 }
