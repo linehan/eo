@@ -1,3 +1,5 @@
+#define USE_ERRNO_H
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -14,44 +16,8 @@
 #include <string.h>
 #include <stdarg.h>
 
-#define USE_ERRNO_H
+#include "error.h"
 #include "util.h"
-
-
-/* EXCEPTION HANDLING
-``````````````````````````````````````````````````````````````````````````````*/
-#define bye(...) { if (VA_NUM_ARGS(__VA_ARGS__) == 1)  \
-                        abort_report(__VA_ARGS__, ""); \
-                   else                                \
-                        abort_report(__VA_ARGS__);  }  \
-/**
- * abort_report -- clean up and exit, printing a brief diagnostic report
- * @fmt: a printf-style format string
- * @...: the variable argument list to the format string
- */
-void abort_report(const char *fmt, ...)
-{
-        char buf[1000];
-        va_list args;
-
-        /* Write formatted output to stream */
-        va_start(args, fmt);
-        vsprintf(buf, fmt, args);
-        va_end(args);
-
-        #ifdef USE_ERRNO_H
-        if (errno)
-                printf("%s (%d): %s\n", etag[errno], errno, emsg[errno]);
-        else
-                printf("An error has occured. ");
-        #endif
-
-        printf("The handler reported: \"%s\"\n", buf);
-
-        exit(1);
-}
-
-
 
 void print_usage(void)
 {
@@ -59,59 +25,118 @@ void print_usage(void)
         exit(0);
 }
 
+void print_logic_usage(void)
+{
+        printf("pump logic usage statement\n");
+        exit(0);
+}
+
 char cwd[1024];
 
-#define STRCMP(a,b) (strcmp((a),(b)) == 0) ? true : false
-
-/* 
- * File modes
- *      User
- *      ````    S_IRUSR
- *              S_IWUSR
- *              S_IXUSR
- *              S_IRWXU (Equivalent to '(S_IRUSR | S_IWUSR | S_IXUSR)').
- *      Group
- *      `````   S_IRGRP
- *              S_IWGRP
- *              S_IXGRP
- *              S_IRWXG (Equivalent to '(S_IRGRP | S_IWGRP | S_IXGRP)').
- *      Other
- *      `````   S_IROTH
- *              S_IWOTH
- *              S_IXOTH
- *              S_IRWXO (Equivalent to '(S_IROTH | S_IWOTH | S_IXOTH)').
- */
-// pump_dir permissions: drwxr-xr-x
-#define PUMP_DIR "./.pump"
-#define PUMP_CONF "./.pump/pump.conf"
-#define PUMP_LOGIC "./.pump/pump.logic"
+// permissions: drwxr-xr-x
+#define PUMP_DIR "./.pump" 
+#define PUMP_CONF "./.pump/config"
+#define PUMP_LOGIC "./.pump/logic"
 #define PUMP_DIR_MODE ((S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH))
+
+void pump_load(void)
+{
+        /* Get current working directory */
+        if (getcwd(cwd, 1024) == NULL)
+                bye("Could not stat working directory.");
+}
+
+
+bool is_pump_directory(const char *path)
+{
+        ASSERT(path != NULL);
+        static char pumpdir[1024];
+        struct stat buffer;
+
+        sprintf(pumpdir, "%s/.pump", path);
+
+        if (stat(pumpdir, &buffer) == -1) {
+                if (errno == ENOENT)
+                        return false;
+                else
+                        bye("Cannot stat pump directory");
+        }
+        return true;
+}
+
 
 
 void pump_init(void)
 {
         FILE *conf;
 
-        if (getcwd(cwd, 1024) == NULL)
-                bye("Could not stat working directory.");
+        /* Create the .pump directory */
         if (mkdir(PUMP_DIR, PUMP_DIR_MODE) == -1)
                 bye("Could not create pump directory.");
+
+        /* Create config */
         if (conf = fopen(PUMP_CONF, "w+"), conf == NULL)
-                bye("Could not create pump.conf");
+                bye("Could not create config");
 
-        fprintf(conf, "#pump configuration\n basedir %s\n", cwd);
+        /* Print the default configuration in config */
+        fprintf(conf, 
+                        "# --------------------------\n"
+                        "# default pump configuration\n"
+                        "# --------------------------\n"
+                        "\n"
+                        "# Full path of directory to be pumped\n"
+                        "basedir \"%s\"\n"
+                        "\n", 
+                cwd);
 
+        /* Close config */
         if (fclose(conf) == EOF)
-                bye("Could not close pump.conf");
+                bye("Could not close config");
 }
+
+void pump_logic(const char *statement)
+{
+        FILE *logic;
+
+        if (!is_pump_directory(cwd))
+                bye("Not a pump directory");
+
+        /* Create logic */
+        if (logic = fopen(PUMP_LOGIC, "w+"), logic == NULL)
+                bye("Could not create logic");
+
+        /* Print the default configuration in config */
+        fprintf(logic, 
+                        "# --------------------------\n"
+                        "# pump logic\n"
+                        "# --------------------------\n"
+                        "\n"
+                        "\"%s\"\n"
+                        "\n", 
+                statement);
+
+        /* Close logic */
+        if (fclose(logic) == EOF)
+                bye("Could not close logic");
+}
+
+
 
 
 int main(int argc, char *argv[]) 
 {
+        pump_load();
+
         if (!argv[1])
                 print_usage();
         if (STRCMP(argv[1], "init"))
                 pump_init();
-
+        else if (STRCMP(argv[1], "logic")) {
+                if (!argv[2])
+                        print_logic_usage();
+                else
+                        pump_logic(argv[2]);
+        }
         return 0;
 }
+

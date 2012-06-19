@@ -9,7 +9,7 @@ LDFLAGS=-pg
 #      gprof 
 #                                  
 
-SOURCES=pump.c
+SOURCES=pump.c error.c
 OBJECTS=$(SOURCES:.c=.o)
 
 EXECUTABLE=pump
