@@ -16,6 +16,7 @@
 #include <string.h>
 #include <stdarg.h>
 
+#include "file.h"
 #include "error.h"
 #include "util.h"
 
@@ -31,52 +32,15 @@ void print_logic_usage(void)
         exit(0);
 }
 
-char cwd[1024];
-
-// permissions: drwxr-xr-x
-#define PUMP_DIR "./.pump" 
-#define PUMP_CONF "./.pump/config"
-#define PUMP_LOGIC "./.pump/logic"
-#define PUMP_DIR_MODE ((S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH))
-
-void pump_load(void)
-{
-        /* Get current working directory */
-        if (getcwd(cwd, 1024) == NULL)
-                bye("Could not stat working directory.");
-}
-
-
-bool is_pump_directory(const char *path)
-{
-        ASSERT(path != NULL);
-        static char pumpdir[1024];
-        struct stat buffer;
-
-        sprintf(pumpdir, "%s/.pump", path);
-
-        if (stat(pumpdir, &buffer) == -1) {
-                if (errno == ENOENT)
-                        return false;
-                else
-                        bye("Cannot stat pump directory");
-        }
-        return true;
-}
-
-
-
 void pump_init(void)
 {
         FILE *conf;
 
-        /* Create the .pump directory */
-        if (mkdir(PUMP_DIR, PUMP_DIR_MODE) == -1)
-                bye("Could not create pump directory.");
+        if (is_pump_directory())
+                bye("pump exists");
 
-        /* Create config */
-        if (conf = fopen(PUMP_CONF, "w+"), conf == NULL)
-                bye("Could not create config");
+        make_pump();
+        conf = pump_open(CONFIG, "w+");
 
         /* Print the default configuration in config */
         fprintf(conf, 
@@ -87,23 +51,19 @@ void pump_init(void)
                         "# Full path of directory to be pumped\n"
                         "basedir \"%s\"\n"
                         "\n", 
-                cwd);
+                CWD);
 
-        /* Close config */
-        if (fclose(conf) == EOF)
-                bye("Could not close config");
+        pump_close(conf);
 }
 
 void pump_logic(const char *statement)
 {
         FILE *logic;
 
-        if (!is_pump_directory(cwd))
+        if (!is_pump_directory())
                 bye("Not a pump directory");
 
-        /* Create logic */
-        if (logic = fopen(PUMP_LOGIC, "w+"), logic == NULL)
-                bye("Could not create logic");
+        logic = pump_open(LOGIC, "w+");
 
         /* Print the default configuration in config */
         fprintf(logic, 
@@ -115,9 +75,7 @@ void pump_logic(const char *statement)
                         "\n", 
                 statement);
 
-        /* Close logic */
-        if (fclose(logic) == EOF)
-                bye("Could not close logic");
+        pump_close(logic);
 }
 
 
