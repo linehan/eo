@@ -9,10 +9,10 @@ LDFLAGS=-pg
 #      gprof 
 #                                  
 
-SOURCES=file.c error.c sha256/sha2.c pump.c
+SOURCES=pumpd.c ../common/error.c
 OBJECTS=$(SOURCES:.c=.o)
 
-EXECUTABLE=pump
+EXECUTABLE=pumpd
 
 all: $(SOURCES)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(SOURCES) -o $(EXECUTABLE) 

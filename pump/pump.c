@@ -1,3 +1,4 @@
+#define __MERSENNE__
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -17,7 +18,6 @@
 #include "file.h"
 #include "error.h"
 #include "util.h"
-#include "sha256/sph_sha2.h"
 
 
 void print_usage(void)
@@ -61,24 +61,6 @@ void do_pump(void)
         closedir(dir);
 }
 
-/**
- * sha256gen -- return a hex string of the sha256sum
- * @hex : will be filled with the sha256sum. Must be at least 64 bytes
- * @hash: the data used to generate the sha256sum
- */
-void sha256gen(unsigned char *hex, void *hash)
-{
-        #define SHA32 32
-        sph_sha256_context context;
-        unsigned char output[SHA32];
-
-        sph_sha256_init(&context);
-        sph_sha256(&context, hash, sizeof(hash));
-        sph_sha256_close(&context, output);
-
-        strtohex(hex, output, SHA32);
-}
-
 
 /**
  * pump_init -- initialize a pump in the current working directory
@@ -87,13 +69,15 @@ void pump_init(void)
 {
         FILE *config;
         unsigned char hex[65];
+        unsigned long salt;
 
         if (is_pump(CWD)) 
                 bye("pump exists");
 
         make_pump();
 
-        sha256gen(hex, CWD);
+        salt = mt_random();
+        sha256gen(hex, &salt);
 
         config = pump_open(CONFIG, "w+");
         fprintf(config, CONFIG_BANNER CONFIG_BASEDIR CONFIG_IDENT, CWD, hex);

@@ -1,43 +1,10 @@
 #ifndef _PUMP_UTIL_H
 #define _PUMP_UTIL_H
 
-
 #define STRCMP(a,b) (strcmp((a),(b)) == 0) ? true : false
 
 #define isarg(n, string) (STRCMP(argv[(n)], (string)))
 #define ARG(n)           (argv[(n)])
-
-
-static inline 
-void uctohex(unsigned char *low, unsigned char *up, unsigned char value)
-{
-        unsigned char lower;
-        unsigned char upper; 
-
-        lower = (value & 0xf);       // mask lower byte
-        upper = (value & 0xf0) >> 4; // mask upper byte
-
-        //                     is the byte a letter   or an integer
-        lower = (lower > 9) ? ('a' + (lower - 9)) : (lower + '0');
-        upper = (upper > 9) ? ('a' + (upper - 9)) : (upper + '0');
-
-        *low = lower;
-        *up  = upper;
-}
-
-
-static inline
-void strtohex(unsigned char *dst, unsigned char *src, size_t len)
-{
-        size_t i;
-        size_t k;
-
-        for ((i=k=0); (i<len && k<(len*2)-1); (i++, k+=2)) {
-                uctohex(&dst[k], &dst[(k+1)], src[i]);
-        }
-        dst[k] = '\0'; /* Make dst a proper string */
-}
-
 
 /******************************************************************************
  * THINGS I PILFERED FROM THE LINUX KERNEL
@@ -408,6 +375,12 @@ extern int __build_bug_on_failed;
 #define dec(x, min) x = ((x) > (min)) ? ((x)-1) : (x)
 #define inc(x, max) x = ((x) < (max)) ? ((x)+1) : (x)
 
+
+void sha256gen(uint8_t *hex, void *hash);
+
+#ifdef __MERSENNE__
+#include "mersenne.h"
+#endif
 
 
 #endif
