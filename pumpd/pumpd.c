@@ -20,19 +20,24 @@
 
 #define PIDDIR "/home/linehan/src/mine/pump/pumpd/pumpd.pid"
 
-
+/**
+ * write the pid to the pid file
+ */
 void writepid(const char *path)
 {
         FILE *fp;
 
         if (fp = fopen(path, "w+"), fp == NULL)
                 bye("pid file exists");
-        else 
-                fprintf(fp, "%d", getpid());
 
+        fprintf(fp, "%d", getpid());
         fclose(fp);
 }
 
+
+/**
+ * read the pid from the pid file (destroys pid file)
+ */
 int readpid(const char *path)
 {
         FILE *fp;
@@ -40,9 +45,8 @@ int readpid(const char *path)
 
         if (fp = fopen(path, "r"), fp == NULL)
                 bye("pid file does not exist");
-        else
-                fscanf(fp, "%d", &pid);
 
+        fscanf(fp, "%d", &pid);
         fclose(fp);
         remove(path);
         
