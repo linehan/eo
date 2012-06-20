@@ -164,6 +164,7 @@ void get_token(char *dest, const char *token, const char *path)
                         offset = strlen(token) + 1;
                         pruned = &buffer[offset];
                         terminate(pruned, COMMENT, strlen(pruned));
+                        trimws(pruned);
                         snprintf(dest, LINESIZE, "%s", pruned);
                         break;
                 }

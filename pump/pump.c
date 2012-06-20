@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
                 (ARG(2)) ? pump_logic(ARG(2)) : print_logic_usage();
 
         else if (isarg(1, "var"))
-                (ARG(2)) ? printf("%s", token(ARG(2), ENV.config)) : print_logic_usage();
+                (ARG(2)) ? printf("%s\n", token(ARG(2), ENV.config)) : print_logic_usage();
 
         return 0;
 }
