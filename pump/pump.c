@@ -15,24 +15,21 @@
 #include <string.h>
 #include <stdarg.h>
 
+#include "pump.h"
 #include "file.h"
 #include "../common/error.h"
 #include "../common/util.h"
+#include "../common/daemon.h"
 
+#define FIFO_WRITE "/home/linehan/src/mine/pump/pumpd/pumpd.read"
+#define FIFO_READ  "/home/linehan/src/mine/pump/pumpd/pumpd.write"
 
-void print_usage(void)
+/**
+ * usage -- print the usage message to stdout and exit
+ */
+void usage(void)
 {
-        printf("pump usage statement\n");
-        exit(0);
-}
-void print_logic_usage(void)
-{
-        printf("pump logic usage statement\n");
-        exit(0);
-}
-void print_info_usage(void)
-{
-        printf("pump info usage statement\n");
+        printf("%s", USAGE_MESSAGE);
         exit(0);
 }
 
@@ -43,8 +40,8 @@ void print_info_usage(void)
 void pump_init(void)
 {
         struct pumpconfig_t config;
-        char hex[65];
         unsigned long salt;
+        char hex[65];
 
         if (is_pump(ENV.cwd)) 
                 bye("pump exists");
@@ -73,6 +70,25 @@ void pump_logic(const char *logic)
 }
 
 
+void pump_write(const char *message)
+{
+        FILE *read;
+        FILE *write;
+        char *msg = "This is a test of the System V IPC\n";
+        char buffer[1024];
+
+        /*write = stream_fifo(FIFO_WRITE, "w");*/
+        read = stream_fifo(FIFO_READ, "r");
+
+        /*fifo_write(msg, (strlen(msg)+1), write);*/
+        fifo_read(buffer, 1024, read);
+
+        printf("%s", buffer);
+
+        close_fifo(read);
+        /*close_fifo(write);*/
+}
+
 /**
  * pump_start -- gather the metadata and register the pump with pumpd
  */
@@ -94,19 +110,22 @@ int main(int argc, char *argv[])
         load_env(&ENV);
 
         if (!ARG(1))
-                print_usage();
+                usage();
 
         else if (isarg(1, "init"))
                 pump_init();
 
         else if (isarg(1, "info"))
-                (ARG(2)) ? pump_info(ARG(2)) : print_info_usage();
+                (ARG(2)) ? pump_info(ARG(2)) : usage();
 
         else if (isarg(1, "logic"))
-                (ARG(2)) ? pump_logic(ARG(2)) : print_logic_usage();
+                (ARG(2)) ? pump_logic(ARG(2)) : usage();
 
         else if (isarg(1, "var"))
-                (ARG(2)) ? printf("%s\n", token(ARG(2), ENV.config)) : print_logic_usage();
+                (ARG(2)) ? printf("%s\n", token(ARG(2), ENV.config)) : usage();
+
+        else if (isarg(1, "say"))
+                (ARG(2)) ? pump_write(ARG(2)) : usage();
 
         return 0;
 }

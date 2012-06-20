@@ -3,7 +3,7 @@
 #include <errno.h>
 #include <stdarg.h>
 
-#define _USE_ERRNO_H
+#define USE_ERRNO_H
 
 #ifdef USE_ERRNO_H
 char *etag[]={ "", "EPERM", "ENOENT", "ESRCH", "EINTR", "EIO", "ENXIO",
@@ -75,8 +75,6 @@ void abort_report(const char *fmt, ...)
         #ifdef USE_ERRNO_H
         if (errno)
                 printf("%s (%d): %s\n", etag[errno], errno, emsg[errno]);
-        else
-                printf("An error has occured. ");
         #endif
 
         printf("The handler reported: \"%s\"\n", buf);

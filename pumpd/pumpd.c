@@ -16,100 +16,58 @@
 #include <stdarg.h>
 #include <signal.h>
 
+#include "pumpd.h"
 #include "../common/error.h"
+#include "../common/daemon.h"
 
 #define PIDDIR "/home/linehan/src/mine/pump/pumpd/pumpd.pid"
-
-/**
- * write the pid to the pid file
- */
-void writepid(const char *path)
-{
-        FILE *fp;
-
-        if (fp = fopen(path, "w+"), fp == NULL)
-                bye("pid file exists");
-
-        fprintf(fp, "%d", getpid());
-        fclose(fp);
-}
-
-
-/**
- * read the pid from the pid file (destroys pid file)
- */
-int readpid(const char *path)
-{
-        FILE *fp;
-        int pid;
-
-        if (fp = fopen(path, "r"), fp == NULL)
-                return 0;
-
-        fscanf(fp, "%d", &pid);
-        fclose(fp);
-        
-        return pid;
-}
-
-
-/** 
- * daemonize -- fork the current process and prepare it to operate as a daemon
- */
-void daemonize(void)
-{
-        int i;
-        /* 
-         * The child will continue executing daemonize(), while
-         * the parent returns 0 to the shell.
-         */
-	if (fork() != 0)
-                exit(0);
-
-        for (i=0; i<NOFILE; i++) /* Close files inherited from parent */
-                close(i);
-
-        umask(0);                /* Reset file access creation mask */
-	signal(SIGCLD, SIG_IGN); /* Ignore child death */
-	signal(SIGHUP, SIG_IGN); /* Ignore terminal hangups */
-	setpgrp();               /* Create new process group */
-}
-
+#define FIFO_READ  "/home/linehan/src/mine/pump/pumpd/pumpd.read"
+#define FIFO_WRITE "/home/linehan/src/mine/pump/pumpd/pumpd.write"
 
 /**
  * do_pump -- apply the logic across each file of the directory
  */
-void do_pump(void)
-{
-        DIR *dir;
-        char *filename;
-        char execute[512];
+/*void do_pump(void)*/
+/*{*/
+        /*DIR *dir;*/
+        /*char *filename;*/
+        /*char execute[512];*/
 
-        if (!exists(ENV.logic))
-                bye("Pump contains no logic.");
+        /*if (!exists(ENV.logic))*/
+                /*bye("Pump contains no logic.");*/
 
-        dir = opendir("./");
+        /*dir = opendir("./");*/
 
-        for (filename  = getfile(dir, F_REG);
-             filename != NULL;
-             filename  = getfile(NULL, F_REG))
-        {
-                sprintf(execute, "./%s %s", ENV.logic, filename);
-                system(execute);
-        }
+        /*for (filename  = getfile(dir, F_REG);*/
+             /*filename != NULL;*/
+             /*filename  = getfile(NULL, F_REG))*/
+        /*{*/
+                /*sprintf(execute, "./%s %s", ENV.logic, filename);*/
+                /*system(execute);*/
+        /*}*/
 
-        closedir(dir);
-}
+        /*closedir(dir);*/
+/*}*/
 
 
 /**
  * pumpd -- the function executed by the running daemon
  */
-void pumpd(void)
+void pumpd(FILE *read, FILE *write)
 {
+        char *msg="FIFO is empty.\n";
+
         for (;;) {
-                sleep(300);
+                fifo_write(msg, strlen(msg), write);
+                /*if ((fgets(buffer, 4097, read)) == NULL)*/
+                        /*fprintf(write, "FIFO is empty.\n");*/
+                /*else*/
+                        /*fprintf(write, "%s\n", buffer);*/
+                /*rewind(read);*/
+                sleep(1);
         }
+        fclose(read);
+        fclose(write);
 }
 
 
@@ -118,9 +76,21 @@ void pumpd(void)
  */
 void pumpd_start(void)
 {
+        FILE *read, *write;
+
+        umask(0); /* Reset process permissions mask */ 
+
+        new_fifo(FIFO_READ);
+        new_fifo(FIFO_WRITE);
+
         daemonize();
-        writepid(PIDDIR);
-        pumpd();
+
+        pidfile(PIDDIR, "w+");
+
+        read = stream_fifo(FIFO_READ, "r");
+        write = stream_fifo(FIFO_WRITE, "w");
+
+        pumpd(read, write);
 }
 
 
@@ -130,9 +100,11 @@ void pumpd_start(void)
 void pumpd_stop(void)
 {
         int pid;
-        if (pid = readpid(PIDDIR), !pid)
-                bye("daemon is not running.");
+        if (pid = pidfile(PIDDIR, "r"), !pid)
+                bye("pumpd is not running.");
         remove(PIDDIR);
+        unlink(FIFO_READ);
+        unlink(FIFO_WRITE);
         kill(pid, SIGTERM);
 }
 
@@ -143,33 +115,26 @@ void pumpd_stop(void)
 void pumpd_stat(void)
 {
         int pid;
-        if (pid = readpid(PIDDIR), !pid)
-                bye("daemon is not running.");
+        if (pid = pidfile(PIDDIR, "r"), !pid)
+                bye("pumpd is not running.");
         else
-                bye("daemon is running with pid %d.", pid);
+                bye("pumpd is running with pid %d.", pid);
 }
 
 
 /**
- * pumpd_usage -- print the usage statement 
+ * usage -- print the usage statement
  */
-void pumpd_help(void)
+void usage(void)
 {
-        printf("The pump daemon manages the pumps registered in the filesystem\n\n" 
-               "Usage: pumpd <DIRECTIVE>\n\n"
-               "\tstart   - start the pump daemon\n"
-               "\tstop    - stop the pump daemon if it is running\n"
-               "\trestart - stop and then start the pump daemon\n"
-               "\tstat    - report the daemon's status\n"
-               "\thelp    - print this message\n"
-               "\n");
+        printf("%s\n", USAGE_MESSAGE);
 }
 
 
 int main(int argc, char *argv[])
 {
         if (argc == 1)
-                pumpd_help();
+                usage();
 
         else if (isarg(1, "start"))
                 pumpd_start();
@@ -181,7 +146,7 @@ int main(int argc, char *argv[])
                 pumpd_stat();
 
         else if (isarg(1, "help") || isarg(1, "?"))
-                pumpd_help();
+                usage();
 
         return 0;
 }

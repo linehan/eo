@@ -9,7 +9,7 @@ LDFLAGS=
 #      
 #                                  
 
-SOURCES=pumpd.c ../common/error.c
+SOURCES=pumpd.c ../common/daemon.c ../common/error.c
 OBJECTS=$(SOURCES:.c=.o)
 
 EXECUTABLE=pumpd

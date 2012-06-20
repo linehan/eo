@@ -42,6 +42,17 @@
  ******************************************************************************/
 
 /**
+ * exists -- test if a file exists 
+ * @path: the root directory of the pump 
+ */
+/*bool exists(const char *path)*/
+/*{*/
+        /*struct stat buf;*/
+        /*return ((stat(path, &buf) == -1) && (errno == ENOENT)) ? false : true;*/
+/*}*/
+
+
+/**
  * load_env -- fill out the current working directory struture 
  * @environ: will contain the current environment 
  */
@@ -84,7 +95,7 @@ void pumpfile_close(FILE *file)
 
 
 /****************************************************************************** 
- * PUMP METADATA FILES 
+ * PUMP DIRECTORY MANAGEMENT 
  * 
  * The path argument accepted by all of these refers to a working
  * directory which is the root of the directory that contains the
@@ -124,23 +135,13 @@ bool is_pump(const char *path)
 }
 
 
-/**
- * exists -- test if a file exists 
- * @path: the root directory of the pump 
- */
-bool exists(const char *path)
-{
-        struct stat buf;
-        return ((stat(path, &buf) == -1) && (errno == ENOENT)) ? false : true;
-}
-
-
 /****************************************************************************** 
  * READING THE PUMP CONFIG FILE 
  * 
  * These functions provide easy access to the configuration
  * file and other metadata.
  ******************************************************************************/
+
 /**
  * get_token -- return a token from the file at 'path'
  * @dest : the destination buffer (token value will be placed here)
@@ -239,6 +240,16 @@ void writeconfig(struct pumpconfig_t *config, const char *path)
 }
 
 
+/**
+ * pumpconfig -- manually supply the members of the pumpconfig struct
+ * @config: pumpconfig struct
+ * @n: name 
+ * @d: desc 
+ * @b: base 
+ * @s: sha2 
+ * @l: link
+ * @w: wait 
+ */
 void pumpconfig(struct pumpconfig_t *config, 
                 char *n, char *d, char *b, char *s, char *l, char *w)
 {
@@ -260,6 +271,12 @@ void pumpconfig(struct pumpconfig_t *config,
 }
 
 
+/**
+ * setconfig -- set the value of a config file token 
+ * @path : config file path
+ * @token: token whose value will be changed 
+ * @value: new value of token
+ */
 void setconfig(const char *path, const char *token, const char *value)
 {
         struct pumpconfig_t config;
@@ -284,6 +301,14 @@ void setconfig(const char *path, const char *token, const char *value)
         writeconfig(&config, path);
 }
 
+
+/****************************************************************************** 
+ * DIRECTORY/FILE ITERATION 
+ * 
+ * These functions form the core mechanism of the pump: a flexible iteration
+ * over the files in a directory, ensuring that the logic will receive them
+ * in a serial fashion, and can thus be simplified in its design.
+ ******************************************************************************/
 
 /**
  * sperm -- return file permissions as a string e.g. 'drwxr-xr-x'
@@ -311,7 +336,6 @@ const char *sperm(__mode_t mode)
                 local_buf[i] = 's';
         else
                 local_buf[i] = '?';
-
         i++;
 
         /* User permissions */
@@ -459,8 +483,9 @@ void list_dir(DIR *dir, int options)
         }
 }
 
-
-
+/****************************************************************************** 
+ * JUNK ?
+ ******************************************************************************/
 #define SH_GREEN    "\033[01;32m"
 #define SH_CYAN     "\033[00;36m"
 #define SH_CYANBOLD "\033[01;36m"

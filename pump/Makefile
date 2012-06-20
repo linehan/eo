@@ -9,7 +9,7 @@ LDFLAGS=
 #     
 #                                  
 
-SOURCES=../common/util.c ../common/textutils.c file.c ../common/error.c ../common/sha256/sha2.c pump.c
+SOURCES=../common/daemon.c ../common/util.c ../common/textutils.c file.c ../common/error.c ../common/sha256/sha2.c pump.c
 OBJECTS=$(SOURCES:.c=.o)
 
 EXECUTABLE=pump

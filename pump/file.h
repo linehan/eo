@@ -25,12 +25,9 @@ struct pumpconfig_t {
         char wait[LINESIZE];
 };
 
+void load_env(struct env_t *environ);
 
-#define BAR "# --------------------------\n"
-#define CONFIG_BANNER   BAR "# default pump configuration\n" BAR "\n"
-
-#define CONFIG_BASEDIR  "# Directory to be pumped\nbasedir %s\n\n"
-#define CONFIG_IDENT    "# Identifies pump to the pump daemon (sha256)\nident %s\n\n"
+bool exists(const char *path);
 
 FILE *pumpfile_open(const char *path, const char *mode);
 void pumpfile_close(FILE *file);
@@ -38,10 +35,6 @@ void pumpfile_close(FILE *file);
 void make_pump(const char *path);
 bool is_pump(const char *path);
 bool has_logic(const char *path);
-bool exists(const char *path);
-
-void load_env(struct env_t *environ);
-
 
 void list_dir(DIR *dir, int options);
 /* List filters */
@@ -73,7 +66,5 @@ void setconfig(const char *path, const char *token, const char *value);
 
 void pumpconfig(struct pumpconfig_t *config, 
                 char *n, char *d, char *b, char *s, char *l, char *w);
-
-
 
 #endif
