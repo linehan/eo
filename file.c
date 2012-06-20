@@ -35,9 +35,33 @@ static const char *PUMP_PATH[]={ PUMP_DIR, PUMP_CONF, PUMP_LOGIC };
 static const char *filename[]={ "pump directory", "config", "logic" };
 
 
-/*void config_token(char *buf, const char *token)*/
-/*{*/
-        /*char buffer[1024];*/
+void config_token(char *buf, const char *token)
+{
+        FILE *config;
+        char buffer[1024];
+        size_t offset;
+        
+        config = pump_open(CONFIG, "r");
+
+        while (fgets(buffer, 1024, config)) {
+                if (strstr(buffer, token)) {
+                        offset = strlen(token) + 1;
+                        sprintf(buf, "%s", &buffer[offset]);
+                        break;
+                }
+        }
+
+        pump_close(config);
+}
+
+char *getvar(const char *name)
+{
+        static char buffer[1024];
+        config_token(buffer, name);
+
+        return buffer;
+}
+
 
 
 /**
@@ -90,12 +114,12 @@ void pump_close(FILE *file)
 /**
  * is_pump -- test if the current working directory is a pump
  */
-bool is_pump(void)
+bool is_pump(const char *path)
 {
         static char pumpdir[1024];
         struct stat buffer;
 
-        sprintf(pumpdir, "%s/%s", CWD, PUMP_PATH[PUMPDIR]);
+        sprintf(pumpdir, "%s/%s", path, PUMP_PATH[PUMPDIR]);
 
         if (stat(pumpdir, &buffer) == -1) {
                 if (errno == ENOENT)
@@ -116,8 +140,25 @@ const char *sperm(__mode_t mode)
         static char local_buf[16] = {0};
         int i = 0;
         
-        /* Directory or regular file */
-        local_buf[i] = (S_ISDIR(mode)) ? 'd' : '-'; i++;
+        /* File type */
+        if (S_ISREG(mode))
+                local_buf[i] = '-';
+        else if (S_ISDIR(mode))
+                local_buf[i] = 'd';
+        else if (S_ISCHR(mode))
+                local_buf[i] = 'c';
+        else if (S_ISBLK(mode))
+                local_buf[i] = 'b';
+        else if (S_ISFIFO(mode))
+                local_buf[i] = 'p';
+        else if (S_ISLNK(mode))
+                local_buf[i] = 'l';
+        else if (S_ISSOCK(mode))
+                local_buf[i] = 's';
+        else
+                local_buf[i] = '?';
+
+        i++;
 
         /* User permissions */
         local_buf[i] = ((mode & S_IRUSR)==S_IRUSR) ? 'r' : '-'; i++;
@@ -148,15 +189,15 @@ int filecount(DIR *dir, int options)
                 if (stat(dirp->d_name, &dstat) == -1)
                         continue;
 
-                if (!(options & LHID)) {
+                if (!(options & F_HID)) {
                         if (dirp->d_name[0] == '.')
                                 continue;
                 }
-                if ((options & LDIR)) {
+                if ((options & F_DIR)) {
                         if (S_ISDIR(dstat.st_mode))
                                 n++;
                 }
-                if ((options & LREG)) {
+                if ((options & F_REG)) {
                         if (S_ISREG(dstat.st_mode))
                                 n++;
                 }
@@ -174,7 +215,6 @@ char *getfile(DIR *dir, int options)
         struct dirent *dirp;
         struct stat dstat;
         static DIR *_dir;
-        int n=0;
 
         if (dir != NULL)
                 _dir = dir;
@@ -183,15 +223,15 @@ char *getfile(DIR *dir, int options)
                 if (stat(dirp->d_name, &dstat) == -1)
                         continue;
 
-                if (!(options & LHID)) {
+                if (!(options & F_HID)) {
                         if (dirp->d_name[0] == '.')
                                 continue;
                 }
-                if ((options & LDIR)) {
+                if ((options & F_DIR)) {
                         if (S_ISDIR(dstat.st_mode))
                                 return dirp->d_name;
                 }
-                if ((options & LREG)) {
+                if ((options & F_REG)) {
                         if (S_ISREG(dstat.st_mode))
                                 return dirp->d_name;
                 }
@@ -216,7 +256,7 @@ void list_dir(DIR *dir, int options)
                                 continue;
 
                         /* -- hidden files -- */
-                        if (!(options & LHID)) {
+                        if (!(options & F_HID)) {
                                 if (ep->d_name[0] == '.')
                                         continue;
                         }
@@ -266,4 +306,19 @@ void list_dir(DIR *dir, int options)
 }
 
 
+#define SH_GREEN    "\033[01;32m"
+#define SH_CYAN     "\033[00;36m"
+#define SH_CYANBOLD "\033[01;36m"
+#define SH_REDBOLD  "\033[01;31m"
+#define SH_MAGBOLD  "\033[01;35m"
+#define SH_DEFBOLD  "\033[00;1m"
+#define SH_DEFAULT  "\033[00;m"
+
+
+void pump_info(const char *path)
+{
+        if (!is_pump(path))
+                return;
+        printf("%s[%s@%s]%s-pump", SH_MAGBOLD, SH_REDBOLD, SH_MAGBOLD, SH_DEFAULT);
+}
 
