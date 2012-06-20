@@ -14,7 +14,7 @@
  * @upper: the upper nibble
  * @value: the value to decompose
  */
-inline void uctohex(uint8_t *lower, uint8_t *upper, uint8_t value)
+inline void uctohex(char *lower, char *upper, char value)
 {
         /* Mask the upper and lower bytes of the value */
         *lower = (value & 0xf);       
@@ -31,7 +31,7 @@ inline void uctohex(uint8_t *lower, uint8_t *upper, uint8_t value)
  * @src: the source buffer
  * @len: the size of the source buffer
  */
-inline void strtohex(uint8_t *dst, uint8_t *src, size_t len)
+inline void strtohex(char *dst, char *src, size_t len)
 {
         size_t i;
         size_t k;
@@ -48,11 +48,11 @@ inline void strtohex(uint8_t *dst, uint8_t *src, size_t len)
  * @hex : will be filled with the sha256sum. Must be at least 64 bytes
  * @hash: the data used to generate the sha256sum
  */
-void sha256gen(uint8_t *hex, void *hash)
+void sha256gen(char *hex, void *hash)
 {
         #define SHA32 32
         sph_sha256_context context;
-        uint8_t output[SHA32];
+        char output[SHA32];
 
         sph_sha256_init(&context);
         sph_sha256(&context, hash, sizeof(hash));

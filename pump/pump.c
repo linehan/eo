@@ -16,8 +16,8 @@
 #include <stdarg.h>
 
 #include "file.h"
-#include "error.h"
-#include "util.h"
+#include "../common/error.h"
+#include "../common/util.h"
 
 
 void print_usage(void)
@@ -37,52 +37,26 @@ void print_info_usage(void)
 }
 
 
-
-/**
- * do_pump -- apply the logic across each file of the directory
- */
-void do_pump(void)
-{
-        DIR *dir;
-        char *filename;
-        char execute[512];
-        char *logic=".pump/logic";
-
-        dir = opendir("./");
-
-        for (filename  = getfile(dir, F_REG);
-             filename != NULL;
-             filename  = getfile(NULL, F_REG))
-        {
-                sprintf(execute, "./%s %s", logic, filename);
-                system(execute);
-        }
-
-        closedir(dir);
-}
-
-
 /**
  * pump_init -- initialize a pump in the current working directory
  */
 void pump_init(void)
 {
-        FILE *config;
-        unsigned char hex[65];
+        struct pumpconfig_t config;
+        char hex[65];
         unsigned long salt;
 
-        if (is_pump(CWD)) 
+        if (is_pump(ENV.cwd)) 
                 bye("pump exists");
 
-        make_pump();
+        make_pump(ENV.cwd);
 
         salt = mt_random();
         sha256gen(hex, &salt);
 
-        config = pump_open(CONFIG, "w+");
-        fprintf(config, CONFIG_BANNER CONFIG_BASEDIR CONFIG_IDENT, CWD, hex);
+        pumpconfig(&config, "Pumpalicious", "The prime pumper", ENV.cwd, hex, NULL, NULL);
 
-        pump_close(config);
+        writeconfig(&config, ENV.config);
 }
 
 
@@ -90,18 +64,26 @@ void pump_init(void)
  * pump_logic -- specify the logic that will drive the pump
  * @statement: the logic statement
  */
-void pump_logic(const char *statement)
+void pump_logic(const char *logic)
 {
-        FILE *logic;
-
-        if (!is_pump(CWD)) 
+        if (!is_pump(ENV.cwd)) 
                 bye("Not a pump directory");
 
-        logic = pump_open(LOGIC, "w+");
-        fprintf(logic, LOGIC_BANNER LOGIC_STATEMENT, statement);
-
-        pump_close(logic);
+        setconfig(ENV.config, "link", logic); 
 }
+
+
+/**
+ * pump_start -- gather the metadata and register the pump with pumpd
+ */
+/*void pump_start(void)*/
+/*{*/
+        /*char *buf[1024];*/
+        /*struct pump_meta *meta;*/
+
+        /*meta = getmeta();*/
+
+        /*system("pumpd -n ");*/
 
 
 /**
@@ -109,10 +91,10 @@ void pump_logic(const char *statement)
  */
 int main(int argc, char *argv[]) 
 {
-        load_cwd();
+        load_env(&ENV);
 
         if (!ARG(1))
-                (is_pump(CWD)) ? do_pump() : print_usage();
+                print_usage();
 
         else if (isarg(1, "init"))
                 pump_init();
@@ -124,7 +106,7 @@ int main(int argc, char *argv[])
                 (ARG(2)) ? pump_logic(ARG(2)) : print_logic_usage();
 
         else if (isarg(1, "var"))
-                (ARG(2)) ? printf("%s", getvar(ARG(2))) : print_logic_usage();
+                (ARG(2)) ? printf("%s", token(ARG(2), ENV.config)) : print_logic_usage();
 
         return 0;
 }

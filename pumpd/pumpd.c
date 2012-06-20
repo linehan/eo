@@ -44,11 +44,10 @@ int readpid(const char *path)
         int pid;
 
         if (fp = fopen(path, "r"), fp == NULL)
-                bye("pid file does not exist");
+                return 0;
 
         fscanf(fp, "%d", &pid);
         fclose(fp);
-        remove(path);
         
         return pid;
 }
@@ -78,12 +77,38 @@ void daemonize(void)
 
 
 /**
+ * do_pump -- apply the logic across each file of the directory
+ */
+void do_pump(void)
+{
+        DIR *dir;
+        char *filename;
+        char execute[512];
+
+        if (!exists(ENV.logic))
+                bye("Pump contains no logic.");
+
+        dir = opendir("./");
+
+        for (filename  = getfile(dir, F_REG);
+             filename != NULL;
+             filename  = getfile(NULL, F_REG))
+        {
+                sprintf(execute, "./%s %s", ENV.logic, filename);
+                system(execute);
+        }
+
+        closedir(dir);
+}
+
+
+/**
  * pumpd -- the function executed by the running daemon
  */
 void pumpd(void)
 {
         for (;;) {
-
+                sleep(300);
         }
 }
 
@@ -105,10 +130,23 @@ void pumpd_start(void)
 void pumpd_stop(void)
 {
         int pid;
-
-        pid = readpid(PIDDIR);
-
+        if (pid = readpid(PIDDIR), !pid)
+                bye("daemon is not running.");
+        remove(PIDDIR);
         kill(pid, SIGTERM);
+}
+
+
+/**
+ * pumpd_stat -- stat the pump daemon
+ */
+void pumpd_stat(void)
+{
+        int pid;
+        if (pid = readpid(PIDDIR), !pid)
+                bye("daemon is not running.");
+        else
+                bye("daemon is running with pid %d.", pid);
 }
 
 
@@ -117,7 +155,14 @@ void pumpd_stop(void)
  */
 void pumpd_help(void)
 {
-        printf("Help!\n");
+        printf("The pump daemon manages the pumps registered in the filesystem\n\n" 
+               "Usage: pumpd <DIRECTIVE>\n\n"
+               "\tstart   - start the pump daemon\n"
+               "\tstop    - stop the pump daemon if it is running\n"
+               "\trestart - stop and then start the pump daemon\n"
+               "\tstat    - report the daemon's status\n"
+               "\thelp    - print this message\n"
+               "\n");
 }
 
 
@@ -132,12 +177,13 @@ int main(int argc, char *argv[])
         else if (isarg(1, "stop"))
                 pumpd_stop();
 
+        else if (isarg(1, "stat"))
+                pumpd_stat();
+
         else if (isarg(1, "help") || isarg(1, "?"))
                 pumpd_help();
 
         return 0;
 }
-
-
 
 

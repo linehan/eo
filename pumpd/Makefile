@@ -1,12 +1,12 @@
 CC=gcc
 #
-#          gprof        
-# optimize   |     warnings
-# lvl 3 \    |     /    
-CFLAGS=-O3 -pg -Wall            
-LDFLAGS=-pg 
-#        |
-#      gprof 
+#                 
+# optimize     warnings
+# lvl 3 \      /    
+CFLAGS=-O3 -Wall            
+LDFLAGS= 
+#        
+#      
 #                                  
 
 SOURCES=pumpd.c ../common/error.c

@@ -19,115 +19,268 @@
 #include <langinfo.h>
 
 #include "file.h"
-#include "error.h"
-#include "util.h"
+#include "../common/error.h"
+#include "../common/util.h"
+#include "../common/textutils.h"
 
 
 /* drwxr-xr-x */
 #define PUMP_DIR_MODE ((S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH))
 
-
 /* Pathnames indexed by file tag */
-#define PUMP_DIR   ".pump" 
-#define PUMP_CONF  ".pump/config"
-#define PUMP_LOGIC ".pump/logic"
-static const char *PUMP_PATH[]={ PUMP_DIR, PUMP_CONF, PUMP_LOGIC };
-static const char *filename[]={ "pump directory", "config", "logic" };
+#define pump_stem   "/.pump" 
+#define config_stem "/.pump/config"
+#define logic_stem  "/.pump/logic"
 
 
-void config_token(char *buf, const char *token)
-{
-        FILE *config;
-        char buffer[1024];
-        size_t offset;
-        
-        config = pump_open(CONFIG, "r");
-
-        while (fgets(buffer, 1024, config)) {
-                if (strstr(buffer, token)) {
-                        offset = strlen(token) + 1;
-                        sprintf(buf, "%s", &buffer[offset]);
-                        break;
-                }
-        }
-
-        pump_close(config);
-}
-
-char *getvar(const char *name)
-{
-        static char buffer[1024];
-        config_token(buffer, name);
-
-        return buffer;
-}
-
-
+/******************************************************************************
+ * GENERAL FILE OPERATIONS 
+ * 
+ * Small functions that safely handle common file operations performed
+ * by pump and pumpd. They provide a layer of security as well as error
+ * reporting.
+ ******************************************************************************/
 
 /**
- * load_cwd -- fill out the current working directory (CWD)
+ * load_env -- fill out the current working directory struture 
+ * @environ: will contain the current environment 
  */
-void load_cwd(void)
+void load_env(struct env_t *environ)
 {
-        if (getcwd(CWD, 1024) == NULL)
+        if (getcwd(environ->cwd, PATHSIZE) == NULL)
                 bye("Could not stat working directory.");
+
+        snprintf(environ->pump,   PATHSIZE, "%s%s", environ->cwd, pump_stem);
+        snprintf(environ->config, PATHSIZE, "%s%s", environ->cwd, config_stem);
+        snprintf(environ->logic,  PATHSIZE, "%s%s", environ->cwd, logic_stem);
 }
 
 
 /**
- * make_pump_dir -- create the .pump directory to hold pump metadata
- */
-void make_pump(void)
-{
-        if (mkdir(PUMP_DIR, PUMP_DIR_MODE) == -1)
-                bye("Could not create pump directory.");
-}
-
-
-/**
- * pump_open -- get a stream pointer to the file identified by 'tag'
- * @tag : pump file identifier
+ * pumpfile_open -- get a stream pointer to the file identified by 'path' 
+ * @path: path to the desired file 
  * @mode: mode to open file with
  */
-FILE *pump_open(enum files tag, const char *mode)
+FILE *pumpfile_open(const char *path, const char *mode)
 {
         FILE *file;
 
-        if (file = fopen(PUMP_PATH[tag], mode), file == NULL)
-                bye("Could not open %s", filename[tag]);
+        if (file = fopen(path, mode), file == NULL)
+                bye("Could not open %s", path);
 
         return file;
 }
 
 
 /**
- * pump_close -- close a stream pointer 
- * @file: pump file stream pointer
+ * pumpfile_close -- close a stream pointer 
+ * @file: file stream pointer
  */
-void pump_close(FILE *file)
+void pumpfile_close(FILE *file)
 {
         if (fclose(file) == EOF)
                 bye("Could not close file");
 }
 
 
+/****************************************************************************** 
+ * PUMP METADATA FILES 
+ * 
+ * The path argument accepted by all of these refers to a working
+ * directory which is the root of the directory that contains the
+ * .pump subfolder, NOT the actual path of a particular file.
+ ******************************************************************************/
+
 /**
- * is_pump -- test if the current working directory is a pump
+ * make_pump -- create a ./.pump directory to hold pump metadata
+ * @path: the root directory in which to create .pump
+ * 
+ * It should be noted that this function sets the diagnostic condition 
+ * of the is_pump() predicate. Whether a given directory is or is not 
+ * a pump is judged entirely on the existence of a .pump subdirectory.
+ */
+void make_pump(const char *path)
+{
+        if (mkdir(CONCAT(path, pump_stem), PUMP_DIR_MODE) == -1)
+                bye("Could not create pump directory.");
+}
+
+
+/**
+ * is_pump -- test if 'path' contains a .pump subdirectory (is a pump)
+ * @path: the directory in which to look for a .pump subdirectory
  */
 bool is_pump(const char *path)
 {
-        static char pumpdir[1024];
         struct stat buffer;
 
-        sprintf(pumpdir, "%s/%s", path, PUMP_PATH[PUMPDIR]);
-
-        if (stat(pumpdir, &buffer) == -1) {
+        if (stat(CONCAT(path, pump_stem), &buffer) == -1) {
                 if (errno == ENOENT)
                         return false;
                 else
                         bye("Cannot stat pump directory");
         }
         return true;
+}
+
+
+/**
+ * exists -- test if a file exists 
+ * @path: the root directory of the pump 
+ */
+bool exists(const char *path)
+{
+        struct stat buf;
+        return ((stat(path, &buf) == -1) && (errno == ENOENT)) ? false : true;
+}
+
+
+/****************************************************************************** 
+ * READING THE PUMP CONFIG FILE 
+ * 
+ * These functions provide easy access to the configuration
+ * file and other metadata.
+ ******************************************************************************/
+/**
+ * get_token -- return a token from the file at 'path'
+ * @dest : the destination buffer (token value will be placed here)
+ * @path : the path of the file to be parsed
+ * @token: the token to be scanned for
+ */
+void get_token(char *dest, const char *token, const char *path)
+{
+        #define COMMENT '#'
+        char buffer[LINESIZE];
+        char *pruned;
+        size_t offset;
+        FILE *file;
+        
+        file = pumpfile_open(path, "r");
+
+        while (fgets(buffer, LINESIZE, file)) {
+                if (buffer[0] == COMMENT)
+                        continue;
+                if (strstr(buffer, token)) {
+                        offset = strlen(token) + 1;
+                        pruned = &buffer[offset];
+                        terminate(pruned, COMMENT, strlen(pruned));
+                        snprintf(dest, LINESIZE, "%s", pruned);
+                        break;
+                }
+        }
+        pumpfile_close(file);
+}
+
+
+/**
+ * token -- return token at 'path' as a statically allocated string
+ * @path : the path of the file to be parsed
+ * @token: the token to be scanned for
+ */
+char *token(const char *token, const char *path)
+{
+        static char buffer[LINESIZE];
+        get_token(buffer, token, path);
+        return buffer;
+}
+
+
+/**
+ * readconfig -- fill a pumpconfig structure with the config file at 'path'
+ * @config: pumpconfig struct
+ * @path  : path to the config file to be parsed
+ */
+void readconfig(struct pumpconfig_t *config, const char *path)
+{
+        get_token(config->name, "name", path);
+        get_token(config->desc, "desc", path);
+        get_token(config->base, "base", path);
+        get_token(config->sha2, "sha2", path);
+        get_token(config->link, "link", path);
+        get_token(config->wait, "wait", path);
+}
+
+
+/**
+ * writeconfig -- write a pumpconfig structure to a config file at 'path'
+ * @config: pumpconfig struct
+ * @path  : path to the config file to be written
+ */
+void writeconfig(struct pumpconfig_t *config, const char *path)
+{
+        FILE *configfile;
+
+        configfile = pumpfile_open(path, "w+");
+        fprintf(configfile, 
+                        "# --------------------------\n"
+                        "# PUMP CONFIGURATION\n"
+                        "# --------------------------\n\n"
+                        "# Pump name\n"
+                        "name \"%s\"\n\n"
+                        "# Pump description\n"
+                        "desc \"%s\"\n\n"
+                        "# Directory to be pumped\n"
+                        "base %s\n\n"
+                        "# Identifies pump to the pump daemon\n"
+                        "sha2 %s\n\n"
+                        "# Link to external logic\n"
+                        "link \"%s\"\n\n"
+                        "# Delay between pumps (in seconds)\n"
+                        "wait %s\n\n",
+                config->name, 
+                config->desc, 
+                config->base, 
+                config->sha2,
+                config->link,
+                config->wait);
+
+        pumpfile_close(configfile);
+}
+
+
+void pumpconfig(struct pumpconfig_t *config, 
+                char *n, char *d, char *b, char *s, char *l, char *w)
+{
+        char *name, *desc, *base, *sha2, *link, *wait;
+
+        name = n ? n : "";
+        desc = d ? d : "";
+        base = b ? b : "";
+        sha2 = s ? s : "";
+        link = l ? l : "";
+        wait = w ? w : "";
+
+        snprintf(config->name, LINESIZE, "%s", name);
+        snprintf(config->desc, LINESIZE, "%s", desc);
+        snprintf(config->base, LINESIZE, "%s", base);
+        snprintf(config->sha2, LINESIZE, "%s", sha2);
+        snprintf(config->link, LINESIZE, "%s", link);
+        snprintf(config->wait, LINESIZE, "%s", wait);
+}
+
+
+void setconfig(const char *path, const char *token, const char *value)
+{
+        struct pumpconfig_t config;
+
+        readconfig(&config, path);
+
+        if (STRCMP(token, "name"))
+                snprintf(config.name, LINESIZE, "%s", value);
+        else if (STRCMP(token, "desc"))
+                snprintf(config.desc, LINESIZE, "%s", value);
+        else if (STRCMP(token, "base"))
+                snprintf(config.base, LINESIZE, "%s", value);
+        else if (STRCMP(token, "sha2"))
+                snprintf(config.sha2, LINESIZE, "%s", value);
+        else if (STRCMP(token, "link"))
+                snprintf(config.link, LINESIZE, "%s", value);
+        else if (STRCMP(token, "wait"))
+                snprintf(config.wait, LINESIZE, "%s", value);
+        else
+                bye("Invalid token passed to setconfig()");
+
+        writeconfig(&config, path);
 }
 
 
@@ -304,6 +457,7 @@ void list_dir(DIR *dir, int options)
                 bye("Couldn't open directory");
         }
 }
+
 
 
 #define SH_GREEN    "\033[01;32m"

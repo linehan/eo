@@ -1,15 +1,15 @@
 CC=gcc
 #
-#          gprof        
-# optimize   |     warnings
-# lvl 3 \    |     /    
-CFLAGS=-O3 -pg -Wall            
-LDFLAGS=-pg 
-#        |
-#      gprof 
+#            
+# optimize     warnings
+# lvl 3 \      /    
+CFLAGS=-O3 -Wall            
+LDFLAGS= 
+#     
+#     
 #                                  
 
-SOURCES=../common/util.c file.c ../common/error.c ../common/sha256/sha2.c pump.c
+SOURCES=../common/util.c ../common/textutils.c file.c ../common/error.c ../common/sha256/sha2.c pump.c
 OBJECTS=$(SOURCES:.c=.o)
 
 EXECUTABLE=pump

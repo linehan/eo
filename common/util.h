@@ -375,8 +375,19 @@ extern int __build_bug_on_failed;
 #define dec(x, min) x = ((x) > (min)) ? ((x)-1) : (x)
 #define inc(x, max) x = ((x) < (max)) ? ((x)+1) : (x)
 
+#define CAT(a,b) a ## b
+#define STR(a) #a
+#define EXP(a) a
 
-void sha256gen(uint8_t *hex, void *hash);
+static inline char *CONCAT(const char *a, const char *b)
+{
+        static char buffer[1024];
+        strcpy(buffer, a);
+        strcat(buffer, b);
+        return buffer;
+}
+
+void sha256gen(char *hex, void *hash);
 
 #ifdef __MERSENNE__
 #include "mersenne.h"
