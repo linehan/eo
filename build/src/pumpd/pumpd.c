@@ -10,15 +10,17 @@
 #include "../common/daemon.h"
 #include "../common/file.h"
 
-#define HOME_PERMS ((S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH))
-#define HOME     "/home/linehan/.pump"
+#define CFG_PERMS ((S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH))
+
 #define FIFO_PUB "fifo.pub"
 #define FIFO_SUB "fifo.sub"
 #define PID_FILE "pumpd.pid"
+#define CFG_STEM ".pump"
 
-#define PID_PATH HOME"/"PID_FILE
-#define PUB_PATH HOME"/"FIFO_PUB
-#define SUB_PATH HOME"/"FIFO_SUB
+#define CFG_PATH (CONCAT((homedir((getuid()))), "/"CFG_STEM"/"CFG_STEM))
+#define PID_PATH (CONCAT((homedir((getuid()))), "/"CFG_STEM"/"PID_FILE))
+#define PUB_PATH (CONCAT((homedir((getuid()))), "/"CFG_STEM"/"FIFO_PUB))
+#define SUB_PATH (CONCAT((homedir((getuid()))), "/"CFG_STEM"/"FIFO_SUB))
 
 #define PERMS 0666
 
@@ -84,15 +86,15 @@ void pumpd_start(void)
 
         umask(0); /* Reset process permissions mask */ 
 
-        if (!exists(HOME))
-                mkdir(HOME, HOME_PERMS);
+        if (!exists(CFG_PATH))
+                mkdir(CFG_PATH, CFG_PERMS);
 
         new_fifo(SUB_PATH, PERMS);
         new_fifo(PUB_PATH, PERMS);
 
         daemonize(); 
 
-        // ---------- process is now daemon ---------- */
+        // ---------- process is now a daemon ---------- */
 
         pidfile(PID_PATH, "w+");
 

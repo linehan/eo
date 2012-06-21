@@ -202,9 +202,33 @@ void fifo_read(int fd, void *buf, size_t len)
 
 
 /******************************************************************************
- * CHANNELS 
+ * DUPLEX CHANNELS 
+ * 
+ * A channel is an IPC abstraction enforced (in this implementation) 
+ * by a datatype struct dpx_t. This structure encapsulates three file 
+ * descriptors, which associate to 2 FIFO files (named pipes). The 
+ * extra descriptor is used to ensure that the channel remains open
+ * after one end has hung up. 
+ * 
+ * A channel is a duplex system, in contrast to the POSIX FIFO which
+ * is strictly serial. More precisely, it pretends to be a duplex
+ * system, by opening two FIFOs, one for reading and one for writing.
+ *
+ * Before a channel is opened, the caller must specify whether their
+ * process will be a PUBLISHER or a SUBSCRIBER. This setting affects
+ * which of the file descriptors is written on, and whether the channel
+ * needs to be kept alive, and also allows the blocking logic to be
+ * enforced below the API, where the caller can't screw it up!
+ *
  ******************************************************************************/
 
+/**
+ * open_dpx -- initialize a new duplex channel 
+ * @dpx: pointer to a duplex structure
+ * @pub_path: path of the FIFO (named pipe) to publish on 
+ * @sub_path: path of the FIFO (named pipe) to listen on 
+ * Returns nothing.
+ */
 void open_dpx(struct dpx_t *dpx, const char *pub_path, const char *sub_path)
 {
         if (dpx->role == PUBLISH) {
@@ -220,6 +244,11 @@ void open_dpx(struct dpx_t *dpx, const char *pub_path, const char *sub_path)
 }
 
 
+/**
+ * close_dpx -- close an open duplex channel
+ * @dpx: pointer to a duplex structure
+ * Returns nothing.
+ */
 void close_dpx(struct dpx_t *dpx)
 {
         if (dpx->role == PUBLISH) {
@@ -235,28 +264,34 @@ void close_dpx(struct dpx_t *dpx)
 }
 
 
-/*void read_dpx(struct dpx_t *dpx, void *buffer, size_t len)*/
-/*{*/
-        /*fifo_read(dpx->fd_sub, buffer, len);*/
-/*}*/
-
-
-/*void write_dpx(struct dpx_t *dpx, void *buffer, size_t len)*/
-/*{*/
-        /*fifo_write(dpx->fd_pub, buffer, len);*/
-/*}*/
-
+/**
+ * load_dpx -- load a message buffer into the duplex struct 
+ * @dpx: pointer to a duplex structure
+ * @msg: message to be loaded in the duplex structure
+ * Returns nothing.
+ */
 void load_dpx(struct dpx_t *dpx, char *msg)
 {
         strcpy(dpx->buf, msg);
 }
 
+
+/**
+ * read_dpx -- read the subscription FIFO into the duplex buffer
+ * @dpx: pointer to a duplex structure
+ * Returns nothing.
+ */
 void read_dpx(struct dpx_t *dpx)
 {
         fifo_read(dpx->fd_sub, (void *)dpx->buf, (size_t)MIN_PIPESIZE);
 }
 
 
+/**
+ * write_dpx -- write the duplex buffer to the publishing FIFO
+ * @dpx: pointer to a duplex structure
+ * Returns nothing.
+ */
 void write_dpx(struct dpx_t *dpx)
 {
         fifo_write(dpx->fd_pub, (void *)dpx->buf, (size_t)MIN_PIPESIZE);

@@ -12,11 +12,12 @@
 #include "../common/daemon.h"
 
 
-#define HOME "/home/linehan/.pump"
 #define FIFO_SUB "fifo.sub"
 #define FIFO_PUB "fifo.pub"
-#define PUB_PATH HOME"/"FIFO_PUB
-#define SUB_PATH HOME"/"FIFO_SUB
+#define CFG_STEM ".pump"
+
+#define PUB_PATH (CONCAT((homedir((getuid()))), "/"CFG_STEM"/"FIFO_PUB))
+#define SUB_PATH (CONCAT((homedir((getuid()))), "/"CFG_STEM"/"FIFO_SUB))
 
 
 /**

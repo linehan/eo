@@ -59,6 +59,23 @@ void sclose(FILE *file)
                 bye("Could not close file");
 }
 
+
+/**
+ * homedir -- return the home directory of user with 'uid'
+ * @uid: uid of the user whose home directory you want
+ */
+const char *homedir(uid_t uid)
+{
+        static const char *path;
+        struct passwd *pw;
+       
+        pw   = getpwuid(uid);
+        path = pw->pw_dir;
+
+        return path;
+}
+
+
 /******************************************************************************
  * FILE PREDICATES 
  * 

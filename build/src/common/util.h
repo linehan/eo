@@ -386,7 +386,7 @@ extern int __build_bug_on_failed;
 
 static inline char *CONCAT(const char *a, const char *b)
 {
-        static char buffer[1024];
+        static char buffer[4096];
         strcpy(buffer, a);
         strcat(buffer, b);
         return buffer;

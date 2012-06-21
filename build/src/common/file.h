@@ -2,9 +2,11 @@
 #define _MY_FILE_LIB_H
 
 #include "../common/util.h"
+#include <stdbool.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#include <stdbool.h>
+#include <unistd.h>
+#include <pwd.h>
 
 #define PATHSIZE 255
 #define LINESIZE 1024
@@ -13,6 +15,7 @@ bool exists(const char *path);
 
 FILE *sopen(const char *path, const char *mode);
 void sclose(FILE *file);
+const char *homedir(uid_t uid);
 
 void list_dir(DIR *dir, int options);
 

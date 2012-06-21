@@ -30,10 +30,8 @@ struct dpx_t {
 void  open_dpx(struct dpx_t *dpx, const char *pub_path, const char *sub_path);
 void close_dpx(struct dpx_t *dpx);
 
-//void  read_dpx(struct dpx_t *dpx, void *buffer, size_t len);
-//void write_dpx(struct dpx_t *dpx, void *buffer, size_t len);
-
 void load_dpx(struct dpx_t *dpx, char *msg);
+
 void  read_dpx(struct dpx_t *dpx);
 void write_dpx(struct dpx_t *dpx);
 
