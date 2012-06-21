@@ -29,8 +29,8 @@
 
 
 #define HOME "/home/linehan/.pump"
-#define FIFO_SUB "fifo.pub"
-#define FIFO_PUB "fifo.sub"
+#define FIFO_SUB "fifo.sub"
+#define FIFO_PUB "fifo.pub"
 
 
 /**

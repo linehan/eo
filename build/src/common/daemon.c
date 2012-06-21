@@ -83,7 +83,6 @@ int pidfile(const char *path, const char *mode)
  *                                              Stevens (1990), pp. 112
  *
  ******************************************************************************/
-/*#define PERMS ((S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH))*/
 #define PERMS (0666)
 /**
  * new_fifo -- create a new fifo for the daemon to listen on
@@ -188,7 +187,7 @@ void fifo_write(int fd, void *buf, size_t len)
 
 
 /**
- * fifo_read -- read the contents of a buffer into a fifo
+ * fifo_read -- read the contents of a fifo into a buffer
  * @fd: file descriptor
  * @buf: buffer to be written to fifo
  * @len: size of the buffer
@@ -196,8 +195,15 @@ void fifo_write(int fd, void *buf, size_t len)
  */
 void fifo_read(int fd, char *buf, size_t len)
 {
-        if ((read(fd, buf, len)) == -1)
+        #define NULterminate
+        size_t z;
+
+        if ((z = read(fd, buf, len)) == -1)
                 bye("daemon: could not write to fifo");
+
+        #if defined(NULterminate)
+        buf[z] = '\0';
+        #endif
 }
 
 

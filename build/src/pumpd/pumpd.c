@@ -19,7 +19,9 @@
 #include "pumpd.h"
 #include "../common/error.h"
 #include "../common/daemon.h"
+#include "../common/file.h"
 
+#define HOME_PERMS ((S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH))
 #define HOME     "/home/linehan/.pump"
 #define FIFO_PUB "fifo.pub"
 #define FIFO_SUB "fifo.sub"
@@ -68,10 +70,10 @@ void pumpd(int read, int write)
         static char buffer[1024];
 
         for (;;) {
-                fifo_read(read, buffer, 1024);
+                memset(buffer, '\0', 1024);
+                fifo_read(read, buffer, 1023);
                 if (buffer[0] != '\0') {
                         fifo_write(write, buffer, strlen(buffer));
-                        memset(buffer, '\0', strlen(buffer));
                 }
         }
         close_fifo(write);
@@ -91,7 +93,7 @@ void pumpd_start(void)
         umask(0); /* Reset process permissions mask */ 
 
         if (!exists(HOME))
-                mkdir(HOME);
+                mkdir(HOME, HOME_PERMS);
 
         new_fifo(HOME"/"FIFO_SUB, PERMS);
         new_fifo(HOME"/"FIFO_PUB, PERMS);
