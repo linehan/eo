@@ -23,6 +23,7 @@
 #include "util.h"
 #include "textutils.h"
 
+
 /******************************************************************************
  * GENERAL FILE OPERATIONS 
  * 
@@ -61,17 +62,39 @@ void sclose(FILE *file)
 
 
 /**
- * homedir -- return the home directory of user with 'uid'
+ * sunlink -- unlink safely 
+ * @path: path of file to be removed
+ */
+void sunlink(const char *path)
+{
+        if ((unlink(path)) < 0)
+                bye("Could not unlink %s", path);
+}
+
+
+/**
+ * gethome_uid -- return the home directory of user with 'uid'
  * @uid: uid of the user whose home directory you want
  */
-const char *homedir(uid_t uid)
+char *gethome_uid(uid_t uid)
 {
-        static const char *path;
+        static char *path;
         struct passwd *pw;
        
         pw   = getpwuid(uid);
         path = pw->pw_dir;
 
+        return path;
+}
+
+
+/**
+ * gethome -- return the home directory set in the environment variable $HOME
+ */
+char *gethome(void)
+{
+        static char *path;
+        path = getenv("HOME");
         return path;
 }
 

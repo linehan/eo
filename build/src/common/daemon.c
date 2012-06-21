@@ -223,21 +223,45 @@ void fifo_read(int fd, void *buf, size_t len)
  ******************************************************************************/
 
 /**
+ * creat_dpx -- create named FIFOs for a duplex channel
+ * @dpxname: path of the FIFO (named pipe) to publish on 
+ * @perms: file permissions 
+ * Returns nothing.
+ */
+void creat_dpx(const char *dpxname, int perms)
+{
+        new_fifo(CONCAT(dpxname, ".sub"), perms);
+        new_fifo(CONCAT(dpxname, ".pub"), perms);
+}
+
+
+/**
+ * remove_dpx -- destroy named FIFOs for a duplex channel
+ * @pub_path
+ */
+void remove_dpx(const char *dpxname)
+{
+        sunlink(CONCAT(dpxname, ".sub"));
+        sunlink(CONCAT(dpxname, ".pub"));
+}
+ 
+
+/**
  * open_dpx -- initialize a new duplex channel 
  * @dpx: pointer to a duplex structure
  * @pub_path: path of the FIFO (named pipe) to publish on 
  * @sub_path: path of the FIFO (named pipe) to listen on 
  * Returns nothing.
  */
-void open_dpx(struct dpx_t *dpx, const char *pub_path, const char *sub_path)
+void open_dpx(struct dpx_t *dpx, const char *path)
 {
         if (dpx->role == PUBLISH) {
-                dpx->fd_sub = open_fifo(sub_path, "r");
-                dpx->fd_nub = open_fifo(sub_path, "w");
-                dpx->fd_pub = open_fifo(pub_path, "w");
+                dpx->fd_sub = open_fifo(CONCAT(path, ".sub"), "r");
+                dpx->fd_nub = open_fifo(CONCAT(path, ".sub"), "w");
+                dpx->fd_pub = open_fifo(CONCAT(path, ".pub"), "w");
         } else if (dpx->role == SUBSCRIBE) {
-                dpx->fd_pub = open_fifo(sub_path, "w");
-                dpx->fd_sub = open_fifo(pub_path, "r");
+                dpx->fd_pub = open_fifo(CONCAT(path, ".sub"), "w");
+                dpx->fd_sub = open_fifo(CONCAT(path, ".pub"), "r");
         } else {
                 bye("open_dpx: Invalid duplex role");
         }

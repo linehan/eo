@@ -12,15 +12,18 @@
 
 #define CFG_PERMS ((S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH))
 
-#define FIFO_PUB "fifo.pub"
-#define FIFO_SUB "fifo.sub"
+/*#define FIFO_PUB "fifo.pub"*/
+/*#define FIFO_SUB "fifo.sub"*/
 #define PID_FILE "pumpd.pid"
 #define CFG_STEM ".pump"
 
-#define CFG_PATH (CONCAT((homedir((getuid()))), "/"CFG_STEM"/"CFG_STEM))
-#define PID_PATH (CONCAT((homedir((getuid()))), "/"CFG_STEM"/"PID_FILE))
-#define PUB_PATH (CONCAT((homedir((getuid()))), "/"CFG_STEM"/"FIFO_PUB))
-#define SUB_PATH (CONCAT((homedir((getuid()))), "/"CFG_STEM"/"FIFO_SUB))
+#define CFG_PATH (CONCAT((gethome()), ("/"CFG_STEM"/"CFG_STEM)))
+#define PID_PATH (CONCAT((gethome()), ("/"CFG_STEM"/"PID_FILE)))
+/*#define FIFO_PATH (CONCAT((homedir((getuid())), "/"CFG_STEM"/fifo")))*/
+#define FIFO_PATH (CONCAT((gethome()), ("/"CFG_STEM"/fifo")))
+
+/*#define PUB_PATH (CONCAT((homedir((getuid()))), "/"CFG_STEM"/"FIFO_PUB))*/
+/*#define SUB_PATH (CONCAT((homedir((getuid()))), "/"CFG_STEM"/"FIFO_SUB))*/
 
 #define PERMS 0666
 
@@ -89,8 +92,7 @@ void pumpd_start(void)
         if (!exists(CFG_PATH))
                 mkdir(CFG_PATH, CFG_PERMS);
 
-        new_fifo(SUB_PATH, PERMS);
-        new_fifo(PUB_PATH, PERMS);
+        creat_dpx(FIFO_PATH, PERMS);
 
         daemonize(); 
 
@@ -99,7 +101,7 @@ void pumpd_start(void)
         pidfile(PID_PATH, "w+");
 
         dpx.role = PUBLISH;
-        open_dpx(&dpx, PUB_PATH, SUB_PATH);
+        open_dpx(&dpx, FIFO_PATH);
 
         pumpd(&dpx);
 }
@@ -116,8 +118,7 @@ void pumpd_stop(void)
                 bye("pumpd is not running.");
 
         remove(PID_PATH);
-        unlink(SUB_PATH);
-        unlink(PUB_PATH);
+        remove_dpx(FIFO_PATH);
 
         kill(pid, SIGTERM);
 }

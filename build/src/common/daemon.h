@@ -23,11 +23,15 @@ struct dpx_t {
         enum dpx_role role;
         int fd_pub; // publish on this fd
         int fd_sub; // consume on this fd 
-        int fd_nub; // sticky fd for loop driver
+        int fd_nub; // sticky fd for loop driver (keepalive)
         char buf[MIN_PIPESIZE];
 };
 
-void  open_dpx(struct dpx_t *dpx, const char *pub_path, const char *sub_path);
+
+void creat_dpx(const char *dpxname, int perms);
+void remove_dpx(const char *dpxname);
+
+void  open_dpx(struct dpx_t *dpx, const char *path);
 void close_dpx(struct dpx_t *dpx);
 
 void load_dpx(struct dpx_t *dpx, char *msg);

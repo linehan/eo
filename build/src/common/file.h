@@ -15,7 +15,10 @@ bool exists(const char *path);
 
 FILE *sopen(const char *path, const char *mode);
 void sclose(FILE *file);
-const char *homedir(uid_t uid);
+void sunlink(const char *path);
+
+char *gethome_uid(uid_t uid);
+char *gethome(void);
 
 void list_dir(DIR *dir, int options);
 
@@ -121,3 +124,4 @@ char *tokenf(char B, char S, char C, const char *tok, const char *path);
  ******************************************************************************/
 
 #endif
+
