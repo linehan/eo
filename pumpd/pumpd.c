@@ -56,33 +56,43 @@
 void pumpd(int read, int write)
 {
         char *msg="FIFO is empty.\n";
+        char buffer[1024];
 
         for (;;) {
-                fifo_write(write, msg, strlen(msg));
-                sleep(1);
+                /*fifo_write(write, msg, strlen(msg));*/
+                fifo_read(read, buffer, 1024);
+                if (buffer[0] != 0) {
+                        fifo_write(write, buffer, strlen(buffer));
+                        bzero(buffer, 1024);
+                }
         }
         close_fifo(write);
+        close_fifo(read);
 }
 
+#define PERMS 0666
 
 /**
  * pumpd_start -- start the pump daemon
  */
 void pumpd_start(void)
 {
-        int read, write;
+        int read;
+        int write;
 
         umask(0); /* Reset process permissions mask */ 
 
-        /*new_fifo(FIFO_READ);*/
-        new_fifo(FIFO_WRITE);
+        new_fifo(FIFO_READ, PERMS);
+        new_fifo(FIFO_WRITE, PERMS);
 
-        daemonize();
+        daemonize(); 
+
+        // ---------- process is now daemon ---------- */
 
         pidfile(PIDDIR, "w+");
 
-        /*read  = open_fifo(FIFO_READ, "r");*/
-        write = open_fifo(FIFO_WRITE, "w");
+        read  = open_fifo(FIFO_READ,  'r');
+        write = open_fifo(FIFO_WRITE, 'w');
 
         pumpd(read, write);
 }
@@ -111,7 +121,7 @@ void pumpd_stat(void)
         int pid;
         if (pid = pidfile(PIDDIR, "r"), !pid)
                 bye("pumpd is not running.");
-        else
+        else    
                 bye("pumpd is running with pid %d.", pid);
 }
 

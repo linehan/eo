@@ -16,7 +16,8 @@
 #include <stdarg.h>
 
 #include "pump.h"
-#include "file.h"
+#include "meta.h"
+#include "../common/file.h"
 #include "../common/error.h"
 #include "../common/util.h"
 #include "../common/daemon.h"
@@ -70,22 +71,22 @@ void pump_logic(const char *logic)
 }
 
 
-void pump_write(const char *message)
+void pump_write(char *message)
 {
         int read, write;
         char *msg = "This is a test of the System V IPC\n";
         char buffer[1024];
 
-        /*write = stream_fifo(FIFO_WRITE, "w");*/
-        read = open_fifo(FIFO_READ, "r");
+        write = open_fifo(FIFO_WRITE, 'w');
+        read = open_fifo(FIFO_READ, 'r');
 
-        /*fifo_write(msg, (strlen(msg)+1), write);*/
+        fifo_write(write, (void *)message, (strlen(message)));
         fifo_read(read, buffer, 1024);
 
-        printf("%s", buffer);
+        printf("%s\n", buffer);
 
         close_fifo(read);
-        /*close_fifo(write);*/
+        close_fifo(write);
 }
 
 /**
@@ -113,9 +114,6 @@ int main(int argc, char *argv[])
 
         else if (isarg(1, "init"))
                 pump_init();
-
-        else if (isarg(1, "info"))
-                (ARG(2)) ? pump_info(ARG(2)) : usage();
 
         else if (isarg(1, "logic"))
                 (ARG(2)) ? pump_logic(ARG(2)) : usage();

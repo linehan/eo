@@ -135,29 +135,21 @@ void pumpf(char **strp, const char *fmt, ...)
 }       
 
 
-/**
- * Macros for optimizing the newlib memchr implementation (below)
- */
+/******************************************************************************/
 #define LONGALIGNED(X)    ((long)X & (sizeof(long) - 1))
 #define LONGBYTES         (sizeof(long))
 #define USE_BYTEWISE(len) ((len) < LONGBYTES)
-/* 32- and 64-bit magic numbers for detecting NUL characters. */
-#define LONGMAX32 2147483647L
-#define LONGMAX64 9223372036854775807L
-#define LOBITS32  0x01010101 
-#define HIBITS32  0x80808080
-#define LOBITS64  0x0101010101010101
-#define HIBITS64  0x8080808080808080
-/* DETECTNUL expands to nonzero if X (long int) contains a NUL character. */
-#if LONG_MAX == LONGMAX32 
-        #define DETECTNUL(X) (((X) - LOBITS32) & ~(X) & HIBITS32)
-#elif LONG_MAX == LONGMAX64 
-        #define DETECTNUL(X) (((X) - LOBITS64) & ~(X) & HIBITS64)
+
+/* NUL expands to nonzero if X (long int) contains '\0' */
+#if LONG_MAX == 2147483647L 
+#define NUL(X) (((X) - 0x01010101) & ~(X) & 0x80808080)
+#elif LONG_MAX == 9223372036854775807L 
+#define NUL(X) (((X) - 0x0101010101010101) & ~(X) & 0x8080808080808080)
 #else
-        #error memchar: long int is neither a 32bit nor a 64bit value
+#error memchar: long int is neither a 32bit nor a 64bit value
 #endif
-/* Expands to nonzero if (long)X contains byte used to fill (long)MASK. */
-#define DETECTCHAR(X,MASK) (DETECTNUL(X ^ MASK))
+
+#define DETECTCHAR(X,MASK) (NUL(X ^ MASK)) /* nonzero if X contains MASK. */
 
 
 /**
@@ -167,11 +159,8 @@ void pumpf(char **strp, const char *fmt, ...)
  */
 void *memchar(void *src_void, unsigned char c, size_t len)
 {
-        const unsigned char *src;
-        unsigned char d;
-        
-        src = (const unsigned char *)src_void;
-        d   = c;
+        const unsigned char *src = (const unsigned char *)src_void;
+        unsigned char d = c;
 
         #if !defined(PREFER_SIZE_OVER_SPEED) && !defined(__OPTIMIZE_SIZE__)
         unsigned long *asrc;
@@ -230,19 +219,17 @@ void *memchar(void *src_void, unsigned char c, size_t len)
 
 
 /**
- * terminate -- replace first instance of byte 'c' in string with NUL ('\0') 
- * @str: string to be truncated
- * @chr: byte to be searched for
- * @len: length of string 'str' 
+ * chrswp -- replace (swap) the first occurence of a char byte with another 
+ * @src : memory area to be searched 
+ * @at  : char byte to be searched for in 'src'
+ * @with: char byte which will overwrite the first occurence of 'at' 
+ * @len : maximum length to search
  */
-void terminate(char *src, char chr, size_t len)
+void chrswp(char *src, char at, char with, size_t len)
 {
-        char *tmp;
-
-        tmp = (char *)memchar(src, chr, len);
-
-        if (tmp != NULL && *tmp == chr)
-                *tmp = '\0';
+        char *sub;
+        if ((sub = (char *)memchar(src, at, len)), sub!=NULL && *sub==at)
+                *sub = with;
 }
 
 
@@ -254,7 +241,8 @@ char *trimws(char *str)
         while (isspace(*str)) 
                 str++;
 
-        if (*str == 0) // All spaces?
+        /* Check for empty string */
+        if (*str == '\0')
                 return str;
 
         /* Trim trailing space */
@@ -262,8 +250,9 @@ char *trimws(char *str)
         while (end > str && isspace(*end)) 
                 end--;
 
-        /* Write new null terminator */
-        *(end+1) = 0;
+        /* Write new NUL terminator */
+        *(end+1) = '\0';
 
         return str;
 }
+
