@@ -12,8 +12,8 @@
         config.status
 
 # gprof
-        *.out
-        */*.out
+        build/*.out
+        build/src/*/*.out
 
 # objdump
         *.s
