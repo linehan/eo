@@ -72,16 +72,15 @@ void pump_logic(const char *logic)
 
 void pump_write(const char *message)
 {
-        FILE *read;
-        FILE *write;
+        int read, write;
         char *msg = "This is a test of the System V IPC\n";
         char buffer[1024];
 
         /*write = stream_fifo(FIFO_WRITE, "w");*/
-        read = stream_fifo(FIFO_READ, "r");
+        read = open_fifo(FIFO_READ, "r");
 
         /*fifo_write(msg, (strlen(msg)+1), write);*/
-        fifo_read(buffer, 1024, read);
+        fifo_read(read, buffer, 1024);
 
         printf("%s", buffer);
 

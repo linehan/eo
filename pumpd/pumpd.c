@@ -53,21 +53,15 @@
 /**
  * pumpd -- the function executed by the running daemon
  */
-void pumpd(FILE *read, FILE *write)
+void pumpd(int read, int write)
 {
         char *msg="FIFO is empty.\n";
 
         for (;;) {
-                fifo_write(msg, strlen(msg), write);
-                /*if ((fgets(buffer, 4097, read)) == NULL)*/
-                        /*fprintf(write, "FIFO is empty.\n");*/
-                /*else*/
-                        /*fprintf(write, "%s\n", buffer);*/
-                /*rewind(read);*/
+                fifo_write(write, msg, strlen(msg));
                 sleep(1);
         }
-        fclose(read);
-        fclose(write);
+        close_fifo(write);
 }
 
 
@@ -76,19 +70,19 @@ void pumpd(FILE *read, FILE *write)
  */
 void pumpd_start(void)
 {
-        FILE *read, *write;
+        int read, write;
 
         umask(0); /* Reset process permissions mask */ 
 
-        new_fifo(FIFO_READ);
+        /*new_fifo(FIFO_READ);*/
         new_fifo(FIFO_WRITE);
 
         daemonize();
 
         pidfile(PIDDIR, "w+");
 
-        read = stream_fifo(FIFO_READ, "r");
-        write = stream_fifo(FIFO_WRITE, "w");
+        /*read  = open_fifo(FIFO_READ, "r");*/
+        write = open_fifo(FIFO_WRITE, "w");
 
         pumpd(read, write);
 }
