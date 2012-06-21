@@ -1,20 +1,25 @@
 #define __MERSENNE__
+/* Standard */
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <pwd.h>
-#include <grp.h>
 #include <time.h>
-#include <fcntl.h>
 #include <string.h>
 #include <stdarg.h>
-
+/* C99 */
+#include <stdint.h>
+#include <stdbool.h>
+/* Debug */
+#include <errno.h>
+#include <assert.h>
+/* Filesystem */
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <dirent.h>
+#include <fcntl.h>
+#include <pwd.h>
+#include <grp.h>
+/* Static */
 #include "pump.h"
 #include "meta.h"
 #include "../common/file.h"
@@ -22,8 +27,11 @@
 #include "../common/util.h"
 #include "../common/daemon.h"
 
-#define FIFO_WRITE "/home/linehan/src/mine/pump/build/pumpd/pumpd.read"
-#define FIFO_READ  "/home/linehan/src/mine/pump/build/pumpd/pumpd.write"
+
+#define HOME "/home/linehan/.pump"
+#define FIFO_SUB "fifo.pub"
+#define FIFO_PUB "fifo.sub"
+
 
 /**
  * usage -- print the usage message to stdout and exit
@@ -85,8 +93,8 @@ void pump_say(char *message)
         char buffer[1024];
 
         /* Order matters! */
-        write = open_fifo(FIFO_WRITE, "w");
-        read  = open_fifo(FIFO_READ, "r");
+        write = open_fifo(HOME"/"FIFO_SUB, "w");
+        read  = open_fifo(HOME"/"FIFO_PUB, "r");
 
         fifo_write(write, (void *)message, (strlen(message)));
         fifo_read(read, buffer, 1024);
