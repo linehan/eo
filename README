@@ -12,12 +12,12 @@
 
   READ and WRITE are FIFOs
 
-  Server reads from fifo1 and writes to fifo2.
-  Client reads from fifo2 and writes to fifo1.
+  Server writes to fifo1 and reads from fifo2.
+  Client writes to fifo2 and reads from fifo1.
 
 
-       read-only           write-only
-    .------<------:server:------>------.
+       write-only           read-only
+    .------<------:server:------<------.
   fifo1                              fifo2 
-    '------>------:client:------<------'
-       write-only          read-only
+    '------>------:client:------>------'
+       read-only            write-only
