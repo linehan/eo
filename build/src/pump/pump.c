@@ -1,25 +1,9 @@
 #define __MERSENNE__
-/* Standard */
+
 #include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
-#include <string.h>
 #include <stdarg.h>
-/* C99 */
-#include <stdint.h>
-#include <stdbool.h>
-/* Debug */
-#include <errno.h>
-#include <assert.h>
-/* Filesystem */
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <dirent.h>
-#include <fcntl.h>
-#include <pwd.h>
-#include <grp.h>
-/* Static */
+
 #include "pump.h"
 #include "meta.h"
 #include "../common/file.h"
@@ -31,6 +15,8 @@
 #define HOME "/home/linehan/.pump"
 #define FIFO_SUB "fifo.sub"
 #define FIFO_PUB "fifo.pub"
+#define PUB_PATH HOME"/"FIFO_PUB
+#define SUB_PATH HOME"/"FIFO_SUB
 
 
 /**
@@ -89,12 +75,10 @@ void pump_logic(const char *logic)
 void pump_say(char *message)
 {
         struct dpx_t dpx;
-        int read, write;
-        char *msg = "This is a test of the System V IPC\n";
         char buffer[1024];
 
         dpx.role = SUBSCRIBE;
-        open_dpx(&dpx, HOME"/"FIFO_PUB, HOME"/"FIFO_SUB);
+        open_dpx(&dpx, PUB_PATH, SUB_PATH);
 
         fifo_write(dpx.fd_pub, (void *)message, (strlen(message)));
         fifo_read(dpx.fd_sub, buffer, 1024);

@@ -1,20 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdint.h>
 #include <stdbool.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/param.h>
-#include <dirent.h>
-#include <pwd.h>
-#include <grp.h>
-#include <time.h>
-#include <fcntl.h>
-#include <string.h>
 #include <stdarg.h>
 #include <signal.h>
+#include <unistd.h>
 
 #include "pumpd.h"
 #include "../common/error.h"
@@ -26,6 +15,12 @@
 #define FIFO_PUB "fifo.pub"
 #define FIFO_SUB "fifo.sub"
 #define PID_FILE "pumpd.pid"
+
+#define PID_PATH HOME"/"PID_FILE
+#define PUB_PATH HOME"/"FIFO_PUB
+#define SUB_PATH HOME"/"FIFO_SUB
+
+#define PERMS 0666
 
 /**
  * do_pump -- apply the logic across each file of the directory
@@ -52,6 +47,8 @@
         /*closedir(dir);*/
 /*}*/
 
+
+
 /**
  * usage -- print the usage statement
  */
@@ -63,10 +60,10 @@ void usage(void)
 
 /**
  * pumpd -- the function executed by the running daemon
+ * @dpx: pointer to an open duplex stream
  */
 void pumpd(struct dpx_t *dpx)
 {
-        char *msg="FIFO is empty.\n";
         static char buffer[1024];
 
         for (;;) {
@@ -78,8 +75,6 @@ void pumpd(struct dpx_t *dpx)
         }
         close_dpx(dpx);
 }
-
-#define PERMS 0666
 
 
 /**
@@ -94,17 +89,17 @@ void pumpd_start(void)
         if (!exists(HOME))
                 mkdir(HOME, HOME_PERMS);
 
-        new_fifo(HOME"/"FIFO_SUB, PERMS);
-        new_fifo(HOME"/"FIFO_PUB, PERMS);
+        new_fifo(SUB_PATH, PERMS);
+        new_fifo(PUB_PATH, PERMS);
 
         daemonize(); 
 
         // ---------- process is now daemon ---------- */
 
-        pidfile(HOME"/"PID_FILE, "w+");
+        pidfile(PID_PATH, "w+");
 
         dpx.role = PUBLISH;
-        open_dpx(&dpx, HOME"/"FIFO_PUB, HOME"/"FIFO_SUB);
+        open_dpx(&dpx, PUB_PATH, SUB_PATH);
 
         pumpd(&dpx);
 }
@@ -117,12 +112,13 @@ void pumpd_stop(void)
 {
         int pid;
 
-        if (pid = pidfile(HOME"/"PID_FILE, "r"), !pid)
+        if (pid = pidfile(PID_PATH, "r"), !pid)
                 bye("pumpd is not running.");
 
-        remove(HOME"/"PID_FILE);
-        unlink(HOME"/"FIFO_SUB);
-        unlink(HOME"/"FIFO_PUB);
+        remove(PID_PATH);
+        unlink(SUB_PATH);
+        unlink(PUB_PATH);
+
         kill(pid, SIGTERM);
 }
 
@@ -133,7 +129,7 @@ void pumpd_stop(void)
 void pumpd_stat(void)
 {
         int pid;
-        if (pid = pidfile(HOME"/"PID_FILE, "r"), !pid)
+        if (pid = pidfile(PID_PATH, "r"), !pid)
                 bye("pumpd is not running.");
         else    
                 bye("pumpd is running with pid %d.", pid);

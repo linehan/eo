@@ -1,6 +1,8 @@
 #ifndef _PUMP_METADATA_H
 #define _PUMP_METADATA_H
 
+#include <stdbool.h>
+
 #define PATHSIZE 255
 #define LINESIZE 1024
 

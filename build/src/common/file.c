@@ -89,7 +89,7 @@ int ftype(const char *path)
         struct stat statbuf;
 
         if ((stat(path, &statbuf) == -1))
-                bye("ftype: could not stat file %s", path);
+                bye("ftype: Could not stat file %s", path);
 
         return F_TYPE(statbuf.st_mode);
 }

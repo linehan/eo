@@ -1,40 +1,42 @@
-#ifndef _PUMP_FILES_H
-#define _PUMP_FILES_H
+#ifndef _MY_FILE_LIB_H
+#define _MY_FILE_LIB_H
 
 #include "../common/util.h"
+#include <sys/stat.h>
+#include <dirent.h>
+#include <stdbool.h>
 
 #define PATHSIZE 255
 #define LINESIZE 1024
-
-
 
 bool exists(const char *path);
 
 FILE *sopen(const char *path, const char *mode);
 void sclose(FILE *file);
 
-
-
 void list_dir(DIR *dir, int options);
-
 
 int filecount(DIR *dir, int options);
 char *getfile(DIR *dir, int options);
-void pump_info(const char *path);
 
 void get_tokenf(char *dst, char B, char S, char C, const char *tok, const char *path);
 char *tokenf(char B, char S, char C, const char *tok, const char *path);
-/* Macros for most common scenario */
+
+/* 
+ * Macros for most common scenario
+ */
 #define get_token(dst, tok, path) get_tokenf(dst, '\n', ' ', '#', tok, path)
 #define token(tok, path)          tokenf('\n', ' ', '#', tok, path)
 
 
-/*
+/******************************************************************************
+ * FILETYPE EXTENSIONS
+ *
  * The following macros should be defined in <sys/stat.h>:
  *
- *                  I think this is a typo in the kernel source
+ *                 (I think this is a typo in the kernel source)
  *                  /
- * #define S_IFMT  00170000  Mask the mode bytes describing file type
+ * #define S_IFMT  00170000   Mask the mode bytes describing file type
  * #define S_IFSOCK 0140000   Socket
  * #define S_IFLNK  0120000   Symlink
  * #define S_IFREG  0100000   Regular file
@@ -86,9 +88,7 @@ char *tokenf(char B, char S, char C, const char *tok, const char *path);
  * again must be implementation-defined. This is just to
  * allow the option bit to be OR'ed with any of the other type
  * options, without loss of any information.
- */
-
-/*
+ *
  * These are used to operate on the st_mode field of the stat structure,
  * also defined in <sys/stat.h>
  *
@@ -114,6 +114,7 @@ char *tokenf(char B, char S, char C, const char *tok, const char *path);
  *      unsigned int	__unused4;
  *      unsigned int	__unused5;
  * };
- */
+ *
+ ******************************************************************************/
 
 #endif

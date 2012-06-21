@@ -1,27 +1,20 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/stat.h>
-#include <sys/param.h>
-#include <dirent.h>
-#include <pwd.h>
-#include <grp.h>
-#include <time.h>
-#include <fcntl.h>
-#include <string.h>
-#include <stdarg.h>
 #include <signal.h>
-#include <limits.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/ipc.h>
 
 #include "error.h"
 #include "file.h"
 #include "textutils.h"
 #include "daemon.h"
+
+
+#define PERMS (0666)
+
 
 /******************************************************************************
  * PID MANAGEMENT
@@ -46,7 +39,7 @@ int pidfile(const char *path, const char *mode)
         } 
         else if (*mode == 'r') {
                 (fp) ? fscanf(fp, "%d", &pid)
-                     : bye("daemon: Cannot read pidfile. Is daemon running?");
+                     : bye("daemon: No pidfile. Is the daemon running?");
         }
         else
                 bye("daemon: Invalid mode supplied to pidfile().");
@@ -84,7 +77,7 @@ int pidfile(const char *path, const char *mode)
  *                                              Stevens (1990), pp. 112
  *
  ******************************************************************************/
-#define PERMS (0666)
+
 /**
  * new_fifo -- create a new fifo for the daemon to listen on
  * @path: path of the FIFO to be created
@@ -152,7 +145,7 @@ int open_fifo(const char *path, const char *mode)
         if ((memchar((void *)mode, 'n', len))) MODE |= O_NDELAY;
 
         if ((fd = open(path, MODE)) < 0)
-                bye("daemon: could not open fifo");
+                bye("daemon: Could not open fifo");
 
         /* keepalive -- see note (Stevens) above */
         if ((memchar((void *)mode, 'k', len))) open_fifo(path, "w");
@@ -169,7 +162,7 @@ int open_fifo(const char *path, const char *mode)
 void close_fifo(int fd)
 {
         if ((close(fd)) < 0)
-                bye("daemon: could not close fifo");
+                bye("daemon: Could not close fifo");
 }
         
 
@@ -183,7 +176,7 @@ void close_fifo(int fd)
 void fifo_write(int fd, void *buf, size_t len)
 {
         if ((write(fd, buf, len)) == -1)
-                bye("daemon: could not write to fifo");
+                bye("daemon: Could not write to fifo");
 }
 
 
@@ -200,7 +193,7 @@ void fifo_read(int fd, void *buf, size_t len)
         size_t z;
 
         if ((z = read(fd, buf, len)) == -1)
-                bye("daemon: could not write to fifo");
+                bye("daemon: Could not read from fifo");
 
         #if defined(NULterminate)
         ((char *)buf)[z] = '\0';

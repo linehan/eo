@@ -1,18 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdint.h>
-#include <stdbool.h>
 #include <errno.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <pwd.h>
-#include <grp.h>
-#include <time.h>
-#include <fcntl.h>
 #include <string.h>
-#include <stdarg.h>
+#include <unistd.h>
 
 #include "meta.h"
 #include "../common/file.h"
