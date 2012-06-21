@@ -1,0 +1,45 @@
+.TH PUMPD 1 "MARCH 2012" Linux "User Manuals"
+.SH NAME
+pumpd \- pump daemon 
+.SH SYNOPSIS
+.B pumpd [option]
+.B ...
+.SH DESCRIPTION
+.BP pumpd 
+The daemon that manages all the active pumps on a filesystem. 
+Active pumps must be registered with the daemon before they 
+will begin processing. See 
+.BR pump(1).
+.SH OPTIONS
+.TP 10
+.B start 
+Start the daemon if it is not already running.
+.TP
+.B stop
+Stop the daemon if it is running.
+.TP
+.B restart 
+Stop and then start the daemon.
+.TP
+.B stat
+Print the current status of the daemon to
+.B stdout.
+.TP
+.B help 
+Show this screen.
+.SH FILES
+.I /etc/pipeutils/pumpd.conf
+.RS
+System configuration file. See
+.BR pumpd(5)
+for further details.
+.RE
+.SH BUGS
+This program is perfect in every way.
+.SH AUTHOR
+Jason Linehan <patientulysses at gmail dot com>
+.SH "SEE ALSO"
+.BR pumpd(5),
+.BR pump(1),
+.BR pipeutils(1)
+

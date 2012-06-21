@@ -20,6 +20,7 @@
 
 #include "../common/error.h"
 #include "../common/file.h"
+#include "../common/textutils.h"
 
 /******************************************************************************
  * PID MANAGEMENT
@@ -131,28 +132,30 @@ void new_fifo(const char *path, int permissions)
  *
  *                                              Stevens (1990), pp. 113
  ******************************************************************************/
+
 /**
  * open_fifo -- open a FIFO with the specified mode 
  * @path: path to the already-created FIFO
  * @mode: 'r' or 'w' for read/write. Can be OR'ed with 'n' for non-blocking
  * Returns file descriptor for the FIFO 
  */
-int open_fifo(const char *path, int mode)
+int open_fifo(const char *path, const char *mode)
 {
         mode_t MODE;
+        size_t len;
         int fd;
 
-        if (hasvalue(mode, 'r')) MODE  = O_RDONLY;
-        if (hasvalue(mode, 'w')) MODE  = O_WRONLY;
-        if (hasvalue(mode, 'n')) MODE |= O_NDELAY;
+        len = strlen(mode);
+
+        if ((memchar((void *)mode, 'r', len))) MODE  = O_RDONLY;
+        if ((memchar((void *)mode, 'w', len))) MODE  = O_WRONLY;
+        if ((memchar((void *)mode, 'n', len))) MODE |= O_NDELAY;
 
         if ((fd = open(path, MODE)) < 0)
                 bye("daemon: could not open fifo");
-        /*
-         * The keepopen option. See note, above.
-         */
-        if (hasvalue(mode, 'k'))
-                open_fifo(path, 'w');
+
+        /* keepalive -- see note (Stevens) above */
+        if ((memchar((void *)mode, 'k', len))) open_fifo(path, "w");
 
         return fd;
 }
@@ -171,7 +174,11 @@ void close_fifo(int fd)
         
 
 /**
- * fifo_write
+ * fifo_write -- write the contents of a buffer into a fifo
+ * @fd: file descriptor
+ * @buf: buffer to be written to fifo
+ * @len: size of the buffer
+ * Returns nothing
  */
 void fifo_write(int fd, void *buf, size_t len)
 {
@@ -181,7 +188,11 @@ void fifo_write(int fd, void *buf, size_t len)
 
 
 /**
- * fifo_read
+ * fifo_read -- read the contents of a buffer into a fifo
+ * @fd: file descriptor
+ * @buf: buffer to be written to fifo
+ * @len: size of the buffer
+ * Returns nothing
  */
 void fifo_read(int fd, char *buf, size_t len)
 {

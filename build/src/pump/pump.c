@@ -22,8 +22,8 @@
 #include "../common/util.h"
 #include "../common/daemon.h"
 
-#define FIFO_WRITE "/home/linehan/src/mine/pump/pumpd/pumpd.read"
-#define FIFO_READ  "/home/linehan/src/mine/pump/pumpd/pumpd.write"
+#define FIFO_WRITE "/home/linehan/src/mine/pump/build/pumpd/pumpd.read"
+#define FIFO_READ  "/home/linehan/src/mine/pump/build/pumpd/pumpd.write"
 
 /**
  * usage -- print the usage message to stdout and exit
@@ -52,7 +52,14 @@ void pump_init(void)
         salt = mt_random();
         sha256gen(hex, &salt);
 
-        pumpconfig(&config, "Pumpalicious", "The prime pumper", ENV.cwd, hex, NULL, NULL);
+        pumpconfig(&config, 
+                        "Pumping Flash", 
+                        "The prime mover", 
+                        ENV.cwd, 
+                        hex, 
+                        "/foo/bar/bazscript.qux",
+                        "10"
+                  );
 
         writeconfig(&config, ENV.config);
 }
@@ -78,8 +85,8 @@ void pump_say(char *message)
         char buffer[1024];
 
         /* Order matters! */
-        write = open_fifo(FIFO_WRITE, 'w');
-        read  = open_fifo(FIFO_READ, 'r');
+        write = open_fifo(FIFO_WRITE, "w");
+        read  = open_fifo(FIFO_READ, "r");
 
         fifo_write(write, (void *)message, (strlen(message)));
         fifo_read(read, buffer, 1024);

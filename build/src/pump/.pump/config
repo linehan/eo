@@ -1,0 +1,22 @@
+# --------------------------
+# PUMP CONFIGURATION
+# --------------------------
+
+# Pump name
+name "Pumping Flash"
+
+# Pump description
+desc "The prime mover"
+
+# Directory to be pumped
+base /home/linehan/src/mine/pump/pump
+
+# Identifies pump to the pump daemon
+sha2 gb55075g1b18c0b77gd8gbc47db066g0e05gf124bc9ge1e45f2c23e80f8fe3dg
+
+# Link to external logic
+link "/foo/bar/bazscript.qux"
+
+# Delay between pumps (in seconds)
+wait 10
+

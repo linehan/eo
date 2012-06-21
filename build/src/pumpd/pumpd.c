@@ -20,9 +20,9 @@
 #include "../common/error.h"
 #include "../common/daemon.h"
 
-#define PIDDIR "/home/linehan/src/mine/pump/pumpd/pumpd.pid"
-#define FIFO_READ  "/home/linehan/src/mine/pump/pumpd/pumpd.read"
-#define FIFO_WRITE "/home/linehan/src/mine/pump/pumpd/pumpd.write"
+#define PIDDIR "/home/linehan/src/mine/pump/build/pumpd/pumpd.pid"
+#define FIFO_READ  "/home/linehan/src/mine/pump/build/pumpd/pumpd.read"
+#define FIFO_WRITE "/home/linehan/src/mine/pump/build/pumpd/pumpd.write"
 
 /**
  * do_pump -- apply the logic across each file of the directory
@@ -65,9 +65,9 @@ void pumpd(int read, int write)
 {
         char *msg="FIFO is empty.\n";
         static char buffer[1024];
-        int safety;
+        /*int safety;*/
 
-        safety = open_fifo(FIFO_READ, 'w');
+        /*safety = open_fifo(FIFO_READ, 'w');*/
 
         for (;;) {
                 /*fifo_write(write, msg, strlen(msg));*/
@@ -102,8 +102,8 @@ void pumpd_start(void)
 
         pidfile(PIDDIR, "w+");
 
-        read  = open_fifo(FIFO_READ,  'r');
-        write = open_fifo(FIFO_WRITE, 'w');
+        read  = open_fifo(FIFO_READ,  "rk");
+        write = open_fifo(FIFO_WRITE, "w");
 
         pumpd(read, write);
 }

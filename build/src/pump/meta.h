@@ -7,12 +7,10 @@
 struct env_t {
         char cwd[PATHSIZE];
         char config[PATHSIZE];
-        char logic[PATHSIZE];
         char pump[PATHSIZE];
 };
 
 struct env_t ENV;
-
 
 struct pumpconfig_t {
         char name[LINESIZE];

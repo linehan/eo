@@ -18,14 +18,13 @@
 #include "../common/file.h"
 #include "../common/error.h"
 
-
 /* drwxr-xr-x */
 #define PUMP_DIR_MODE ((S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH))
 
 /* Pathnames indexed by file tag */
 #define pump_stem   "/.pump" 
 #define config_stem "/.pump/config"
-#define logic_stem  "/.pump/logic"
+
 
 /**
  * load_env -- fill out the current working directory struture 
@@ -38,8 +37,8 @@ void load_env(struct env_t *environ)
 
         snprintf(environ->pump,   PATHSIZE, "%s%s", environ->cwd, pump_stem);
         snprintf(environ->config, PATHSIZE, "%s%s", environ->cwd, config_stem);
-        snprintf(environ->logic,  PATHSIZE, "%s%s", environ->cwd, logic_stem);
 }
+
 
 /****************************************************************************** 
  * PUMP DIRECTORY MANAGEMENT 
@@ -80,6 +79,7 @@ bool is_pump(const char *path)
         }
         return true;
 }
+
 
 /**
  * readconfig -- fill a pumpconfig structure with the config file at 'path'
@@ -194,3 +194,4 @@ void setconfig(const char *path, const char *token, const char *value)
 
         writeconfig(&config, path);
 }
+
