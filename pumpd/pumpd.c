@@ -49,6 +49,14 @@
         /*closedir(dir);*/
 /*}*/
 
+/**
+ * usage -- print the usage statement
+ */
+void usage(void)
+{
+        printf("%s\n", USAGE_MESSAGE);
+}
+
 
 /**
  * pumpd -- the function executed by the running daemon
@@ -56,14 +64,17 @@
 void pumpd(int read, int write)
 {
         char *msg="FIFO is empty.\n";
-        char buffer[1024];
+        static char buffer[1024];
+        int safety;
+
+        safety = open_fifo(FIFO_READ, 'w');
 
         for (;;) {
                 /*fifo_write(write, msg, strlen(msg));*/
                 fifo_read(read, buffer, 1024);
-                if (buffer[0] != 0) {
+                if (buffer[0] != '\0') {
                         fifo_write(write, buffer, strlen(buffer));
-                        bzero(buffer, 1024);
+                        memset(buffer, '\0', strlen(buffer));
                 }
         }
         close_fifo(write);
@@ -126,13 +137,7 @@ void pumpd_stat(void)
 }
 
 
-/**
- * usage -- print the usage statement
- */
-void usage(void)
-{
-        printf("%s\n", USAGE_MESSAGE);
-}
+
 
 
 int main(int argc, char *argv[])

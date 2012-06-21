@@ -32,28 +32,22 @@
  */
 int pidfile(const char *path, const char *mode)
 {
-        enum { READ, WRITE } action;
         FILE *fp;
         int pid;
-
-        if      (mode[0] == 'r') action = READ; 
-        else if (mode[0] == 'w') action = WRITE;
-        else    bye("invalid mode supplied to pidfile");
 
         fp  = fopen(path, mode);
         pid = getpid();
 
-        if (fp == NULL) {
-               if (action == WRITE) 
-                       bye("pidfile error");
-               else 
-                       return 0;
+        if (*mode == 'w') {
+                (fp) ? fprintf(fp, "%d", pid) 
+                     : bye("daemon: Cannot open pidfile for writing.");
+        } 
+        else if (*mode == 'r') {
+                (fp) ? fscanf(fp, "%d", &pid)
+                     : bye("daemon: Cannot read pidfile. Is daemon running?");
         }
-
-        if (action == WRITE)
-                fprintf(fp, "%d", pid);  /* Write pid to fp */
         else
-                fscanf(fp, "%d", &pid);  /* Read pid from fp */
+                bye("daemon: Invalid mode supplied to pidfile().");
         
         fclose(fp);
         return pid;
@@ -153,7 +147,12 @@ int open_fifo(const char *path, int mode)
         if (hasvalue(mode, 'n')) MODE |= O_NDELAY;
 
         if ((fd = open(path, MODE)) < 0)
-                bye("open_fifo: could not open file descriptor.");
+                bye("daemon: could not open fifo");
+        /*
+         * The keepopen option. See note, above.
+         */
+        if (hasvalue(mode, 'k'))
+                open_fifo(path, 'w');
 
         return fd;
 }
@@ -167,7 +166,7 @@ int open_fifo(const char *path, int mode)
 void close_fifo(int fd)
 {
         if ((close(fd)) < 0)
-                bye("close_fifo: could not close file descriptor.");
+                bye("daemon: could not close fifo");
 }
         
 
@@ -177,8 +176,9 @@ void close_fifo(int fd)
 void fifo_write(int fd, void *buf, size_t len)
 {
         if ((write(fd, buf, len)) == -1)
-                bye("fifo write error");
+                bye("daemon: could not write to fifo");
 }
+
 
 /**
  * fifo_read
@@ -186,7 +186,7 @@ void fifo_write(int fd, void *buf, size_t len)
 void fifo_read(int fd, char *buf, size_t len)
 {
         if ((read(fd, buf, len)) == -1)
-                bye("fifo read error");
+                bye("daemon: could not write to fifo");
 }
 
 

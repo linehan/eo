@@ -71,35 +71,25 @@ void pump_logic(const char *logic)
 }
 
 
-void pump_write(char *message)
+void pump_say(char *message)
 {
         int read, write;
         char *msg = "This is a test of the System V IPC\n";
         char buffer[1024];
 
+        /* Order matters! */
         write = open_fifo(FIFO_WRITE, 'w');
-        read = open_fifo(FIFO_READ, 'r');
+        read  = open_fifo(FIFO_READ, 'r');
 
         fifo_write(write, (void *)message, (strlen(message)));
         fifo_read(read, buffer, 1024);
 
         printf("%s\n", buffer);
 
-        close_fifo(read);
+        /* Order matters! */
         close_fifo(write);
+        close_fifo(read);
 }
-
-/**
- * pump_start -- gather the metadata and register the pump with pumpd
- */
-/*void pump_start(void)*/
-/*{*/
-        /*char *buf[1024];*/
-        /*struct pump_meta *meta;*/
-
-        /*meta = getmeta();*/
-
-        /*system("pumpd -n ");*/
 
 
 /**
@@ -122,7 +112,7 @@ int main(int argc, char *argv[])
                 (ARG(2)) ? printf("%s\n", token(ARG(2), ENV.config)) : usage();
 
         else if (isarg(1, "say"))
-                (ARG(2)) ? pump_write(ARG(2)) : usage();
+                (ARG(2)) ? pump_say(ARG(2)) : usage();
 
         return 0;
 }

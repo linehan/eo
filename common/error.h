@@ -5,14 +5,9 @@
 /*
  * Exit the program and print a diagnostic message
  */
-#define bye(...)                                       \
-        do {                                           \
-                if (VA_NUM_ARGS(__VA_ARGS__) == 1)     \
-                        abort_report(__VA_ARGS__, ""); \
-                else                                   \
-                        abort_report(__VA_ARGS__);     \
-        } while(1)
-
+#define bye(...)                                                         \
+        (VA_NUM_ARGS(__VA_ARGS__) == 1) ? abort_report(__VA_ARGS__, "")  \
+                                        : abort_report(__VA_ARGS__)      \
 
 void abort_report(const char *fmt, ...);
 
