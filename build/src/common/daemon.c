@@ -235,6 +235,34 @@ void close_dpx(struct dpx_t *dpx)
 }
 
 
+/*void read_dpx(struct dpx_t *dpx, void *buffer, size_t len)*/
+/*{*/
+        /*fifo_read(dpx->fd_sub, buffer, len);*/
+/*}*/
+
+
+/*void write_dpx(struct dpx_t *dpx, void *buffer, size_t len)*/
+/*{*/
+        /*fifo_write(dpx->fd_pub, buffer, len);*/
+/*}*/
+
+void load_dpx(struct dpx_t *dpx, char *msg)
+{
+        strcpy(dpx->buf, msg);
+}
+
+void read_dpx(struct dpx_t *dpx)
+{
+        fifo_read(dpx->fd_sub, (void *)dpx->buf, (size_t)MIN_PIPESIZE);
+}
+
+
+void write_dpx(struct dpx_t *dpx)
+{
+        fifo_write(dpx->fd_pub, (void *)dpx->buf, (size_t)MIN_PIPESIZE);
+}
+
+
 /******************************************************************************
  * DAEMONIZE 
  ******************************************************************************/

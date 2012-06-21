@@ -18,16 +18,23 @@ void fifo_write(int fd, void *buf, size_t len);
 void fifo_read(int fd, void *buf, size_t len);
 
 enum dpx_role { PUBLISH, SUBSCRIBE };
-
+#define MIN_PIPESIZE (4095) // 4096 - 1
 struct dpx_t {
         enum dpx_role role;
-        int fd_pub;
-        int fd_sub;
-        int fd_nub;
+        int fd_pub; // publish on this fd
+        int fd_sub; // consume on this fd 
+        int fd_nub; // sticky fd for loop driver
+        char buf[MIN_PIPESIZE];
 };
 
-void open_dpx(struct dpx_t *dpx, const char *pub_path, const char *sub_path);
+void  open_dpx(struct dpx_t *dpx, const char *pub_path, const char *sub_path);
 void close_dpx(struct dpx_t *dpx);
 
+//void  read_dpx(struct dpx_t *dpx, void *buffer, size_t len);
+//void write_dpx(struct dpx_t *dpx, void *buffer, size_t len);
+
+void load_dpx(struct dpx_t *dpx, char *msg);
+void  read_dpx(struct dpx_t *dpx);
+void write_dpx(struct dpx_t *dpx);
 
 #endif

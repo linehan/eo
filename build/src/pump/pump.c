@@ -75,15 +75,15 @@ void pump_logic(const char *logic)
 void pump_say(char *message)
 {
         struct dpx_t dpx;
-        char buffer[1024];
 
         dpx.role = SUBSCRIBE;
         open_dpx(&dpx, PUB_PATH, SUB_PATH);
 
-        fifo_write(dpx.fd_pub, (void *)message, (strlen(message)));
-        fifo_read(dpx.fd_sub, buffer, 1024);
+        load_dpx(&dpx, message);
+        write_dpx(&dpx);
+        read_dpx(&dpx);
 
-        printf("%s\n", buffer);
+        printf("%s\n", dpx.buf);
 
         close_dpx(&dpx);
 }

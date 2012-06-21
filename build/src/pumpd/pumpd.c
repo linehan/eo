@@ -64,13 +64,11 @@ void usage(void)
  */
 void pumpd(struct dpx_t *dpx)
 {
-        static char buffer[1024];
-
         for (;;) {
-                memset(buffer, '\0', 1024);
-                fifo_read(dpx->fd_sub, buffer, 1023);
-                if (buffer[0] != '\0') {
-                        fifo_write(dpx->fd_pub, buffer, strlen(buffer));
+                memset(dpx->buf, '\0', MIN_PIPESIZE);
+                read_dpx(dpx);
+                if (dpx->buf[0] != '\0') {
+                        write_dpx(dpx);
                 }
         }
         close_dpx(dpx);
