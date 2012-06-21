@@ -12,7 +12,7 @@ LDFLAGS=-pg
 #              
 #             
 
-man1_MANS     = doc/pumpd.man
+man1_MANS     = doc/pumpd.man doc/pump.man
 
 bin_PROGRAMS  = pump pumpd
 

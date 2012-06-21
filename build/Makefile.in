@@ -218,7 +218,7 @@ AUTOMAKE_OPTIONS = foreign subdir-objects
 #  gprof  
 #              
 #             
-man1_MANS = doc/pumpd.man
+man1_MANS = doc/pumpd.man doc/pump.man
 pump_SOURCES = src/pump/pump.c          \
                 src/pump/meta.c          \
                 src/common/daemon.c      \

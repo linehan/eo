@@ -77,8 +77,6 @@ void pumpd(struct dpx_t *dpx)
                 }
         }
         close_dpx(dpx);
-        /*close_fifo(write);*/
-        /*close_fifo(read);*/
 }
 
 #define PERMS 0666
@@ -107,8 +105,6 @@ void pumpd_start(void)
 
         dpx.role = PUBLISH;
         open_dpx(&dpx, HOME"/"FIFO_PUB, HOME"/"FIFO_SUB);
-        /*read  = open_fifo(HOME"/"FIFO_SUB, "rk");*/
-        /*write = open_fifo(HOME"/"FIFO_PUB, "w");*/
 
         pumpd(&dpx);
 }

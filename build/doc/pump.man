@@ -1,0 +1,40 @@
+.TH PUMP 1 "MARCH 2012" Linux "User Manuals"
+.SH NAME
+pump \- pump client
+.SH SYNOPSIS
+.B pump <command> [args]
+.B ...
+.SH DESCRIPTION
+.B pump
+The pump client performs pump directory (sump) management
+tasks, receives directives from the pump daemon, and publishes
+the objects in its directory so that other processes may 
+operate on them. See
+.BR pumpd(1).
+.SH OPTIONS
+.TP 10
+.B init 
+Initialize a pump in the current working directory.
+.TP
+.B var
+Print the value of the argued parameter from the config file. 
+.TP
+.B say
+Test command that publishes a string to pumpd, which echoes it back.
+.TP
+.B help 
+Show this screen. 
+.SH FILES
+.I ~/.pump/pump.conf
+.RS
+User configuration file. See
+.BR pumpd(5)
+.RE
+.SH BUGS
+This program is perfect in every way.
+.SH AUTHOR
+Jason Linehan <patientulysses at gmail dot com>
+.SH "SEE ALSO"
+.BR pumpd(1),
+.BR pumpd(5),
+.BR pipeutils(1)
