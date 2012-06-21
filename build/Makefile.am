@@ -14,16 +14,16 @@ LDFLAGS=-pg
 
 man1_MANS     = doc/pumpd.man
 
-bin_PROGRAMS = pump pumpd
+bin_PROGRAMS  = pump pumpd
 
-pump_SOURCES = src/pump/pump.c          \
-               src/pump/meta.c          \
-               src/common/daemon.c      \
-               src/common/util.c        \
-               src/common/textutils.c   \
-               src/common/file.c        \
-               src/common/error.c       \
-               src/common/sha256/sha2.c
+pump_SOURCES  = src/pump/pump.c          \
+                src/pump/meta.c          \
+                src/common/daemon.c      \
+                src/common/util.c        \
+                src/common/textutils.c   \
+                src/common/file.c        \
+                src/common/error.c       \
+                src/common/sha256/sha2.c
 
 pumpd_SOURCES = src/pumpd/pumpd.c        \
                 src/common/daemon.c      \

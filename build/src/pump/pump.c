@@ -88,22 +88,20 @@ void pump_logic(const char *logic)
 
 void pump_say(char *message)
 {
+        struct dpx_t dpx;
         int read, write;
         char *msg = "This is a test of the System V IPC\n";
         char buffer[1024];
 
-        /* Order matters! */
-        write = open_fifo(HOME"/"FIFO_SUB, "w");
-        read  = open_fifo(HOME"/"FIFO_PUB, "r");
+        dpx.role = SUBSCRIBE;
+        open_dpx(&dpx, HOME"/"FIFO_PUB, HOME"/"FIFO_SUB);
 
-        fifo_write(write, (void *)message, (strlen(message)));
-        fifo_read(read, buffer, 1024);
+        fifo_write(dpx.fd_pub, (void *)message, (strlen(message)));
+        fifo_read(dpx.fd_sub, buffer, 1024);
 
         printf("%s\n", buffer);
 
-        /* Order matters! */
-        close_fifo(write);
-        close_fifo(read);
+        close_dpx(&dpx);
 }
 
 

@@ -18,9 +18,10 @@
 #include <signal.h>
 #include <limits.h>
 
-#include "../common/error.h"
-#include "../common/file.h"
-#include "../common/textutils.h"
+#include "error.h"
+#include "file.h"
+#include "textutils.h"
+#include "daemon.h"
 
 /******************************************************************************
  * PID MANAGEMENT
@@ -193,7 +194,7 @@ void fifo_write(int fd, void *buf, size_t len)
  * @len: size of the buffer
  * Returns nothing
  */
-void fifo_read(int fd, char *buf, size_t len)
+void fifo_read(int fd, void *buf, size_t len)
 {
         #define NULterminate
         size_t z;
@@ -202,10 +203,43 @@ void fifo_read(int fd, char *buf, size_t len)
                 bye("daemon: could not write to fifo");
 
         #if defined(NULterminate)
-        buf[z] = '\0';
+        ((char *)buf)[z] = '\0';
         #endif
 }
 
+
+/******************************************************************************
+ * CHANNELS 
+ ******************************************************************************/
+
+void open_dpx(struct dpx_t *dpx, const char *pub_path, const char *sub_path)
+{
+        if (dpx->role == PUBLISH) {
+                dpx->fd_sub = open_fifo(sub_path, "r");
+                dpx->fd_nub = open_fifo(sub_path, "w");
+                dpx->fd_pub = open_fifo(pub_path, "w");
+        } else if (dpx->role == SUBSCRIBE) {
+                dpx->fd_pub = open_fifo(sub_path, "w");
+                dpx->fd_sub = open_fifo(pub_path, "r");
+        } else {
+                bye("open_dpx: Invalid duplex role");
+        }
+}
+
+
+void close_dpx(struct dpx_t *dpx)
+{
+        if (dpx->role == PUBLISH) {
+                close(dpx->fd_sub);
+                close(dpx->fd_nub);
+                close(dpx->fd_pub);
+        } else if (dpx->role == SUBSCRIBE) {
+                close(dpx->fd_pub);
+                close(dpx->fd_sub);
+        } else {
+                bye("close_dpx: Invalid duplex role");
+        }
+}
 
 
 /******************************************************************************

@@ -64,31 +64,32 @@ void usage(void)
 /**
  * pumpd -- the function executed by the running daemon
  */
-void pumpd(int read, int write)
+void pumpd(struct dpx_t *dpx)
 {
         char *msg="FIFO is empty.\n";
         static char buffer[1024];
 
         for (;;) {
                 memset(buffer, '\0', 1024);
-                fifo_read(read, buffer, 1023);
+                fifo_read(dpx->fd_sub, buffer, 1023);
                 if (buffer[0] != '\0') {
-                        fifo_write(write, buffer, strlen(buffer));
+                        fifo_write(dpx->fd_pub, buffer, strlen(buffer));
                 }
         }
-        close_fifo(write);
-        close_fifo(read);
+        close_dpx(dpx);
+        /*close_fifo(write);*/
+        /*close_fifo(read);*/
 }
 
 #define PERMS 0666
+
 
 /**
  * pumpd_start -- start the pump daemon
  */
 void pumpd_start(void)
 {
-        int read;
-        int write;
+        struct dpx_t dpx;
 
         umask(0); /* Reset process permissions mask */ 
 
@@ -104,10 +105,12 @@ void pumpd_start(void)
 
         pidfile(HOME"/"PID_FILE, "w+");
 
-        read  = open_fifo(HOME"/"FIFO_SUB, "rk");
-        write = open_fifo(HOME"/"FIFO_PUB, "w");
+        dpx.role = PUBLISH;
+        open_dpx(&dpx, HOME"/"FIFO_PUB, HOME"/"FIFO_SUB);
+        /*read  = open_fifo(HOME"/"FIFO_SUB, "rk");*/
+        /*write = open_fifo(HOME"/"FIFO_PUB, "w");*/
 
-        pumpd(read, write);
+        pumpd(&dpx);
 }
 
 
