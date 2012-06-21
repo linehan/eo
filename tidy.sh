@@ -23,7 +23,8 @@ rm INSTALL             2>/dev/null
 rm missing             2>/dev/null
 rm aclocal.m4          2>/dev/null
 rm -r autom4te.cache   2>/dev/null
-
+rm Makefile.in         2>/dev/null
+rm configure           2>/dev/null
 git clean -X -d -f # Remove any files or directories indicated in .gitignore
 git gc # Clean junk files from repo, recompress and optimize
 #gitstats ${PWD} ~/gitstats_${PWD##*/}
