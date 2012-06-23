@@ -28,15 +28,13 @@ struct dpx_t {
 };
 
 
-void creat_dpx(const char *dpxname, int perms);
-void remove_dpx(const char *dpxname);
+void dpx_creat (const char *dpxname, int perms);
+void dpx_remove(const char *dpxname);
 
-void  open_dpx(struct dpx_t *dpx, const char *path);
-void close_dpx(struct dpx_t *dpx);
-
-void load_dpx(struct dpx_t *dpx, char *msg);
-
-void  read_dpx(struct dpx_t *dpx);
-void write_dpx(struct dpx_t *dpx);
+void dpx_open  (struct dpx_t *dpx, const char *path);
+void dpx_close (struct dpx_t *dpx);
+void dpx_load  (struct dpx_t *dpx, char *msg);
+void dpx_read  (struct dpx_t *dpx);
+void dpx_write (struct dpx_t *dpx);
 
 #endif

@@ -94,7 +94,7 @@ void new_fifo(const char *path, int permissions)
 /******************************************************************************
  * OPENING AND CLOSING FIFOs 
  *
- *  time  server process                          client process   
+ *  time
  *  ===================================================================
  *   00  [SERVER]     ....                            ....       ....    
  *          ⬇⬇ 
@@ -129,7 +129,15 @@ void new_fifo(const char *path, int permissions)
 /**
  * open_fifo -- open a FIFO with the specified mode 
  * @path: path to the already-created FIFO
- * @mode: 'r' or 'w' for read/write. Can be OR'ed with 'n' for non-blocking
+ * @mode: any combination of 'r' 'w' 'k' and 'n' in a string
+ *
+ * Valid mode letters
+ * ----------------------------------------
+ *      r       read only
+ *      w       write only
+ *      n       no delay (non-blocking)
+ *      k       keep alive
+ * ----------------------------------------
  * Returns file descriptor for the FIFO 
  */
 int open_fifo(const char *path, const char *mode)
@@ -168,7 +176,7 @@ void close_fifo(int fd)
 
 /**
  * fifo_write -- write the contents of a buffer into a fifo
- * @fd: file descriptor
+ * @fd : file descriptor
  * @buf: buffer to be written to fifo
  * @len: size of the buffer
  * Returns nothing
@@ -182,7 +190,7 @@ void fifo_write(int fd, void *buf, size_t len)
 
 /**
  * fifo_read -- read the contents of a fifo into a buffer
- * @fd: file descriptor
+ * @fd : file descriptor
  * @buf: buffer to be written to fifo
  * @len: size of the buffer
  * Returns nothing
@@ -223,12 +231,12 @@ void fifo_read(int fd, void *buf, size_t len)
  ******************************************************************************/
 
 /**
- * creat_dpx -- create named FIFOs for a duplex channel
+ * dpx_creat -- create named FIFOs for a duplex channel
  * @dpxname: path of the FIFO (named pipe) to publish on 
- * @perms: file permissions 
+ * @perms  : file permissions 
  * Returns nothing.
  */
-void creat_dpx(const char *dpxname, int perms)
+void dpx_creat(const char *dpxname, int perms)
 {
         new_fifo(CONCAT(dpxname, ".sub"), perms);
         new_fifo(CONCAT(dpxname, ".pub"), perms);
@@ -236,10 +244,10 @@ void creat_dpx(const char *dpxname, int perms)
 
 
 /**
- * remove_dpx -- destroy named FIFOs for a duplex channel
+ * dpx_remove -- destroy named FIFOs for a duplex channel
  * @pub_path
  */
-void remove_dpx(const char *dpxname)
+void dpx_remove(const char *dpxname)
 {
         sunlink(CONCAT(dpxname, ".sub"));
         sunlink(CONCAT(dpxname, ".pub"));
@@ -247,13 +255,12 @@ void remove_dpx(const char *dpxname)
  
 
 /**
- * open_dpx -- initialize a new duplex channel 
- * @dpx: pointer to a duplex structure
- * @pub_path: path of the FIFO (named pipe) to publish on 
- * @sub_path: path of the FIFO (named pipe) to listen on 
+ * dpx_open -- initialize a new duplex channel 
+ * @dpx : pointer to a duplex structure
+ * @path: path where FIFOs will be created (path.pub/path.sub)
  * Returns nothing.
  */
-void open_dpx(struct dpx_t *dpx, const char *path)
+void dpx_open(struct dpx_t *dpx, const char *path)
 {
         if (dpx->role == PUBLISH) {
                 dpx->fd_sub = open_fifo(CONCAT(path, ".sub"), "r");
@@ -269,11 +276,11 @@ void open_dpx(struct dpx_t *dpx, const char *path)
 
 
 /**
- * close_dpx -- close an open duplex channel
+ * dpx_close -- close an open duplex channel
  * @dpx: pointer to a duplex structure
  * Returns nothing.
  */
-void close_dpx(struct dpx_t *dpx)
+void dpx_close(struct dpx_t *dpx)
 {
         if (dpx->role == PUBLISH) {
                 close(dpx->fd_sub);
@@ -289,34 +296,34 @@ void close_dpx(struct dpx_t *dpx)
 
 
 /**
- * load_dpx -- load a message buffer into the duplex struct 
+ * dpx_load -- load a message buffer into the duplex struct 
  * @dpx: pointer to a duplex structure
  * @msg: message to be loaded in the duplex structure
  * Returns nothing.
  */
-void load_dpx(struct dpx_t *dpx, char *msg)
+void dpx_load(struct dpx_t *dpx, char *msg)
 {
         strcpy(dpx->buf, msg);
 }
 
 
 /**
- * read_dpx -- read the subscription FIFO into the duplex buffer
+ * dpx_read -- read the subscription FIFO into the duplex buffer
  * @dpx: pointer to a duplex structure
  * Returns nothing.
  */
-void read_dpx(struct dpx_t *dpx)
+void dpx_read(struct dpx_t *dpx)
 {
         fifo_read(dpx->fd_sub, (void *)dpx->buf, (size_t)MIN_PIPESIZE);
 }
 
 
 /**
- * write_dpx -- write the duplex buffer to the publishing FIFO
+ * dpx_write -- write the duplex buffer to the publishing FIFO
  * @dpx: pointer to a duplex structure
  * Returns nothing.
  */
-void write_dpx(struct dpx_t *dpx)
+void dpx_write(struct dpx_t *dpx)
 {
         fifo_write(dpx->fd_pub, (void *)dpx->buf, (size_t)MIN_PIPESIZE);
 }

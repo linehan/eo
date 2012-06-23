@@ -16,8 +16,7 @@
 #define FIFO_PUB "fifo.pub"
 #define CFG_STEM ".pump"
 
-/*#define PUB_PATH (CONCAT((homedir((getuid()))), "/"CFG_STEM"/"FIFO_PUB))*/
-/*#define SUB_PATH (CONCAT((homedir((getuid()))), "/"CFG_STEM"/"FIFO_SUB))*/
+
 #define FIFO_PATH (CONCAT((gethome()), ("/"CFG_STEM"/fifo")))
 
 
@@ -79,15 +78,15 @@ void pump_say(char *message)
         struct dpx_t dpx;
 
         dpx.role = SUBSCRIBE;
-        open_dpx(&dpx, FIFO_PATH);
+        dpx_open(&dpx, FIFO_PATH);
 
-        load_dpx(&dpx, message);
-        write_dpx(&dpx);
-        read_dpx(&dpx);
+        dpx_load(&dpx, message);
+        dpx_write(&dpx);
+        dpx_read(&dpx);
 
         printf("%s\n", dpx.buf);
 
-        close_dpx(&dpx);
+        dpx_close(&dpx);
 }
 
 

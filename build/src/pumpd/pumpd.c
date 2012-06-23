@@ -10,48 +10,92 @@
 #include "../common/daemon.h"
 #include "../common/file.h"
 
-#define CFG_PERMS ((S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH))
-
-/*#define FIFO_PUB "fifo.pub"*/
-/*#define FIFO_SUB "fifo.sub"*/
-#define PID_FILE "pumpd.pid"
-#define CFG_STEM ".pump"
-
-#define CFG_PATH (CONCAT((gethome()), ("/"CFG_STEM"/"CFG_STEM)))
-#define PID_PATH (CONCAT((gethome()), ("/"CFG_STEM"/"PID_FILE)))
-/*#define FIFO_PATH (CONCAT((homedir((getuid())), "/"CFG_STEM"/fifo")))*/
-#define FIFO_PATH (CONCAT((gethome()), ("/"CFG_STEM"/fifo")))
-
-/*#define PUB_PATH (CONCAT((homedir((getuid()))), "/"CFG_STEM"/"FIFO_PUB))*/
-/*#define SUB_PATH (CONCAT((homedir((getuid()))), "/"CFG_STEM"/"FIFO_SUB))*/
-
-#define PERMS 0666
-
-/**
- * do_pump -- apply the logic across each file of the directory
+/*
+ * File permissions
+ *
+ * When a daemon process is forked, its process group is dissociated
+ * from process group of its parent. It is important that if files 
+ * are created by a parent process, they are given permissions that
+ * will allow the daemon to access them as well, since from the 
+ * kernel's perspective, the daemon's process bears no relation to the 
+ * owner/creator of the files.
+ *
+ * Specifically, we want to ensure that processes in the "others"
+ * triplet will have read and write access. For directories, this
+ * means having execute access, because "entering" a directory is
+ * equivalent to executing a file of type "directory". 
+ *
+ *      (u)ser   process which created file
+ *      (g)roup  processes sharing the owner's group
+ *      (o)ther  any other process
+ *
+ *        u   g   o 
+ *      ======================================================
+ *      -rwx rwx rwx      full permissions
+ *      -rw- r-- r--      default permissions for files
+ *      -rw- rw- rw-      desired permissions for files
+ *      drwx r-- ---      default permissions for directories
+ *      drwx r-- r-x      desired permissions for directories
+ *      =======================================================
  */
-/*void do_pump(void)*/
-/*{*/
-        /*DIR *dir;*/
-        /*char *filename;*/
-        /*char execute[512];*/
+#define CFG_PERMS ((S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH))
+#define DIR_PERMS ((S_IRWXU | S_IRGRP | S_IROTH | S_IXOTH))
+#define PERMS     (0666)
 
-        /*if (!exists(ENV.logic))*/
-                /*bye("Pump contains no logic.");*/
 
-        /*dir = opendir("./");*/
+/*
+ * Home directory
+ *
+ * The configuration folder will be placed in the home directory
+ * of the user who the process is associated with. See gethome()
+ * in ../common/file.c.
+ */
+#define HOME_DIR  (gethome())
 
-        /*for (filename  = getfile(dir, F_REG);*/
-             /*filename != NULL;*/
-             /*filename  = getfile(NULL, F_REG))*/
-        /*{*/
-                /*sprintf(execute, "./%s %s", ENV.logic, filename);*/
-                /*system(execute);*/
-        /*}*/
 
-        /*closedir(dir);*/
-/*}*/
+/*
+ * Configuration files on disk
+ *
+ * The pump daemon maintains a number of files, all of which are
+ * stored in a hidden directory, CFG_STEM, which resides in the
+ * directory identified by CFG_PATH. 
+ *
+ * CFG_NAME     Name of the hidden directory
+ * CFG_PATH     Path of the hidden directory
+ *
+ */
+#define CFG_STEM  ".pump"
+#define CFG_PATH  (CONCAT(HOME_DIR, "/"CFG_STEM))
 
+
+/*
+ * PID file
+ *
+ * In order to signal and stat the daemon, a client needs to know 
+ * the pid (process id) of the daemon process. When the daemon is
+ * started, it writes this number to the pid file.
+ */
+#define PID_NAME  "pumpd.pid"
+#define PID_PATH  (CONCAT(CFG_PATH, "/"PID_NAME))
+
+
+/*
+ * FIFO files
+ *
+ * Communication between the daemon and clients is performed via
+ * FIFO files (named pipes). A number of these files may need to
+ * be maintained, depending on the number of clients and the amount
+ * of message multiplexing. 
+ *
+ * FIFOs which carry messages *to* the server are marked with the 
+ * extension ".sub", while those carrying messages *from* the server 
+ * are marked with the extension ".pub". 
+ *
+ * These extensions are automatically appended to the path supplied 
+ * to the dpx_creat() function (see daemon.c).
+ */
+#define FIFO_NAME "fifo"
+#define FIFO_PATH (CONCAT(CFG_PATH, "/"FIFO_NAME))
 
 
 /**
@@ -71,12 +115,12 @@ void pumpd(struct dpx_t *dpx)
 {
         for (;;) {
                 memset(dpx->buf, '\0', MIN_PIPESIZE);
-                read_dpx(dpx);
+                dpx_read(dpx);
                 if (dpx->buf[0] != '\0') {
-                        write_dpx(dpx);
+                        dpx_write(dpx);
                 }
         }
-        close_dpx(dpx);
+        dpx_close(dpx);
 }
 
 
@@ -87,12 +131,12 @@ void pumpd_start(void)
 {
         struct dpx_t dpx;
 
-        umask(0); /* Reset process permissions mask */ 
+        umask(0); /* Reset process permissions mask */
 
         if (!exists(CFG_PATH))
-                mkdir(CFG_PATH, CFG_PERMS);
+                mkdir(CFG_PATH, DIR_PERMS);
 
-        creat_dpx(FIFO_PATH, PERMS);
+        dpx_creat(FIFO_PATH, PERMS);
 
         daemonize(); 
 
@@ -101,7 +145,7 @@ void pumpd_start(void)
         pidfile(PID_PATH, "w+");
 
         dpx.role = PUBLISH;
-        open_dpx(&dpx, FIFO_PATH);
+        dpx_open(&dpx, FIFO_PATH);
 
         pumpd(&dpx);
 }
@@ -118,7 +162,7 @@ void pumpd_stop(void)
                 bye("pumpd is not running.");
 
         remove(PID_PATH);
-        remove_dpx(FIFO_PATH);
+        dpx_remove(FIFO_PATH);
 
         kill(pid, SIGTERM);
 }

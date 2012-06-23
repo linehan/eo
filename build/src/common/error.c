@@ -6,14 +6,14 @@
 #define USE_ERRNO_H
 
 #ifdef USE_ERRNO_H
-char *etag[]={ "", "EPERM", "ENOENT", "ESRCH", "EINTR", "EIO", "ENXIO",
-                   "E2BIG", "ENOEXEC", "EBADF", "ECHILD", "EAGAIN",
-                   "ENOMEM", "EACCES", "EFAULT", "ENOTBLK", "EBUSY",
-                   "EEXIST", "EXDEV", "ENODEV", "ENOTDIR", "EISDIR",
-                   "EINVAL", "ENFILE", "EMFILE", "ENOTTY", "ETXTBSY",
-                   "EFBIG", "ENOSPC", "ESPIPE", "EROFS", "EMLINK",
-                   "EPIPE", "EDOM", "ERANGE"
-};
+char *etag[]={ "", "EPERM",   "ENOENT",  "ESRCH",   "EINTR",   "EIO",   
+                   "ENXIO",   "E2BIG",   "ENOEXEC", "EBADF",   "ECHILD",  
+                   "EAGAIN",  "ENOMEM",  "EACCES",  "EFAULT",  "ENOTBLK", 
+                   "EBUSY",   "EEXIST",  "EXDEV",   "ENODEV",  "ENOTDIR", 
+                   "EISDIR",  "EINVAL",  "ENFILE",  "EMFILE",  "ENOTTY",  
+                   "ETXTBSY", "EFBIG",   "ENOSPC",  "ESPIPE",  "EROFS",   
+                   "EMLINK",  "EPIPE",   "EDOM",    "ERANGE"               };
+
 char *emsg[]={ 
         "",
         "Operation not permitted", 
@@ -52,9 +52,6 @@ char *emsg[]={
         "Math result not representable"
 };
 #endif /* USE_ERRNO_H */
-
-
-
 
 
 /**

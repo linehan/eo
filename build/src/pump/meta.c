@@ -11,10 +11,10 @@
 /* drwxr-xr-x */
 #define PUMP_DIR_MODE ((S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH))
 
+
 /* Pathnames indexed by file tag */
 #define pump_stem   "/.pump" 
 #define config_stem "/.pump/config"
-
 
 /**
  * load_env -- fill out the current working directory struture 
