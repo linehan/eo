@@ -10,6 +10,11 @@
 #include "../common/daemon.h"
 #include "../common/file.h"
 
+
+/******************************************************************************
+ * FILES AND DIRECTORIES 
+ ******************************************************************************/
+
 /*
  * File permissions
  *
@@ -40,7 +45,6 @@
  */
 #define CFG_PERMS ((S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH))
 #define DIR_PERMS ((S_IRWXU | S_IRGRP | S_IROTH | S_IXOTH))
-#define PERMS     (0666)
 
 
 /*
@@ -98,8 +102,27 @@
 #define FIFO_PATH (CONCAT(CFG_PATH, "/"FIFO_NAME))
 
 
+
+/******************************************************************************
+ * PUMPD OPERATION
+ * 
+ * The pump daemon is fairly simple at this point. When started, it
+ * initializes several files and then enters a loop driver, where it
+ * remains until it receives a SIGTERM, hopefully from pumpd_stop().  
+ *
+ * FIXME: Transplant the signal handler from Barnicle into error.c
+ *        in order to perform cleanup after unexpected SIGTERMs.
+ *
+ * pumpd_init    # Create initial files
+ * pumpd_start   # Start the daemon 
+ * pumpd_stop    # Stop the daemon 
+ * pumpd_stat    # Return the status of the daemon
+ *
+ ******************************************************************************/
+
 /**
- * usage -- print the usage statement
+ * usage -- Print the usage statement to stdout
+ * Returns nothing.
  */
 void usage(void)
 {
@@ -108,8 +131,9 @@ void usage(void)
 
 
 /**
- * pumpd -- the function executed by the running daemon
- * @dpx: pointer to an open duplex stream
+ * pumpd -- The loop driver executed by the running daemon
+ * @dpx: pointer to an open duplex stream in PUBLISH mode
+ * Returns nothing.
  */
 void pumpd(struct dpx_t *dpx)
 {
@@ -125,34 +149,50 @@ void pumpd(struct dpx_t *dpx)
 
 
 /**
- * pumpd_start -- start the pump daemon
+ * pumpd_init -- Perform filesystem checks and prepare environment
+ * Returns nothing.
+ */
+void pumpd_init(void)
+{
+        /* Reset permissions mask */
+        umask(0); 
+
+        /* Create configuration directory if none present */
+        if (!exists(CFG_PATH))
+                mkdir(CFG_PATH, DIR_PERMS);
+
+        /* Create named pipes for duplex channel */
+        dpx_creat(FIFO_PATH, PERMS);
+}
+
+
+/**
+ * pumpd_start -- Spawn a daemon, acquire a duplex channel, and listen
+ * Returns nothing.
  */
 void pumpd_start(void)
 {
         struct dpx_t dpx;
 
-        umask(0); /* Reset process permissions mask */
-
-        if (!exists(CFG_PATH))
-                mkdir(CFG_PATH, DIR_PERMS);
-
-        dpx_creat(FIFO_PATH, PERMS);
-
-        daemonize(); 
+        daemonize(); // See daemon.c
 
         // ---------- process is now a daemon ---------- */
 
+        /* Create a new pidfile */
         pidfile(PID_PATH, "w+");
 
+        /* Open a duplex channel as publisher */
         dpx.role = PUBLISH;
         dpx_open(&dpx, FIFO_PATH);
 
+        /* Enter the loop driver */
         pumpd(&dpx);
 }
 
 
 /**
- * pumpd_stop -- stop the pump daemon
+ * pumpd_stop -- Terminate the daemon and perform cleanup
+ * Returns nothing.
  */
 void pumpd_stop(void)
 {
@@ -169,7 +209,8 @@ void pumpd_stop(void)
 
 
 /**
- * pumpd_stat -- stat the pump daemon
+ * pumpd_stat -- Print the status of the pump daemon to stdout
+ * Returns nothing.
  */
 void pumpd_stat(void)
 {
@@ -182,8 +223,9 @@ void pumpd_stat(void)
 
 
 
-
-
+/******************************************************************************
+ * MAIN
+ ******************************************************************************/
 int main(int argc, char *argv[])
 {
         if (argc == 1)
@@ -203,5 +245,4 @@ int main(int argc, char *argv[])
 
         return 0;
 }
-
 
