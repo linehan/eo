@@ -9,7 +9,7 @@
 #include "../common/error.h"
 #include "../common/daemon.h"
 #include "../common/file.h"
-#include "../common/ipc.h"
+#include "../common/channel.h"
 
 
 /******************************************************************************

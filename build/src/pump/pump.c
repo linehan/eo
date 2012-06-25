@@ -10,7 +10,7 @@
 #include "../common/error.h"
 #include "../common/util.h"
 #include "../common/daemon.h"
-#include "../common/ipc.h"
+#include "../common/channel.h"
 
 
 /******************************************************************************
@@ -163,7 +163,12 @@ void pump_say(char *msg)
  ******************************************************************************/
 int main(int argc, char *argv[]) 
 {
+        int i;
         load_env(&ENV);
+
+        for (i=0; i<argc; i++) {
+                printf("%s\n", argv[i]);
+        }
 
         if (!ARG(1))
                 usage();

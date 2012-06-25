@@ -10,7 +10,7 @@
 #include "file.h"
 #include "error.h"
 #include "textutils.h"
-#include "ipc.h"
+#include "channel.h"
 
 
 #define PERMS (0666)
