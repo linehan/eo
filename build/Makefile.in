@@ -63,15 +63,17 @@ am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__dirstamp = $(am__leading_dot)dirstamp
 am_pump_OBJECTS = src/pump/pump.$(OBJEXT) src/pump/meta.$(OBJEXT) \
-	src/common/daemon.$(OBJEXT) src/common/util.$(OBJEXT) \
-	src/common/textutils.$(OBJEXT) src/common/file.$(OBJEXT) \
-	src/common/error.$(OBJEXT) src/common/sha256/sha2.$(OBJEXT)
+	src/common/daemon.$(OBJEXT) src/common/channel.$(OBJEXT) \
+	src/common/util.$(OBJEXT) src/common/textutils.$(OBJEXT) \
+	src/common/file.$(OBJEXT) src/common/error.$(OBJEXT) \
+	src/common/sha256/sha2.$(OBJEXT)
 pump_OBJECTS = $(am_pump_OBJECTS)
 pump_LDADD = $(LDADD)
 am_pumpd_OBJECTS = src/pumpd/pumpd.$(OBJEXT) \
-	src/common/daemon.$(OBJEXT) src/common/util.$(OBJEXT) \
-	src/common/textutils.$(OBJEXT) src/common/file.$(OBJEXT) \
-	src/common/error.$(OBJEXT) src/common/sha256/sha2.$(OBJEXT)
+	src/common/daemon.$(OBJEXT) src/common/channel.$(OBJEXT) \
+	src/common/util.$(OBJEXT) src/common/textutils.$(OBJEXT) \
+	src/common/file.$(OBJEXT) src/common/error.$(OBJEXT) \
+	src/common/sha256/sha2.$(OBJEXT)
 pumpd_OBJECTS = $(am_pumpd_OBJECTS)
 pumpd_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I.@am__isrc@
@@ -222,6 +224,7 @@ man1_MANS = doc/pumpd.man doc/pump.man
 pump_SOURCES = src/pump/pump.c          \
                 src/pump/meta.c          \
                 src/common/daemon.c      \
+                src/common/channel.c     \
                 src/common/util.c        \
                 src/common/textutils.c   \
                 src/common/file.c        \
@@ -230,6 +233,7 @@ pump_SOURCES = src/pump/pump.c          \
 
 pumpd_SOURCES = src/pumpd/pumpd.c        \
                 src/common/daemon.c      \
+                src/common/channel.c     \
                 src/common/util.c        \
                 src/common/textutils.c   \
                 src/common/file.c        \
@@ -328,6 +332,8 @@ src/common/$(DEPDIR)/$(am__dirstamp):
 	@: > src/common/$(DEPDIR)/$(am__dirstamp)
 src/common/daemon.$(OBJEXT): src/common/$(am__dirstamp) \
 	src/common/$(DEPDIR)/$(am__dirstamp)
+src/common/channel.$(OBJEXT): src/common/$(am__dirstamp) \
+	src/common/$(DEPDIR)/$(am__dirstamp)
 src/common/util.$(OBJEXT): src/common/$(am__dirstamp) \
 	src/common/$(DEPDIR)/$(am__dirstamp)
 src/common/textutils.$(OBJEXT): src/common/$(am__dirstamp) \
@@ -361,6 +367,7 @@ pumpd$(EXEEXT): $(pumpd_OBJECTS) $(pumpd_DEPENDENCIES) $(EXTRA_pumpd_DEPENDENCIE
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f src/common/channel.$(OBJEXT)
 	-rm -f src/common/daemon.$(OBJEXT)
 	-rm -f src/common/error.$(OBJEXT)
 	-rm -f src/common/file.$(OBJEXT)
@@ -374,6 +381,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@src/common/$(DEPDIR)/channel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/common/$(DEPDIR)/daemon.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/common/$(DEPDIR)/error.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/common/$(DEPDIR)/file.Po@am__quote@

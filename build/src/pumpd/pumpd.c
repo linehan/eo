@@ -9,6 +9,7 @@
 #include "../common/error.h"
 #include "../common/daemon.h"
 #include "../common/file.h"
+#include "../common/ipc.h"
 
 
 /******************************************************************************
@@ -45,6 +46,7 @@
  */
 #define CFG_PERMS ((S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH))
 #define DIR_PERMS ((S_IRWXU | S_IRGRP | S_IROTH | S_IXOTH))
+#define PERMS (0666)
 
 
 /*
@@ -162,7 +164,7 @@ void pumpd_init(void)
                 mkdir(CFG_PATH, DIR_PERMS);
 
         /* Create named pipes for duplex channel */
-        dpx_creat(FIFO_PATH, PERMS);
+        dpx_creat(FIFO_PATH, CFG_PERMS);
 }
 
 
@@ -173,6 +175,8 @@ void pumpd_init(void)
 void pumpd_start(void)
 {
         struct dpx_t dpx;
+
+        pumpd_init();
 
         daemonize(); // See daemon.c
 

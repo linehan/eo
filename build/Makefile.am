@@ -19,6 +19,7 @@ bin_PROGRAMS  = pump pumpd
 pump_SOURCES  = src/pump/pump.c          \
                 src/pump/meta.c          \
                 src/common/daemon.c      \
+                src/common/channel.c     \
                 src/common/util.c        \
                 src/common/textutils.c   \
                 src/common/file.c        \
@@ -27,6 +28,7 @@ pump_SOURCES  = src/pump/pump.c          \
 
 pumpd_SOURCES = src/pumpd/pumpd.c        \
                 src/common/daemon.c      \
+                src/common/channel.c     \
                 src/common/util.c        \
                 src/common/textutils.c   \
                 src/common/file.c        \

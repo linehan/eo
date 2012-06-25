@@ -10,18 +10,79 @@
 #include "../common/error.h"
 #include "../common/util.h"
 #include "../common/daemon.h"
+#include "../common/ipc.h"
 
+
+/******************************************************************************
+ * FILES AND DIRECTORIES 
+ ******************************************************************************/
 
 #define FIFO_SUB "fifo.sub"
 #define FIFO_PUB "fifo.pub"
-#define CFG_STEM ".pump"
+
+/*
+ * Home directory
+ *
+ * The configuration folder will be placed in the home directory
+ * of the user who the process is associated with. See gethome()
+ * in ../common/file.c.
+ */
+#define HOME_DIR  (gethome())
 
 
-#define FIFO_PATH (CONCAT((gethome()), ("/"CFG_STEM"/fifo")))
+/*
+ * Configuration files on disk
+ *
+ * The pump daemon maintains a number of files, all of which are
+ * stored in a hidden directory, CFG_STEM, which resides in the
+ * directory identified by CFG_PATH. 
+ *
+ * CFG_NAME     Name of the hidden directory
+ * CFG_PATH     Path of the hidden directory
+ *
+ */
+#define CFG_STEM  ".pump"
+#define CFG_PATH  (CONCAT(HOME_DIR, "/"CFG_STEM))
 
+
+/*
+ * PID file
+ *
+ * In order to signal and stat the daemon, a client needs to know 
+ * the pid (process id) of the daemon process. When the daemon is
+ * started, it writes this number to the pid file.
+ */
+#define PID_NAME  "pumpd.pid"
+#define PID_PATH  (CONCAT(CFG_PATH, "/"PID_NAME))
+
+
+/*
+ * FIFO files
+ *
+ * Communication between the daemon and clients is performed via
+ * FIFO files (named pipes). A number of these files may need to
+ * be maintained, depending on the number of clients and the amount
+ * of message multiplexing. 
+ *
+ * FIFOs which carry messages *to* the server are marked with the 
+ * extension ".sub", while those carrying messages *from* the server 
+ * are marked with the extension ".pub". 
+ *
+ * These extensions are automatically appended to the path supplied 
+ * to the dpx_creat() function (see daemon.c).
+ */
+#define FIFO_NAME "fifo"
+#define FIFO_PATH (CONCAT(CFG_PATH, "/"FIFO_NAME))
+
+
+
+/******************************************************************************
+ * PUMP
+ ******************************************************************************/
 
 /**
- * usage -- print the usage message to stdout and exit
+ * usage -- Print the usage message to stdout and exit
+ * Returns nothing.
  */
 void usage(void)
 {
@@ -31,7 +92,8 @@ void usage(void)
 
 
 /**
- * pump_init -- initialize a pump in the current working directory
+ * pump_init -- Initialize a pump in the current working directory
+ * Returns nothing.
  */
 void pump_init(void)
 {
@@ -61,8 +123,9 @@ void pump_init(void)
 
 
 /**
- * pump_logic -- specify the logic that will drive the pump
+ * pump_logic -- Specify the logic that will drive the pump
  * @statement: the logic statement
+ * Returns nothing.
  */
 void pump_logic(const char *logic)
 {
@@ -73,14 +136,19 @@ void pump_logic(const char *logic)
 }
 
 
-void pump_say(char *message)
+/**
+ * pump_say -- Echo a message to stdout via the pump daemon
+ * @msg: Text to be printed
+ * Returns nothing.
+ */
+void pump_say(char *msg)
 {
         struct dpx_t dpx;
 
         dpx.role = SUBSCRIBE;
         dpx_open(&dpx, FIFO_PATH);
 
-        dpx_load(&dpx, message);
+        dpx_load(&dpx, msg);
         dpx_write(&dpx);
         dpx_read(&dpx);
 
@@ -90,9 +158,9 @@ void pump_say(char *message)
 }
 
 
-/**
- * main -- it's main
- */
+/******************************************************************************
+ * MAIN 
+ ******************************************************************************/
 int main(int argc, char *argv[]) 
 {
         load_env(&ENV);
