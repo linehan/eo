@@ -9,7 +9,7 @@ pumpd \- pump daemon
 The pump daemon manages all the active pumps on a filesystem.
 Active pumps must be registered with the daemon before they 
 can begin processing. See 
-.BR pump(1).
+.BR pmp(1).
 .SH OPTIONS
 .TP 10
 .B start 
@@ -40,6 +40,6 @@ This program is perfect in every way.
 Jason Linehan <patientulysses at gmail dot com>
 .SH "SEE ALSO"
 .BR pumpd(5),
-.BR pump(1),
+.BR pmp(1),
 .BR pipeutils(1)
 

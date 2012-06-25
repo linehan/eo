@@ -14,9 +14,9 @@ LDFLAGS=-pg -lpanel -lncursesw
 
 man1_MANS     = doc/pumpd.man doc/pump.man
 
-bin_PROGRAMS  = pump pumpd
+bin_PROGRAMS  = pmp pumpd
 
-pump_SOURCES  = src/pump/pump.c          \
+pmp_SOURCES   = src/pump/pump.c          \
                 src/pump/meta.c          \
                 src/common/daemon.c      \
                 src/common/channel.c     \

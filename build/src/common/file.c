@@ -121,6 +121,30 @@ char *gethome(void)
 }
 
 
+/**
+ * rel2abs -- resolve a relative path to an absolute path
+ */
+void rel2abs(char *rel, char *abs)
+{
+        if ((getcwd(abs, PATHSIZE)) == NULL)
+                bye("Could not stat working directory.");
+
+        strlcat(abs, CONCAT("/", rel), 255);
+}
+
+
+/**
+ * is_relpath -- check if path is relative
+ */
+bool is_relpath(char *path)
+{
+        return (path[0] == '/') ? false : true;
+}
+
+
+
+
+
 /******************************************************************************
  * FILE CREATION 
  * 

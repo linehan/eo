@@ -18,6 +18,8 @@ void sclose(FILE *file);
 void sunlink(const char *path);
 void smkdir(const char *path, int perms);
 void srmdir(const char *path);
+void rel2abs(char *rel, char *abs);
+bool is_relpath(char *path);
 
 char *gethome_uid(uid_t uid);
 char *gethome(void);

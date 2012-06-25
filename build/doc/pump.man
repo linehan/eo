@@ -1,11 +1,11 @@
-.TH PUMP 1 "MARCH 2012" Linux "User Manuals"
+.TH PMP 1 "MARCH 2012" Linux "User Manuals"
 .SH NAME
-pump \- pump client
+pmp \- pump client
 .SH SYNOPSIS
-.B pump <command> [args]
+.B pmp <command> [args]
 .B ...
 .SH DESCRIPTION
-.B pump
+.B pmp 
 The pump client performs pump directory (sump) management
 tasks, receives directives from the pump daemon, and publishes
 the objects in its directory so that other processes may 
@@ -36,5 +36,4 @@ This program is perfect in every way.
 Jason Linehan <patientulysses at gmail dot com>
 .SH "SEE ALSO"
 .BR pumpd(1),
-.BR pumpd(5),
 .BR pipeutils(1)

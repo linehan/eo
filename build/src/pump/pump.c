@@ -75,10 +75,16 @@ void pump_logic(const char *logic)
 }
 
 
-void pump_try(char *path)
+void pump_list(char *path)
 {
         struct dpx_t dpx;
+        char abspath[255];
         char target[512];
+
+        if (is_relpath(path))
+                rel2abs(path, abspath);
+        else
+                strlcpy(abspath, path, 255);
 
         /* Subscribe to the pump daemon's control channel */
         dpx_open(&dpx, CHANNEL("control"), CH_SUB);
@@ -128,8 +134,8 @@ int main(int argc, char *argv[])
         else if (isarg(1, "var"))
                 (ARG(2)) ? printf("%s\n", token(ARG(2), ENV.config)) : usage();
 
-        else if (isarg(1, "try"))
-                (ARG(2)) ? pump_try(ARG(2)) : usage();
+        else if (isarg(1, ":-"))
+                (ARG(2)) ? pump_list(ARG(2)) : usage();
 
         return 0;
 }
