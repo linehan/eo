@@ -12,7 +12,7 @@ LDFLAGS=-pg -lpanel -lncursesw
 #                     support
 #             
 
-man1_MANS     = doc/pumpd.man doc/pump.man
+man1_MANS     = doc/pumpd.man doc/pmp.man
 
 bin_PROGRAMS  = pmp pumpd
 
