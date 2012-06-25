@@ -121,6 +121,9 @@ void pumpd(struct dpx_t *dpx)
                         tempname(id);
                         spawn_pump_handler(dpx->buf, id);
 
+                        /* Wait for pump handler to create files */
+                        while (!exists(CHANNEL(id)))
+                                ;
                         /* Tell client where to connect */
                         dpx_send(dpx, id);
                 }

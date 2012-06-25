@@ -80,26 +80,27 @@ void pump_try(char *path)
         struct dpx_t dpx;
         char target[512];
 
+        /* Subscribe to the pump daemon's control channel */
         dpx_open(&dpx, CHANNEL("control"), CH_SUB);
 
-        dpx_send(&dpx, path);
+        dpx_send(&dpx, path); // Send the path we want to be listed
+        dpx_read(&dpx);       // Wait for channel to connect to... 
 
-        dpx_read(&dpx);
+        /* Print the channel (diagnostic) */
+        printf("name: %s\nchannel:%s\n", dpx.buf, CHANNEL(dpx.buf));
 
-        strcpy(target, dpx.buf);
-        printf("name: %s\n", target);
-        printf("channel: %s\n", CHANNEL(target));
+        /*sleep(1);*/
 
-        sleep(1);
+        /* Close the control channel and open the new channel */
         dpx_close(&dpx);
-        dpx_flush(&dpx);
-        dpx_open(&dpx, CHANNEL(target), CH_SUB);
-        dpx_send(&dpx, "ack");
+        dpx_open(&dpx, CHANNEL(dpx.buf), CH_SUB);
+        dpx_send(&dpx, "ack"); // Tell the pump that we're ready to receive
 
+        /* Receive file listing until "done" message from pump */
         for (;;) {
                 dpx_read(&dpx);
                 if (STRCMP(dpx.buf, "done")) {
-                        dpx_send(&dpx, "ack");
+                        dpx_send(&dpx, "ack"); // Tell pump we received "done"
                         break;
                 }
                 printf("%s\n", dpx.buf);
