@@ -73,6 +73,28 @@ void sunlink(const char *path)
 
 
 /**
+ * srmdir -- remove a directory safely
+ * @path: path of the directory to be removed
+ */
+void srmdir(const char *path)
+{
+        if ((rmdir(path)) < 0)
+                bye("Could not remove directory %s", path);
+}
+
+
+/**
+ * smkdir -- create a new directory safely
+ * @path: path of the directory to be created
+ */
+void smkdir(const char *path, int perms)
+{
+        if ((mkdir(path, perms)) < 0)
+                bye("Could not create directory %s", path);
+}
+
+
+/**
  * gethome_uid -- return the home directory of user with 'uid'
  * @uid: uid of the user whose home directory you want
  */

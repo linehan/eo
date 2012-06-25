@@ -71,12 +71,19 @@
  *
  ******************************************************************************/
 
+/******************************************************************************
+ * FIFO DISK FILES
+ *
+ * fifo_creat  -- create a new named pipe in the filesystem
+ * fifo_remove -- remove a named pipe from the filesystem 
+ *
+ ******************************************************************************/
 /**
- * new_fifo -- Create a new named pipe file
+ * fifo_creat -- Create a new named pipe file
  * @path: path of the new file 
  * @perm: permissions
  */
-void new_fifo(const char *path, int perm)
+void fifo_creat(const char *path, int perm)
 {
         if ((mknod(path, S_IFIFO | perm, 0)) == -1) {
                 bye("Fee! Fie! Foe! Fum! The FIFO failed to open!");
@@ -85,48 +92,62 @@ void new_fifo(const char *path, int perm)
 
 
 /**
- * open_fifo -- open a FIFO with the specified mode 
+ * fifo_remove -- Remove a named pipe from the filesystem 
+ * @path: path of the new file 
+ */
+void fifo_remove(const char *path)
+{
+        if ((unlink(path)) == -1) {
+                bye("Could not remove named pipe at %s", path);
+        }
+}
+
+
+/******************************************************************************
+ * FIFO OPERATIONS 
+ *
+ * fifo_open  -- Open a named pipe with the specified mode.
+ * fifo_close -- Close an open named pipe.
+ *
+ ******************************************************************************/
+/**
+ * fifo_open -- Open a named pipe with the specified mode. 
  * @path: path to the already-created FIFO
- * @mode: any combination of 'r' 'w' 'k' and 'n' in a string
- * r=read only, w=write only, n=no delay (non-blocking), k=keep alive
+ * @mode: Any OR'ed combination of O_RDONLY, O_WRONLY, and O_NDELAY 
  * Returns file descriptor for the FIFO 
  */
-int open_fifo(const char *path, const char *mode)
+int fifo_open(const char *path, mode_t mode)
 {
-        mode_t MODE;
-        size_t len;
         int fd;
 
-        len = strlen(mode);
-
-        if ((memchar((void *)mode, 'r', len))) MODE  = O_RDONLY;
-        if ((memchar((void *)mode, 'w', len))) MODE  = O_WRONLY;
-        if ((memchar((void *)mode, 'n', len))) MODE |= O_NDELAY;
-
-        if ((fd = open(path, MODE)) < 0)
+        if ((fd = open(path, mode)) < 0)
                 bye("daemon: Could not open fifo");
-
-        /* keepalive -- see note (Stevens) above */
-        if ((memchar((void *)mode, 'k', len))) open_fifo(path, "w");
 
         return fd;
 }
 
 
 /**
- * close_fifo -- close a FIFO file descriptor
+ * fifo_close -- Close an open named pipe. 
  * @fd: file descriptor of the file to be closed
  * Returns nothing 
  */
-void close_fifo(int fd)
+void fifo_close(int fd)
 {
         if ((close(fd)) < 0)
                 bye("daemon: Could not close fifo");
 }
         
 
+/******************************************************************************
+ * FIFO TRANSMISSION 
+ *
+ * fifo_read  -- Read the contents of a named pipe into a buffer.
+ * fifo_write -- Write the contents of a buffer into a named pipe.
+ *
+ ******************************************************************************/
 /**
- * fifo_read -- read the contents of a fifo into a buffer
+ * fifo_read  -- Read the contents of a named pipe into a buffer.
  * @fd : file descriptor
  * @buf: buffer to be written to fifo
  * @len: size of the buffer
@@ -147,7 +168,7 @@ void fifo_read(int fd, void *buf, size_t len)
 
 
 /**
- * fifo_write -- write the contents of a buffer into a fifo
+ * fifo_write -- Write the contents of a buffer into a named pipe.
  * @fd : file descriptor
  * @buf: buffer to be written to fifo
  * @len: size of the buffer
@@ -246,17 +267,25 @@ void fifo_write(int fd, void *buf, size_t len)
  * 
  ******************************************************************************/
 
+/******************************************************************************
+ * CHANNEL DISK FILES
+ *
+ * dpx_creat  -- create a new channel directory in the filesystem
+ * dpx_remove -- remove a channel directory from the filesystem 
+ *
+ ******************************************************************************/
+
 /**
  * dpx_creat -- create a duplex channel in the filesystem
  * @path : path of the duplex directory
  * @perms: file permissions 
  * Returns nothing.
  */
-void dpx_creat(char *path)
+void dpx_creat(const char *path)
 {
-        mkdir(path, DIR_PERMS);
-        new_fifo(CONCAT(path, "/sub"), PERMS);
-        new_fifo(CONCAT(path, "/pub"), PERMS);
+        smkdir(path, DIR_PERMS);
+        fifo_creat(CONCAT(path, "/sub"), PERMS);
+        fifo_creat(CONCAT(path, "/pub"), PERMS);
 }
 
 
@@ -266,27 +295,58 @@ void dpx_creat(char *path)
  */
 void dpx_remove(char *path)
 {
-        sunlink(CONCAT(path, "/sub"));
-        sunlink(CONCAT(path, "/pub"));
-        /*sunlink(path);*/
+        fifo_remove(CONCAT(path, "/sub"));
+        fifo_remove(CONCAT(path, "/pub"));
+        srmdir(path);
 }
  
 
+/******************************************************************************
+ * CHANNEL OPERATIONS 
+ *
+ * dpx_open  -- open a new channel 
+ * dpx_close -- close a currently open channel 
+ *
+ ******************************************************************************/
+
 /**
- * dpx_open -- initialize a new duplex channel 
+ * dpx_open -- Open a new channel. 
  * @dpx : pointer to a duplex structure
  * @path: path where FIFOs will be created (path.pub/path.sub)
  * Returns nothing.
  */
-void dpx_open(struct dpx_t *dpx, char *path)
+void dpx_open(struct dpx_t *dpx, const char *path, int mode)
 {
+        /* Optionally create the channel files */
+        if (NEW_CH(mode))
+                dpx_creat(path);
+
+        /* Set the role of the channel terminal */
+        dpx->role = CH_ROLE(mode);
+
+        /* Set the path of the channel's disk files */
+        dpx->path = bdup(path);
+
+        /* Open the file descriptors in the appropriate order */
         if (dpx->role == PUBLISH) {
-                dpx->fd_sub = open_fifo(CONCAT(path, "/sub"), "r");
-                dpx->fd_nub = open_fifo(CONCAT(path, "/sub"), "w");
-                dpx->fd_pub = open_fifo(CONCAT(path, "/pub"), "w");
+                /* Set the publish and subscribe paths */
+                dpx->path_pub = bdup(CONCAT(path, "/pub"));
+                dpx->path_sub = bdup(CONCAT(path, "/sub"));
+
+                /* Open the publish and subscribe paths */ 
+                dpx->fd_sub = fifo_open(dpx->path_sub, O_RDONLY);
+                dpx->fd_nub = fifo_open(dpx->path_sub, O_WRONLY);
+                dpx->fd_pub = fifo_open(dpx->path_pub, O_WRONLY); // keepalive
+
         } else if (dpx->role == SUBSCRIBE) {
-                dpx->fd_pub = open_fifo(CONCAT(path, "/sub"), "w");
-                dpx->fd_sub = open_fifo(CONCAT(path, "/pub"), "r");
+                /* Set the publish and subscribe paths */ 
+                dpx->path_pub = bdup(CONCAT(path, "/sub"));
+                dpx->path_sub = bdup(CONCAT(path, "/pub"));
+
+                /* Open the publish and subscribe paths */ 
+                dpx->fd_pub = fifo_open(dpx->path_pub, O_WRONLY);
+                dpx->fd_sub = fifo_open(dpx->path_sub, O_RDONLY);
+
         } else {
                 bye("open_dpx: Invalid duplex role");
         }
@@ -294,7 +354,7 @@ void dpx_open(struct dpx_t *dpx, char *path)
 
 
 /**
- * dpx_close -- close an open duplex channel
+ * dpx_close -- Close an open channel
  * @dpx: pointer to a duplex structure
  * Returns nothing.
  */
@@ -313,30 +373,19 @@ void dpx_close(struct dpx_t *dpx)
 }
 
 
-/**
- * dpx_load -- load a message buffer into the duplex struct 
- * @dpx: pointer to a duplex structure
- * @msg: message to be loaded in the duplex structure
- * Returns nothing.
- */
-void dpx_load(struct dpx_t *dpx, char *msg)
-{
-        strcpy(dpx->buf, msg);
-}
-
-
-/**
- * dpx_flush -- Flush the dpx buffer, filling it with zeroes
- * @dpx: pointer to a duplex structure
- */
-void dpx_flush(struct dpx_t *dpx)
-{
-        bzero(dpx->buf, MIN_PIPESIZE);
-}
-
+/******************************************************************************
+ * CHANNEL TRANSMISSION 
+ *
+ * dpx_read  -- read the channel into the transmission buffer
+ * dpx_write -- write the transmission buffer to the channel 
+ * dpx_load  -- load a message into the transmission buffer 
+ * dpx_flush -- fill the transmission buffer with 0's 
+ * dpx_send  -- load and write the transmission buffer in one call 
+ *
+ ******************************************************************************/
 
 /**
- * dpx_read -- read the subscription FIFO into the duplex buffer
+ * dpx_read -- Read the channel into the transmission buffer 
  * @dpx: pointer to a duplex structure
  * Returns nothing.
  */
@@ -347,13 +396,48 @@ void dpx_read(struct dpx_t *dpx)
 
 
 /**
- * dpx_write -- write the duplex buffer to the publishing FIFO
+ * dpx_write -- Write the transmission buffer to the channel 
  * @dpx: pointer to a duplex structure
  * Returns nothing.
  */
 void dpx_write(struct dpx_t *dpx)
 {
         fifo_write(dpx->fd_pub, (void *)dpx->buf, (size_t)MIN_PIPESIZE);
+}
+
+
+/**
+ * dpx_load -- Load a message buffer into the transmission buffer 
+ * @dpx: pointer to a duplex structure
+ * @msg: message to be loaded in the duplex structure
+ * Returns nothing.
+ */
+void dpx_load(struct dpx_t *dpx, const char *msg)
+{
+        strlcpy(dpx->buf, msg, MIN_PIPESIZE);
+}
+
+
+/**
+ * dpx_flush -- Fill the transmission buffer with 0's 
+ * @dpx: pointer to a duplex structure
+ */
+void dpx_flush(struct dpx_t *dpx)
+{
+        bzero(dpx->buf, MIN_PIPESIZE);
+}
+
+
+/**
+ * dpx_send -- Load and write the transmission buffer in one call
+ * @dpx: pointer to a duplex structure
+ * @msg: message to be loaded into the duplex
+ * Returns nothing.
+ */
+void dpx_send(struct dpx_t *dpx, const char *msg)
+{
+        dpx_load(dpx, msg);
+        dpx_write(dpx);
 }
 
 

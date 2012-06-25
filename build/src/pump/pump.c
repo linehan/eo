@@ -80,32 +80,31 @@ void pump_try(char *path)
         struct dpx_t dpx;
         char target[512];
 
-        dpx.role = SUBSCRIBE;
-        dpx_open(&dpx, CHANNEL("control"));
+        dpx_open(&dpx, CHANNEL("control"), CH_SUB);
 
-        dpx_load(&dpx, path);
-        dpx_write(&dpx);
+        dpx_send(&dpx, path);
+
         dpx_read(&dpx);
 
         strcpy(target, dpx.buf);
         printf("name: %s\n", target);
         printf("channel: %s\n", CHANNEL(target));
 
+        sleep(1);
         dpx_close(&dpx);
         dpx_flush(&dpx);
-        dpx_open(&dpx, CHANNEL(target));
-        dpx_load(&dpx, "ack");
-        dpx_write(&dpx);
+        dpx_open(&dpx, CHANNEL(target), CH_SUB);
+        dpx_send(&dpx, "ack");
 
         for (;;) {
                 dpx_read(&dpx);
                 if (STRCMP(dpx.buf, "done")) {
-                        dpx_load(&dpx, "ack");
-                        dpx_write(&dpx);
+                        dpx_send(&dpx, "ack");
                         break;
                 }
                 printf("%s\n", dpx.buf);
         }
+        dpx_close(&dpx);
 }
 
 

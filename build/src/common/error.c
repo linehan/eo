@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <errno.h>
 #include <stdarg.h>
 
@@ -78,4 +79,92 @@ void abort_report(const char *fmt, ...)
 
         exit(1);
 }
+
+
+
+/****************************************************************************** 
+ * SIGNAL HANDLING
+ *
+ * Overview
+ * --------
+ * Signals are usually Bad News that a process receives from the kernel.
+ * 
+ *
+ * Signal       Default action  Description
+ * --------------------------------------------------------------------------
+ * SIGABRT      A               Process abort signal.
+ * SIGALRM      T               Alarm clock.
+ * SIGBUS       A               Access to an undefined memory portion.
+ * SIGCHLD      I               Child process terminated/stopped/continued.
+ * SIGCONT      C               Continue executing, if stopped.
+ * SIGFPE       A               Erroneous arithmetic operation.
+ * SIGHUP       T               Terminal hangup.
+ * SIGILL       A               Illegal instruction.
+ * SIGINT       T               Terminal interrupt.
+ * SIGKILL      T               Kill (cannot be caught or ignored).
+ * SIGPIPE      T               Write on a pipe with no one to read it.
+ * SIGQUIT      A               Terminal quit signal.
+ * SIGSEGV      A               Invalid memory reference.
+ * SIGSTOP      S               Stop executing (cannot be caught or ignored).
+ * SIGTERM      T               Termination signal.
+ * SIGTSTP      S               Terminal stop signal.
+ * SIGTTIN      S               Background process attempting read.
+ * SIGTTOU      S               Background process attempting write.
+ * SIGUSR1      T               User-defined signal 1.
+ * SIGUSR2      T               User-defined signal 2.
+ * SIGPOLL      T               Pollable event.
+ * SIGPROF      T               Profiling timer expired.
+ * SIGSYS       A               Bad system call.
+ * SIGTRAP      A               Trace/breakpoint trap.
+ * SIGURG       I               High bandwidth data availible at a socket.
+ * SIGVTALRM    T               Virtual timer expired.
+ * SIGXCPU      A               CPU time limit exceeded.
+ * SIGXFSZ      A               File size limit exceeded.
+ * --------------------------------------------------------------------------
+ * 
+ *
+ * signal.h defines the sigaction() function:
+ *
+ * int sigaction(int sig, const struct sigaction *restrict act,
+ *                              struct sigaction *restrict oact);
+ *
+ * where 'act' specifies the implementation-defined signal handling, and
+ * 'oact' refers to the location at which the default signal handling
+ * configuration will be stored. These are of type struct sigaction, which
+ * is also defined in signal.h. See man(3) signal.h
+ *
+ ******************************************************************************/
+
+/**
+ * handle_signal_simple -- clean up and exit on receipt of certain signals
+ * @signo: signal number
+ */
+/*void handle_signal_verbose(int signo, siginfo_t *info, void *context)*/
+/*{*/
+        /*handle_signal_simple(signo);*/
+/*}*/
+
+
+/*[> The new signal handling configuration <]*/
+/*const struct sigaction new_action = {*/
+        /*.sa_handler   = &handle_signal_simple,*/
+        /*.sa_mask      = 0,*/
+        /*.sa_flags     = 0,*/
+        /*.sa_sigaction = &handle_signal_verbose,*/
+/*};*/
+
+/*struct sigaction old_action = {0}; [> Default configuration <]*/
+
+
+/**
+ * init_signal_handlers -- provide the handler functions to the system 
+ */
+/*void init_signal_handlers(void)*/
+/*{*/
+        /*sigaction(SIGINT,  &new_action, &old_action);*/
+        /*sigaction(SIGSEGV, &new_action, &old_action);*/
+        /*sigaction(SIGABRT, &new_action, &old_action); [> assert uses abort() <]*/
+/*}*/
+
+
 

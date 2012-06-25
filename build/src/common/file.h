@@ -16,6 +16,8 @@ bool exists(const char *path);
 FILE *sopen(const char *path, const char *mode);
 void sclose(FILE *file);
 void sunlink(const char *path);
+void smkdir(const char *path, int perms);
+void srmdir(const char *path);
 
 char *gethome_uid(uid_t uid);
 char *gethome(void);

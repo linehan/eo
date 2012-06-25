@@ -36,20 +36,21 @@ const char *do_pump(struct dpx_t *dpx, const char *path)
 
         dpx_read(dpx); // Wait for client to connect
 
+        dpx_send(dpx, dpx->path);
+
         for (filename  = getfile(dir, F_REG);
              filename != NULL;
              filename  = getfile(NULL, F_REG))
         {
-                dpx_load(dpx, filename);
-                dpx_write(dpx);
+                dpx_send(dpx, filename);
         }
-        dpx_load(dpx, "done");
-        dpx_write(dpx);
+        dpx_send(dpx, "done");
         dpx_read(dpx);
 
         if (STRCMP(dpx->buf, "ack")) {
-                dpx_close(dpx);
                 closedir(dir);
+                dpx_close(dpx);
+                dpx_remove(dpx->path);
         }
         exit(0);
 }
@@ -59,11 +60,9 @@ const char *do_pump(struct dpx_t *dpx, const char *path)
  * spawn_pump_handler -- Create a process to handle a pump client request
  * @id: unique identifier for named pipes and other resolution 
  */
-void spawn_pump_handler(const char *path, char *id)
+void spawn_pump_handler(const char *path, const char *id)
 {
         struct dpx_t dpx;
-
-        dpx_creat(CHANNEL(id));
 
         if ((daemonize()) == -1) // See daemon.c
                 return;
@@ -71,8 +70,7 @@ void spawn_pump_handler(const char *path, char *id)
         // ---------- process is now a daemon ---------- */
 
         /* Open a duplex channel as publisher */
-        dpx.role = PUBLISH;
-        dpx_open(&dpx, CHANNEL(id));
+        dpx_open(&dpx, CHANNEL(id), CH_NEW | CH_PUB);
 
         /* Enter the loop driver */
         do_pump(&dpx, path);
@@ -118,15 +116,13 @@ void pumpd(struct dpx_t *dpx)
 
         for (;;) {
                 strcpy(id, "XXXXXX");
-                dpx_flush(dpx);
                 dpx_read(dpx);
                 if (dpx->buf[0] != '\0') {
                         tempname(id);
                         spawn_pump_handler(dpx->buf, id);
 
                         /* Tell client where to connect */
-                        dpx_load(dpx, id);
-                        dpx_write(dpx);
+                        dpx_send(dpx, id);
                 }
         }
         dpx_close(dpx);
@@ -145,9 +141,6 @@ void pumpd_init(void)
         /* Create configuration directory if none present */
         if (!exists(CFG_PATH))
                 mkdir(CFG_PATH, DIR_PERMS);
-
-        /* Create duplex channel files */
-        dpx_creat(CHANNEL("control"));
 }
 
 
@@ -169,9 +162,8 @@ void pumpd_start(void)
         /* Create a new pidfile */
         pidfile(PID_PATH, "w+");
 
-        /* Open a duplex channel as publisher */
-        dpx.role = PUBLISH;
-        dpx_open(&dpx, CHANNEL("control"));
+        /* Open the control channel as publisher */
+        dpx_open(&dpx, CHANNEL("control"), CH_NEW | CH_PUB);
 
         /* Enter the loop driver */
         pumpd(&dpx);

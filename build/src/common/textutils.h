@@ -11,4 +11,7 @@ void trimws(char *str);
 
 void chrswp(char *src, char at, char with, size_t len);
 
+size_t strlcpy(char *dst, const char *src, size_t siz);
+size_t strlcat(char *dst, const char *src, size_t siz);
+
 #endif

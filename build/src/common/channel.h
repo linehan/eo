@@ -1,6 +1,7 @@
 #ifndef _IPC_CHANNELS_H 
 #define _IPC_CHANNELS_H 
 
+#include <stdbool.h>
 
 #define MIN_PIPESIZE (4095) // 4096 - 1
 #define MAX_PATHSIZE (255)
@@ -16,19 +17,28 @@ struct dpx_t {
         int fd_sub; // consume on this fd 
         int fd_nub; // sticky fd for loop driver (keepalive)
         char buf[MIN_PIPESIZE];
+        char *path_pub;
+        char *path_sub;
+        char *path;
 };
 
+#define CH_NEW 0x001
+#define CH_PUB 0x002
+#define CH_SUB 0x000
+#define CH_ROLE(mode) (((mode) & CH_PUB) == CH_PUB) ? PUBLISH : SUBSCRIBE
+#define NEW_CH(mode)  (((mode) & CH_NEW) == CH_NEW) ? true : false
 
-void dpx_creat (char *path);
+void dpx_creat (const char *path);
 void dpx_remove(char *path);
 
-void dpx_open  (struct dpx_t *dpx, char *path);
+void dpx_open  (struct dpx_t *dpx, const char *path, int mode);
 void dpx_close (struct dpx_t *dpx);
 
 void dpx_read  (struct dpx_t *dpx);
 void dpx_write (struct dpx_t *dpx);
+void dpx_send  (struct dpx_t *dpx, const char *msg);
 
-void dpx_load  (struct dpx_t *dpx, char *msg);
+void dpx_load  (struct dpx_t *dpx, const char *msg);
 void dpx_flush (struct dpx_t *dpx);
 
 #endif
