@@ -3,6 +3,7 @@
 
 
 #define MIN_PIPESIZE (4095) // 4096 - 1
+#define MAX_PATHSIZE (255)
 
 enum dpx_role { 
         PUBLISH, 
@@ -18,15 +19,16 @@ struct dpx_t {
 };
 
 
-void dpx_creat (const char *dpxname, int perms);
-void dpx_remove(const char *dpxname);
+void dpx_creat (char *path);
+void dpx_remove(char *path);
 
-void dpx_open  (struct dpx_t *dpx, const char *path);
+void dpx_open  (struct dpx_t *dpx, char *path);
 void dpx_close (struct dpx_t *dpx);
-void dpx_load  (struct dpx_t *dpx, char *msg);
-void dpx_flush (struct dpx_t *dpx);
+
 void dpx_read  (struct dpx_t *dpx);
 void dpx_write (struct dpx_t *dpx);
 
+void dpx_load  (struct dpx_t *dpx, char *msg);
+void dpx_flush (struct dpx_t *dpx);
 
 #endif

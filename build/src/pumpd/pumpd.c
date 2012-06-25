@@ -56,11 +56,11 @@ const char *do_pump(struct dpx_t *dpx, const char *path)
  * spawn_pump_handler -- Create a process to handle a pump client request
  * @id: unique identifier for named pipes and other resolution 
  */
-void spawn_pump_handler(const char *path, const char *id)
+void spawn_pump_handler(const char *path, char *id)
 {
         struct dpx_t dpx;
 
-        dpx_creat(FIFO(id), PERMS);
+        dpx_creat(id);
 
         if ((daemonize()) == -1) // See daemon.c
                 return;
@@ -69,7 +69,7 @@ void spawn_pump_handler(const char *path, const char *id)
 
         /* Open a duplex channel as publisher */
         dpx.role = PUBLISH;
-        dpx_open(&dpx, FIFO(id));
+        dpx_open(&dpx, id);
 
         /* Enter the loop driver */
         do_pump(&dpx, path);
@@ -103,17 +103,6 @@ void usage(void)
         printf("%s\n", USAGE_MESSAGE);
 }
 
-inline char *sha2(void)
-{
-        unsigned long salt;
-        static char hex[65];
-
-        salt = mt_random();
-        sha256gen(hex, &salt);
-
-        return hex;
-}
-
 
 /**
  * pumpd -- The loop driver executed by the running daemon
@@ -122,18 +111,20 @@ inline char *sha2(void)
  */
 void pumpd(struct dpx_t *dpx)
 {
+        char id[255];
+
         for (;;) {
+                strcpy(id, "dpx.XXXXXX");
                 memset(dpx->buf, '\0', MIN_PIPESIZE);
                 dpx_read(dpx);
-                /*if (dpx->buf[0] != '\0') {*/ /* echo */
-                        /*dpx_write(dpx);*/
-                /*}*/
-                if (dpx->buf[0] != '\0')
-                        spawn_pump_handler(dpx->buf, "test");
+                if (dpx->buf[0] != '\0') {
+                        tempname(id);
+                        spawn_pump_handler(dpx->buf, id);
 
-                /* Tell client where to connect */
-                dpx_load(dpx, "test");
-                dpx_write(dpx);
+                        /* Tell client where to connect */
+                        dpx_load(dpx, id);
+                        dpx_write(dpx);
+                }
         }
         dpx_close(dpx);
 }
@@ -152,8 +143,8 @@ void pumpd_init(void)
         if (!exists(CFG_PATH))
                 mkdir(CFG_PATH, DIR_PERMS);
 
-        /* Create named pipes for duplex channel */
-        dpx_creat(FIFO_PATH, CFG_PERMS);
+        /* Create duplex channel files */
+        dpx_creat(CFG_PATH);
 }
 
 
@@ -177,7 +168,7 @@ void pumpd_start(void)
 
         /* Open a duplex channel as publisher */
         dpx.role = PUBLISH;
-        dpx_open(&dpx, FIFO_PATH);
+        dpx_open(&dpx, CFG_PATH);
 
         /* Enter the loop driver */
         pumpd(&dpx);
@@ -196,7 +187,7 @@ void pumpd_stop(void)
                 bye("pumpd is not running.");
 
         remove(PID_PATH);
-        dpx_remove(FIFO_PATH);
+        dpx_remove(CFG_PATH);
 
         kill(pid, SIGTERM);
 }

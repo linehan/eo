@@ -100,6 +100,46 @@ char *gethome(void)
 
 
 /******************************************************************************
+ * FILE CREATION 
+ * 
+ ******************************************************************************/
+
+/**
+ * tmpname -- return a temporary name according to a template "test.XXXXXX"
+ */
+int tempname(char *template)
+{
+        pid_t val;
+        int start;
+
+        val   = getpid();
+        start = strlen(template) - 1;
+
+        while (template[start] == 'X') {
+                template[start] = '0' + val % 10;
+                val /= 10;
+                start--;
+        }
+        return start;
+}
+
+
+int tempdir(char *template)
+{
+        char name[255];
+        int start;
+
+        strcpy(name, template);
+
+        start = tempname(name);
+        if ((mkdir(name, 0700)), errno != EEXIST)
+                return 0;
+        else
+                return -1;
+}
+
+
+/******************************************************************************
  * FILE PREDICATES 
  * 
  * Queries that can be applied to files. There are three kinds of files that

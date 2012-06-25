@@ -80,21 +80,21 @@ void pump_logic(const char *logic)
  * @msg: Text to be printed
  * Returns nothing.
  */
-void pump_say(char *msg)
-{
-        struct dpx_t dpx;
+/*void pump_say(char *msg)*/
+/*{*/
+        /*struct dpx_t dpx;*/
 
-        dpx.role = SUBSCRIBE;
-        dpx_open(&dpx, FIFO_PATH);
+        /*dpx.role = SUBSCRIBE;*/
+        /*dpx_open(&dpx, FIFO_PATH);*/
 
-        dpx_load(&dpx, msg);
-        dpx_write(&dpx);
-        dpx_read(&dpx);
+        /*dpx_load(&dpx, msg);*/
+        /*dpx_write(&dpx);*/
+        /*dpx_read(&dpx);*/
 
-        printf("%s\n", dpx.buf);
+        /*printf("%s\n", dpx.buf);*/
 
-        dpx_close(&dpx);
-}
+        /*dpx_close(&dpx);*/
+/*}*/
 
 
 void pump_try(char *path)
@@ -103,18 +103,18 @@ void pump_try(char *path)
         char target[512];
 
         dpx.role = SUBSCRIBE;
-        dpx_open(&dpx, FIFO_PATH);
+        dpx_open(&dpx, CFG_PATH);
 
         dpx_load(&dpx, path);
         dpx_write(&dpx);
         dpx_read(&dpx);
 
         strcpy(target, dpx.buf);
-        printf("target: %s\n", FIFO(target));
+        printf("target: %s\n", target);
 
-        /*dpx_close(&dpx);*/
+        dpx_close(&dpx);
         dpx_flush(&dpx);
-        dpx_open(&dpx, FIFO(target));
+        dpx_open(&dpx, target);
 
         for (;;) {
                 dpx_read(&dpx);
@@ -128,7 +128,6 @@ void pump_try(char *path)
  ******************************************************************************/
 int main(int argc, char *argv[]) 
 {
-        int i;
         load_env(&ENV);
 
         /*for (i=0; i<argc; i++) {*/
@@ -147,8 +146,8 @@ int main(int argc, char *argv[])
         else if (isarg(1, "var"))
                 (ARG(2)) ? printf("%s\n", token(ARG(2), ENV.config)) : usage();
 
-        else if (isarg(1, "say"))
-                (ARG(2)) ? pump_say(ARG(2)) : usage();
+        /*else if (isarg(1, "say"))*/
+                /*(ARG(2)) ? pump_say(ARG(2)) : usage();*/
 
         else if (isarg(1, "try"))
                 (ARG(2)) ? pump_try(ARG(2)) : usage();

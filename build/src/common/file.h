@@ -20,6 +20,8 @@ void sunlink(const char *path);
 char *gethome_uid(uid_t uid);
 char *gethome(void);
 
+int tempdir(char *templ);
+
 void list_dir(DIR *dir, int options);
 
 int filecount(DIR *dir, int options);

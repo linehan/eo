@@ -91,6 +91,8 @@
  */
 #define FIFO_NAME  "fifo"
 #define FIFO_PATH  (CONCAT(CFG_PATH, FIFO_NAME))
+#define PATH(stem) (CONCAT(CFG_PATH, stem))
 
 #endif
-#define FIFO(name) (CONCAT(CFG_PATH, name))
+
+
