@@ -75,49 +75,35 @@ void pump_logic(const char *logic)
 }
 
 
-/**
- * pump_say -- Echo a message to stdout via the pump daemon
- * @msg: Text to be printed
- * Returns nothing.
- */
-/*void pump_say(char *msg)*/
-/*{*/
-        /*struct dpx_t dpx;*/
-
-        /*dpx.role = SUBSCRIBE;*/
-        /*dpx_open(&dpx, FIFO_PATH);*/
-
-        /*dpx_load(&dpx, msg);*/
-        /*dpx_write(&dpx);*/
-        /*dpx_read(&dpx);*/
-
-        /*printf("%s\n", dpx.buf);*/
-
-        /*dpx_close(&dpx);*/
-/*}*/
-
-
 void pump_try(char *path)
 {
         struct dpx_t dpx;
         char target[512];
 
         dpx.role = SUBSCRIBE;
-        dpx_open(&dpx, CFG_PATH);
+        dpx_open(&dpx, CHANNEL("control"));
 
         dpx_load(&dpx, path);
         dpx_write(&dpx);
         dpx_read(&dpx);
 
         strcpy(target, dpx.buf);
-        printf("target: %s\n", target);
+        printf("name: %s\n", target);
+        printf("channel: %s\n", CHANNEL(target));
 
         dpx_close(&dpx);
         dpx_flush(&dpx);
-        dpx_open(&dpx, target);
+        dpx_open(&dpx, CHANNEL(target));
+        dpx_load(&dpx, "ack");
+        dpx_write(&dpx);
 
         for (;;) {
                 dpx_read(&dpx);
+                if (STRCMP(dpx.buf, "done")) {
+                        dpx_load(&dpx, "ack");
+                        dpx_write(&dpx);
+                        break;
+                }
                 printf("%s\n", dpx.buf);
         }
 }
@@ -130,10 +116,6 @@ int main(int argc, char *argv[])
 {
         load_env(&ENV);
 
-        /*for (i=0; i<argc; i++) {*/
-                /*printf("%s\n", argv[i]);*/
-        /*}*/
-
         if (!ARG(1))
                 usage();
 
@@ -145,9 +127,6 @@ int main(int argc, char *argv[])
 
         else if (isarg(1, "var"))
                 (ARG(2)) ? printf("%s\n", token(ARG(2), ENV.config)) : usage();
-
-        /*else if (isarg(1, "say"))*/
-                /*(ARG(2)) ? pump_say(ARG(2)) : usage();*/
 
         else if (isarg(1, "try"))
                 (ARG(2)) ? pump_try(ARG(2)) : usage();

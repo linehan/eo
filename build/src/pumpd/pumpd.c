@@ -43,12 +43,15 @@ const char *do_pump(struct dpx_t *dpx, const char *path)
                 dpx_load(dpx, filename);
                 dpx_write(dpx);
         }
+        dpx_load(dpx, "done");
+        dpx_write(dpx);
         dpx_read(dpx);
 
-        if (STRCMP(dpx->buf, "done")) {
+        if (STRCMP(dpx->buf, "ack")) {
                 dpx_close(dpx);
                 closedir(dir);
         }
+        exit(0);
 }
 
 
@@ -60,7 +63,7 @@ void spawn_pump_handler(const char *path, char *id)
 {
         struct dpx_t dpx;
 
-        dpx_creat(id);
+        dpx_creat(CHANNEL(id));
 
         if ((daemonize()) == -1) // See daemon.c
                 return;
@@ -69,7 +72,7 @@ void spawn_pump_handler(const char *path, char *id)
 
         /* Open a duplex channel as publisher */
         dpx.role = PUBLISH;
-        dpx_open(&dpx, id);
+        dpx_open(&dpx, CHANNEL(id));
 
         /* Enter the loop driver */
         do_pump(&dpx, path);
@@ -114,8 +117,8 @@ void pumpd(struct dpx_t *dpx)
         char id[255];
 
         for (;;) {
-                strcpy(id, "dpx.XXXXXX");
-                memset(dpx->buf, '\0', MIN_PIPESIZE);
+                strcpy(id, "XXXXXX");
+                dpx_flush(dpx);
                 dpx_read(dpx);
                 if (dpx->buf[0] != '\0') {
                         tempname(id);
@@ -144,7 +147,7 @@ void pumpd_init(void)
                 mkdir(CFG_PATH, DIR_PERMS);
 
         /* Create duplex channel files */
-        dpx_creat(CFG_PATH);
+        dpx_creat(CHANNEL("control"));
 }
 
 
@@ -168,7 +171,7 @@ void pumpd_start(void)
 
         /* Open a duplex channel as publisher */
         dpx.role = PUBLISH;
-        dpx_open(&dpx, CFG_PATH);
+        dpx_open(&dpx, CHANNEL("control"));
 
         /* Enter the loop driver */
         pumpd(&dpx);
@@ -187,7 +190,7 @@ void pumpd_stop(void)
                 bye("pumpd is not running.");
 
         remove(PID_PATH);
-        dpx_remove(CFG_PATH);
+        dpx_remove(CHANNEL("control"));
 
         kill(pid, SIGTERM);
 }
