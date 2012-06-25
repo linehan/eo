@@ -5,11 +5,11 @@ AUTOMAKE_OPTIONS = foreign subdir-objects
 # optimize  | warnings  debug info
 # lvl 3 \   |    /     /  
 CFLAGS=-O3 -pg -Wall -g -DVERSION=\"$(VERSION)\" -DPROG="\"$(PACKAGE)\""
-LDFLAGS=-pg 
-#       / 
-#      /  
-#  gprof  
-#              
+LDFLAGS=-pg -lpanel -lncursesw 
+#       /       |   `````|````
+#      /    panels    ncurses with               
+#  gprof   (curses)   wide character
+#                     support
 #             
 
 man1_MANS     = doc/pumpd.man doc/pump.man
@@ -24,7 +24,9 @@ pump_SOURCES  = src/pump/pump.c          \
                 src/common/textutils.c   \
                 src/common/file.c        \
                 src/common/error.c       \
+                src/common/curses.c      \
                 src/common/sha256/sha2.c
+
 
 pumpd_SOURCES = src/pumpd/pumpd.c        \
                 src/common/daemon.c      \

@@ -24,6 +24,7 @@ void dpx_remove(const char *dpxname);
 void dpx_open  (struct dpx_t *dpx, const char *path);
 void dpx_close (struct dpx_t *dpx);
 void dpx_load  (struct dpx_t *dpx, char *msg);
+void dpx_flush (struct dpx_t *dpx);
 void dpx_read  (struct dpx_t *dpx);
 void dpx_write (struct dpx_t *dpx);
 

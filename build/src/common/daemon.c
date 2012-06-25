@@ -66,7 +66,7 @@ int pidfile(const char *path, const char *mode)
 /** 
  * daemonize -- fork the current process and prepare it to operate as a daemon
  */
-void daemonize(void)
+int daemonize(void)
 {
         int i;
         /* 
@@ -74,7 +74,7 @@ void daemonize(void)
          * the parent returns 0 to the shell.
          */
 	if (fork() != 0)
-                exit(0);
+                return -1;
 
         for (i=0; i<NOFILE; i++) /* Close files inherited from parent */
                 close(i);

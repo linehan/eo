@@ -6,7 +6,7 @@
 int pidfile(const char *path, const char *mode);
 
 /* Process grooming */ 
-void daemonize(void);
+int daemonize(void);
 
 
 #endif

@@ -323,6 +323,16 @@ void dpx_load(struct dpx_t *dpx, char *msg)
 
 
 /**
+ * dpx_flush -- Flush the dpx buffer, filling it with zeroes
+ * @dpx: pointer to a duplex structure
+ */
+void dpx_flush(struct dpx_t *dpx)
+{
+        bzero(dpx->buf, MIN_PIPESIZE);
+}
+
+
+/**
  * dpx_read -- read the subscription FIFO into the duplex buffer
  * @dpx: pointer to a duplex structure
  * Returns nothing.
@@ -342,4 +352,5 @@ void dpx_write(struct dpx_t *dpx)
 {
         fifo_write(dpx->fd_pub, (void *)dpx->buf, (size_t)MIN_PIPESIZE);
 }
+
 
