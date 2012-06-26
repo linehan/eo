@@ -133,11 +133,11 @@ AWK = @AWK@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 #                      |            \
-#         gprof       non-GNU        compile objects in the 
-#           |                        indicated relative paths
-# optimize  | warnings  debug info
-# lvl 3 \   |    /     /  
-CFLAGS = -O3 -pg -Wall -g -DVERSION=\"$(VERSION)\" -DPROG="\"$(PACKAGE)\""
+#                  non-GNU        compile objects in the 
+#                                 indicated relative paths
+# optimize warnings debug info
+# lvl 3 \     /    /  
+CFLAGS = -O3 -Wall -g -DVERSION=\"$(VERSION)\" -DPROG="\"$(PACKAGE)\""
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CYGPATH_W = @CYGPATH_W@
@@ -154,7 +154,7 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
-LDFLAGS = -pg -lpanel -lncursesw 
+LDFLAGS = -lpanel -lncursesw 
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LTLIBOBJS = @LTLIBOBJS@
@@ -215,12 +215,12 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign subdir-objects
-#       /       |   `````|````
-#      /    panels    ncurses with               
-#  gprof   (curses)   wide character
-#                     support
+#           |   `````|````
+#        panels    ncurses with               
+#       (curses)   wide character
+#                  support
 #             
-man1_MANS = doc/pumpd.man doc/pump.man
+man1_MANS = doc/pumpd.man doc/pmp.man
 pmp_SOURCES = src/pump/pump.c          \
                 src/pump/meta.c          \
                 src/common/daemon.c      \

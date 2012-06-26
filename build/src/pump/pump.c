@@ -13,6 +13,7 @@
 #include "../common/channel.h"
 #include "../common/curses.h"
 #include "../common/configfiles.h"
+#include "../common/textutils.h"
 
 
 /******************************************************************************
@@ -79,23 +80,20 @@ void pump_list(char *path)
 {
         struct dpx_t dpx;
         char abspath[255];
-        char target[512];
 
         if (is_relpath(path))
                 rel2abs(path, abspath);
         else
-                strlcpy(abspath, path, 255);
+                strcpy(abspath, path);
 
         /* Subscribe to the pump daemon's control channel */
         dpx_open(&dpx, CHANNEL("control"), CH_SUB);
 
-        dpx_send(&dpx, path); // Send the path we want to be listed
-        dpx_read(&dpx);       // Wait for channel to connect to... 
+        dpx_send(&dpx, abspath); // Send the path we want to be listed
+        dpx_read(&dpx);          // Wait for channel to connect to... 
 
         /* Print the channel (diagnostic) */
-        printf("name: %s\nchannel:%s\n", dpx.buf, CHANNEL(dpx.buf));
-
-        /*sleep(1);*/
+        printf("name: %s\nchan: %s\n\n", dpx.buf, CHANNEL(dpx.buf));
 
         /* Close the control channel and open the new channel */
         dpx_close(&dpx);
@@ -111,6 +109,7 @@ void pump_list(char *path)
                 }
                 printf("%s\n", dpx.buf);
         }
+        /*cmp_dir(abspath, F_REG);*/
         dpx_close(&dpx);
 }
 

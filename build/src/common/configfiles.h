@@ -89,7 +89,7 @@
  * These extensions are automatically appended to the path supplied 
  * to the dpx_creat() function (see daemon.c).
  */
-#define FIFO_NAME  "fifo"
+#define FIFO_NAME     "fifo"
 #define FIFO_PATH     (CONCAT(CFG_PATH, FIFO_NAME))
 #define CHANNEL(stem) (CONCAT(CFG_PATH, stem))
 

@@ -1,15 +1,15 @@
 AUTOMAKE_OPTIONS = foreign subdir-objects
 #                      |            \
-#         gprof       non-GNU        compile objects in the 
-#           |                        indicated relative paths
-# optimize  | warnings  debug info
-# lvl 3 \   |    /     /  
-CFLAGS=-O3 -pg -Wall -g -DVERSION=\"$(VERSION)\" -DPROG="\"$(PACKAGE)\""
-LDFLAGS=-pg -lpanel -lncursesw 
-#       /       |   `````|````
-#      /    panels    ncurses with               
-#  gprof   (curses)   wide character
-#                     support
+#                  non-GNU        compile objects in the 
+#                                 indicated relative paths
+# optimize warnings debug info
+# lvl 3 \     /    /  
+CFLAGS=-O3 -Wall -g -DVERSION=\"$(VERSION)\" -DPROG="\"$(PACKAGE)\""
+LDFLAGS=-lpanel -lncursesw 
+#           |   `````|````
+#        panels    ncurses with               
+#       (curses)   wide character
+#                  support
 #             
 
 man1_MANS     = doc/pumpd.man doc/pmp.man

@@ -12,10 +12,11 @@
 #include "../common/file.h"
 #include "../common/channel.h"
 #include "../common/configfiles.h"
+#include "../common/textutils.h"
 
 
 /******************************************************************************
- * PUMPD OPERATION
+ * PUMP HANDLER OPERATION
  * 
  * The pump daemon is intended to handle marshalling operations for the
  * inputs specified by the pump program. Once these inputs are marshalled,
@@ -26,25 +27,32 @@
 
 /**
  * do_pump -- Marshal the inputs specified by the pump client 
+ * @dpx : pointer to a duplex channel
+ * @path: directory to be marshalled
+ * Returns nothing.
  */ 
-const char *do_pump(struct dpx_t *dpx, const char *path)
+void do_pump(struct dpx_t *dpx, const char *path)
 {
         DIR  *dir;
-        char *filename;
+        const char *file;
 
         dir = opendir(path);
 
-        dpx_read(dpx); // Wait for client to connect
+        /* Wait for client to connect to channel */
+        dpx_read(dpx);
 
-        dpx_send(dpx, dpx->path);
-
-        for (filename  = getfile(dir, F_REG);
-             filename != NULL;
-             filename  = getfile(NULL, F_REG))
+        /* Write each filename into the channel */
+        for (file  = getfile(dir, F_REG); 
+             file != NULL; 
+             file  = getfile(NULL, F_REG)) 
         {
-                dpx_send(dpx, filename);
+                dpx_send(dpx, file);
         }
+
+        /* Notify when all filenames have been written */
         dpx_send(dpx, "done");
+
+        /* Wait for further instructions */
         dpx_read(dpx);
 
         if (STRCMP(dpx->buf, "ack")) {
@@ -58,9 +66,10 @@ const char *do_pump(struct dpx_t *dpx, const char *path)
 
 /**
  * spawn_pump_handler -- Create a process to handle a pump client request
- * @id: unique identifier for named pipes and other resolution 
+ * @path: Marshalling path for the pump 
+ * @chan: unique identifier for the channel 
  */
-void spawn_pump_handler(const char *path, const char *id)
+void spawn_pump_handler(const char *path, const char *chan)
 {
         struct dpx_t dpx;
 
@@ -70,7 +79,7 @@ void spawn_pump_handler(const char *path, const char *id)
         // ---------- process is now a daemon ---------- */
 
         /* Open a duplex channel as publisher */
-        dpx_open(&dpx, CHANNEL(id), CH_NEW | CH_PUB);
+        dpx_open(&dpx, CHANNEL(chan), CH_NEW | CH_PUB);
 
         /* Enter the loop driver */
         do_pump(&dpx, path);
@@ -112,13 +121,20 @@ void usage(void)
  */
 void pumpd(struct dpx_t *dpx)
 {
-        char id[255];
+        char id[PATHSIZE];
 
         for (;;) {
-                strcpy(id, "XXXXXX");
+                /* Load the tempfile template */
+                strlcpy(id, "XXXXXX", PATHSIZE);
+
+                /* Wait for a pump request */
                 dpx_read(dpx);
+
                 if (dpx->buf[0] != '\0') {
+                        /* Turn the template into a tempname */
                         tempname(id);
+
+                        /* Spawn a pump handler with that name */
                         spawn_pump_handler(dpx->buf, id);
 
                         /* Wait for pump handler to create files */

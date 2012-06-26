@@ -22,6 +22,7 @@
 #include "error.h"
 #include "util.h"
 #include "textutils.h"
+#include "list.h"
 
 
 /******************************************************************************
@@ -147,7 +148,6 @@ bool is_relpath(char *path)
 
 /******************************************************************************
  * FILE CREATION 
- * 
  ******************************************************************************/
 
 /**
@@ -173,7 +173,7 @@ int tempname(char *template)
 int tempdir(char *template)
 {
         char name[255];
-        int start;
+        int  start;
 
         strcpy(name, template);
 
@@ -389,7 +389,7 @@ int filecount(DIR *dir, int filter)
 /**
  * getfile -- like strtok
  */
-char *getfile(DIR *dir, int filter)
+const char *getfile(DIR *dir, int filter)
 {
         struct dirent *dirp;
         struct stat dstat;
@@ -398,7 +398,7 @@ char *getfile(DIR *dir, int filter)
         if (dir != NULL)
                 _dir = dir;
 
-        while ((dirp = readdir(_dir)) != NULL) {
+        while ((dirp = readdir(_dir)), dirp != NULL) {
                 /*
                  * If we cannot stat a file, we move on.
                  */
@@ -408,19 +408,72 @@ char *getfile(DIR *dir, int filter)
                  * If the F_HID filter is not set, and the file
                  * is is hidden, i.e. preceded by a '.', move on.
                  */
-                if (!hasvalue(filter, F_HID) && dirp->d_name[0] == '.')
-                                continue;
+                if (dirp->d_name[0] == '.' && !hasvalue(filter, F_HID))
+                        continue;
                 /* 
                  * If the file's type is included in the filter,
-                 * increment the counter. 
+                 * return that filename. 
                  */
-                if ((hasvalue(filter, F_TYPE(dstat.st_mode))))
-                                return dirp->d_name;
+                if (hasvalue(filter, F_TYPE(dstat.st_mode)))
+                        return dirp->d_name;
         }
         rewinddir(_dir);
         return NULL;
 }
 
+
+struct dirlist_t {
+        char filename[PATHSIZE];
+        struct list_node node;
+};
+
+
+void list_dir(struct list_head *head, DIR *dir, int filter)
+{
+        struct dirent *dirp;
+        struct stat dstat;
+
+        while ((dirp = readdir(dir)) != NULL) {
+                /*
+                 * If we cannot stat some file, we move on.
+                 */
+                if (stat(dirp->d_name, &dstat) == -1)
+                        continue;
+                /* 
+                 * If the F_HID filter is not set, and the file
+                 * is is hidden, i.e. preceded by a '.', move on.
+                 */
+                if (!hasvalue(filter, F_HID) && dirp->d_name[0] == '.')
+                        continue;
+                /* 
+                 * If the file's type is included in the filter,
+                 * add it to the list. 
+                 */
+                if ((hasvalue(filter, F_TYPE(dstat.st_mode)))) {
+                        struct dirlist_t *new;
+                        new = calloc(1, sizeof(struct dirlist_t));
+                        strlcat(new->filename, dirp->d_name, PATHSIZE);
+                        list_add(head, &new->node);
+                }
+        }
+}
+
+
+void cmp_dir(const char *path, int options)
+{
+        LIST_HEAD(old);
+        LIST_HEAD(new);
+        struct dirlist_t *tmp;
+        DIR *dir;
+
+        dir = opendir(path);
+
+        list_dir(&old, dir, options);
+
+        list_for_each(&old, tmp, node) {
+                printf("%s\n", tmp->filename);
+        }
+}
 
 /*void list_dir(DIR *dir, int options)*/
 /*{*/
@@ -484,5 +537,111 @@ char *getfile(DIR *dir, int filter)
         /*} else {*/
                 /*bye("Couldn't open directory");*/
         /*}*/
+/*}*/
+
+
+
+/*#define BUFF_SIZE	2048*/
+
+
+/*int filecmp(char *scr,char *copy);*/
+/*int dircmp(char *src, char *copy);*/
+/*void *sbuff;*/
+/*void *cbuff;*/
+/*int filecnt = 0;*/
+/*int dircnt = 0;*/
+
+
+/*int dircmp(char *src, char *copy)*/
+/*{*/
+	/*struct _finddata_t c_file;*/
+	/*long hFile;*/
+	/*char srcwc[_MAX_FNAME];*/
+	/*int ret = 0;*/
+	/*puts(src);*/
+	/*strcat(strcpy(srcwc,src),"*.*");*/
+	/*hFile = _findfirst(srcwc, &c_file);*/
+	/*if(hFile == -1L){*/
+		/*printf("A file doesn't exist in this directory.\n");*/
+		/*ret = -1;*/
+	/*}*/
+	/*else{*/
+		/*do{*/
+			/*char sname[_MAX_FNAME];*/
+			/*char cname[_MAX_FNAME];*/
+			/*if(strcmp(c_file.name,".")!=0 && strcmp(c_file.name,"..")!=0){*/
+				/*strcpy(sname,src);*/
+				/*strcat(sname,c_file.name);*/
+				/*strcpy(cname,copy);*/
+				/*strcat(cname,c_file.name);*/
+				/*if(c_file.attrib & _A_SUBDIR){*/
+					/*strcat(sname,"\\");*/
+					/*strcat(cname,"\\");*/
+					/*dircnt++;*/
+					/*if(ret = dircmp(sname,cname)) break;*/
+				/*}*/
+				/*else{*/
+					/*filecnt++;*/
+					/*if(ret = filecmp(sname,cname)) break;*/
+				/*}*/
+			/*}*/
+		/*}while(_findnext( hFile, &c_file ) == 0);*/
+		/*_findclose(hFile);*/
+	/*}*/
+	/*return ret;*/
+/*}*/
+
+/*int filecmp(char *src,char *copy){*/
+	/*int filesizeS, filesizeC;*/
+	/*int sh,ch;*/
+	/*int Sreadsize, Creadsize;*/
+	/*int ret = 0;*/
+
+	/*sh = _sopen(src, _O_RDONLY, _SH_DENYWR);*/
+	/*if(sh == -1){*/
+		/*printf("\"%s\" doesn't open it.\n", src);*/
+		/*return -1;*/
+	/*}*/
+	/*ch = _sopen(copy, _O_RDONLY, _SH_DENYWR);*/
+	/*if(ch == -1){*/
+		/*printf("\"%s\" doesn't open it.\n", copy);*/
+		/*_close(sh);*/
+		/*return -1;*/
+	/*}*/
+	/*_setmode(sh, _O_BINARY);*/
+	/*_setmode(ch, _O_BINARY);*/
+	/*filesizeS = _filelength(sh);*/
+	/*filesizeC = _filelength(ch);*/
+	/*if(filesizeS != filesizeC){*/
+		/*printf("The size of the file doesn't correspond.\n");*/
+		/*printf("\"%s\" : %d byte\n", src, filesizeS);*/
+		/*printf("\"%s\" : %d byte\n", copy, filesizeC);*/
+		/*ret = -1;*/
+	/*}*/
+	/*else{*/
+		/*for(;;){*/
+			/*Sreadsize = _read(sh, sbuff, BUFF_SIZE);*/
+			/*if(Sreadsize == -1){*/
+				/*printf("\"%s\" read error",src);*/
+				/*ret = -1;*/
+				/*break;*/
+			/*}*/
+			/*Creadsize = _read(ch, cbuff, BUFF_SIZE);*/
+			/*if(Creadsize == -1){*/
+				/*printf("\"%s\" read error (;_;)",copy);*/
+				/*ret = -1;*/
+				/*break;*/
+			/*}*/
+			/*if(memcmp(sbuff, cbuff, Sreadsize)){*/
+				/*printf("Difference was detected. (T_T) \"%s\" \n", copy);*/
+				/*ret = -1;*/
+				/*break;*/
+			/*}*/
+			/*if(Sreadsize != BUFF_SIZE) break;*/
+		/*}*/
+	/*}*/
+	/*_close(sh);*/
+	/*_close(ch);*/
+	/*return ret;*/
 /*}*/
 

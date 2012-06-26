@@ -83,6 +83,8 @@ int daemonize(void)
 	signal(SIGCLD, SIG_IGN); /* Ignore child death */
 	signal(SIGHUP, SIG_IGN); /* Ignore terminal hangups */
 	setpgrp();               /* Create new process group */
+
+        return 0;
 }
 
 
