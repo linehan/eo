@@ -20,27 +20,50 @@
 
 
 /******************************************************************************
- * PUMP HANDLERS
+ * PUMPS 
  * 
  * The pump daemon is intended to handle marshalling operations for the
- * inputs specified by the pump program. Once these inputs are marshalled,
- * they can be yielded back to the pump client as required. The job of
- * the client is simply to deliver the individual inputs to the pump logic.
+ * inputs specified by the pump client. The way it does this is by creating
+ * a process context in the form of a pump object, and then forking a new
+ * process to handle the client's request. The client is then directed to
+ * re-connect with the pump object on a dedicated channel.
+ *
+ * Once the client is talking directly to the pump object, it essentially has
+ * its own worker process at its disposal. In the most common usage, the
+ * pump object will marshal inputs in the form of a directory listing, and
+ * yield those inputs to the client as requested. 
+ *
+ * In this way, the client must only specify the general logic for handling 
+ * a single input, and can leave the marshalling and juggling to the pump 
+ * process. 
  *
  ******************************************************************************/
 
+/*
+ * The pump object datatype (PRIVATE)
+ */
+
 struct pump_t {
-        struct dpx_t dpx;
-        struct pth_t watcher;
-        struct nav_t breadcrumb;
-        char target[PATHSIZE];
-        char channel[PATHSIZE];
-        int mode;
+        int mode;                // Used by pump daemon
+        struct nav_t breadcrumb; // Tracks working directory
+        struct dpx_t dpx;        // Duplex channel link
+        struct pth_t watcher;    // Watcher thread for DIR I/O 
+        char target[PATHSIZE];   // Directory to be pumped
+        char channel[PATHSIZE];  // Channel identification string
+        DIR *stream;             // Where the money comes out
 };
 
 
 /**
  * new_pump
+ * ````````
+ * Create a dynamically-allocated pump object.
+ * 
+ * @target : the directory to be pumped
+ * @channel: the name of the channel to publish on
+ * @mode   : whether to fork the process or not
+ * Return  : pointer to an allocated pump object.
+ *
  */
 struct pump_t *new_pump(char *target, char *channel, int mode)
 {
@@ -51,25 +74,33 @@ struct pump_t *new_pump(char *target, char *channel, int mode)
         new->mode = mode;
 
         strlcpy(new->target, target, PATHSIZE);
-        strlcpy(new->channel, channel, 32);
+        strlcpy(new->channel, channel, PATHSIZE);
 
         return new;
 }
 
 
 /**
- * do_pump -- Marshal the inputs specified by the pump client 
- * @dpx : pointer to a duplex channel
- * @path: directory to be marshalled
- * Returns nothing.
+ * pump_files 
+ * ``````````
+ * Transmit filenames in the target directory to the client.
+ *
+ * @p    : pointer to an initialized pump object 
+ * Return: does not return.
+ *
+ * NOTES
+ * Once this function is entered, the pump object and the worker thread
+ * associated with it will only exist for the duration of the client's
+ * connection. If a disconnection occurs, the channel and memory will
+ * be free'd and the process will be killed. 
+ *
  */ 
-void do_pump(struct pump_t *p)
+void pump_files(struct pump_t *p)
 {
         const char *file;
-        DIR        *dir;
 
         /* Open directory stream */
-        dir = opendir(p->target);
+        p->stream = opendir(p->target);
 
         /* Shift working directory to target */
         nav_shift(&p->breadcrumb, p->target);
@@ -82,24 +113,15 @@ void do_pump(struct pump_t *p)
         rediff:
 
         /* Write each filename into the channel */
-        for (file  = getdiff(dir,  F_REG); 
+        for (file  = getdiff(p->stream,  F_REG); 
              file != NULL; 
              file  = getdiff(NULL, F_REG)) 
         {
                 dpx_send(&p->dpx, file);
         }
 
-        /* 
-         * Notify client when all filenames 
-         * have been written 
-         */
-        dpx_send(&p->dpx, "DONE");
-
-        /* 
-         * Wait for further instructions from 
-         * the client
-         */
-        dpx_read(&p->dpx);
+        dpx_send(&p->dpx, "DONE"); // notify client
+        dpx_read(&p->dpx);         // wait for instructions
 
         /*
          * Unless the client indicates that
@@ -112,22 +134,101 @@ void do_pump(struct pump_t *p)
                 goto rediff;
         }
 
-        /*
-         * Tidy up any descriptors and/or files 
-         * on disk.
-         */
-        closedir(dir);
+        exit(0);
+}
+
+
+/*
+ * NOTICE 
+ * Because each process has its own stack, and a pump object maps
+ * reasonably well to an individual process, the global variable 
+ * "current_pump" is able to maintain scope such that the signal
+ * handler can feed it to kill_pump() when SHTF, and cleanup can
+ * be performed in an orderly way before the process terminates. 
+ */
+struct pump_t *current_pump;
+
+
+/**
+ * catch_signal
+ * ````````````
+ * Call kill_pump() to perform cleanup before process termination.
+ *
+ * @signo : signal number sent from the kernel
+ * Returns: does not return.
+ */
+void catch_signal(int signo)
+{
+        if (current_pump)
+                kill_pump(current_pump);
+}
+
+
+/**
+ * register_pump
+ * `````````````
+ * Register the pump object and set the signal handlers.
+ *
+ * @p: pump object
+ * Returns: nothing.
+ *
+ * NOTE
+ * We have to set "current_pump" in order for the signal handler
+ * to perform appropriate cleanup. Remember, we should be in a 
+ * worker process, so assigning the pump to a global variable is 
+ * less global than it seems at first glance.
+ */
+void register_pump(struct pump_t *p)
+{
+        current_pump = p;
+
+        signal(SIGABRT, catch_signal);
+        signal(SIGINT,  catch_signal);
+        signal(SIGTERM, catch_signal);
+        signal(SIGPIPE, catch_signal);
+        signal(SIGQUIT, catch_signal);
+        signal(SIGSTOP, catch_signal);
+}
+
+
+/**
+ * kill_pump
+ * `````````
+ * Perform cleanup and arrange for an orderly termination of the process.
+ *
+ * Return: does not return.
+ */
+void kill_pump(struct pump_t *p)
+{
+        /* Close directory stream if it's open */
+        if (p->stream)
+                closedir(p->stream);
+
+        /* Close and unlink files on disk */
         dpx_close(&p->dpx);
         dpx_remove(p->dpx.path);
 
         /* Restore current working directory */
         nav_revert(&p->breadcrumb);
 
-        exit(0);
 }
 
 
-
+/**
+ * open_pump 
+ * `````````
+ * Open a pump and its associated IPC channel, fork if mode specifies.
+ *
+ * @p    : pointer to an un-initialized pump object 
+ * Return: nothing / child does not return.
+ *
+ * NOTES 
+ * After a pump has been "opened", it is essentially on its own, off
+ * in whatever elysian memory the kernel gives it. After this call,
+ * responsibility for the transaction effectively transfers to the 
+ * client. 
+ *
+ */ 
 void open_pump(struct pump_t *p)
 {
         if ((p->mode == P_FORK) && ((daemonize()) == -1))
@@ -135,10 +236,12 @@ void open_pump(struct pump_t *p)
 
         // ---------- process is now a daemon ---------- */
 
+        register_pump(p);
+
         /* Open a new duplex channel as publisher */
         dpx_open(&p->dpx, CHANNEL(p->channel), CH_NEW | CH_PUB);
 
         /* Enter the loop driver */
-        do_pump(p);
+        pump_files(p);
 }
 

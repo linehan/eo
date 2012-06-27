@@ -35,8 +35,11 @@
  ******************************************************************************/
 
 /**
- * usage -- Print the usage statement to stdout
- * Returns nothing.
+ * usage 
+ * `````
+ * Print the usage statement to stdout
+ * 
+ * Return: nothing.
  */
 void usage(void)
 {
@@ -45,9 +48,38 @@ void usage(void)
 
 
 /**
- * pumpd -- The loop driver executed by the running daemon
- * @dpx: pointer to an open duplex stream in PUBLISH mode
- * Returns nothing.
+ * pumpd_init 
+ * ``````````
+ * Perform filesystem checks and prepare environment.
+ * 
+ * Return: nothing.
+ */
+void pumpd_init(void)
+{
+        /* Reset permissions mask */
+        umask(0); 
+
+        /* Create configuration directory if none present */
+        if (!exists(CFG_PATH))
+                mkdir(CFG_PATH, DIR_PERMS);
+}
+
+
+/**
+ * pumpd
+ * `````
+ * The loop driver executed by the running daemon
+ * 
+ * @dpx  : pointer to an open duplex stream in PUBLISH mode
+ * Return: does not return.
+ *
+ * NOTES
+ * This is where the daemon really spends most of its time, the closest
+ * thing to a "main loop" that exists at the moment. It basically waits
+ * for a client to provide it with a path, then it creates a pump to
+ * handle that path and tells the client and pump what channel to meet
+ * up on. 
+ *
  */
 void pumpd(struct dpx_t *dpx)
 {
@@ -79,23 +111,15 @@ void pumpd(struct dpx_t *dpx)
 
 
 /**
- * pumpd_init -- Perform filesystem checks and prepare environment
- * Returns nothing.
- */
-void pumpd_init(void)
-{
-        /* Reset permissions mask */
-        umask(0); 
-
-        /* Create configuration directory if none present */
-        if (!exists(CFG_PATH))
-                mkdir(CFG_PATH, DIR_PERMS);
-}
-
-
-/**
- * pumpd_start -- Spawn a daemon, acquire a duplex channel, and listen
- * Returns nothing.
+ * pumpd_start 
+ * ```````````
+ * Spawn a daemon, acquire a duplex channel, and listen
+ *
+ * Return: does not return.
+ *
+ * FIXME
+ * This needs to be factored with pump_open() in pumps.c 
+ *
  */
 void pumpd_start(void)
 {
@@ -120,8 +144,11 @@ void pumpd_start(void)
 
 
 /**
- * pumpd_stop -- Terminate the daemon and perform cleanup
- * Returns nothing.
+ * pumpd_stop 
+ * ``````````
+ * Terminate the daemon and perform cleanup
+ *
+ * Return: does not return.
  */
 void pumpd_stop(void)
 {
@@ -138,8 +165,11 @@ void pumpd_stop(void)
 
 
 /**
- * pumpd_stat -- Print the status of the pump daemon to stdout
- * Returns nothing.
+ * pumpd_stat 
+ * ``````````
+ * Print the status of the pump daemon to stdout
+ *
+ * Return: nothing.
  */
 void pumpd_stat(void)
 {
