@@ -119,7 +119,7 @@ void pump_list(char *path)
          */
         for (;;) {
                 dpx_read(&dpx);
-                if (STRCMP(dpx.buf, "done")) {
+                if (STRCMP(dpx.buf, "DONE")) {
                         dpx_send(&dpx, "ack"); // Tell pump we received "done"
                         continue;
                 }
@@ -136,9 +136,6 @@ void pump_list(char *path)
  */ 
 void pump_print(char *path)
 {
-        /*char abspath[PATHSIZE];*/
-
-        /*make_path_absolute(abspath, path);*/
         dlist_print(path, 0);
 }
 

@@ -14,13 +14,13 @@ const char *getfile(DIR *dir, int options);
 const char *getdiff(DIR *dir, int filter);
 
 
-struct breadcrumb_t {
+struct nav_t {
         char home[PATHSIZE];
         bool away;
 };
 
-void cwd_mark  (struct breadcrumb_t *dirnav);
-void cwd_shift (struct breadcrumb_t *dirnav, const char *path);
-void cwd_revert(struct breadcrumb_t *dirnav);
+void nav_mark  (struct nav_t *breadcrumb);
+void nav_shift (struct nav_t *breadcrumb, const char *path);
+void nav_revert(struct nav_t *breadcrumb);
 
 #endif

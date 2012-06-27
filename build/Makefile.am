@@ -30,6 +30,7 @@ pmp_SOURCES   = src/pump/pump.c              \
 
 
 pumpd_SOURCES = src/pumpd/pumpd.c            \
+                src/pumpd/pumps.c            \
                 src/common/daemon.c          \
                 src/common/channel.c         \
                 src/common/util.c            \

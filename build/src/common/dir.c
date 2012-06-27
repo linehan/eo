@@ -160,23 +160,23 @@ const char *getdiff(DIR *dir, int filter)
 }
 
 
-void cwd_mark(struct breadcrumb_t *bc)
+void nav_mark(struct nav_t *breadcrumb)
 {
-        strlcpy(bc->home, scwd(), PATHSIZE); 
+        strlcpy(breadcrumb->home, scwd(), PATHSIZE); 
 }
 
-void cwd_shift(struct breadcrumb_t *bc, const char *path)
+void nav_shift(struct nav_t *breadcrumb, const char *path)
 {
-        cwd_mark(bc);
+        nav_mark(breadcrumb);
         chdir(path);
-        bc->away = true;
+        breadcrumb->away = true;
 }
 
-void cwd_revert(struct breadcrumb_t *bc)
+void nav_revert(struct nav_t *breadcrumb)
 {
-        if (bc->away) {
-                chdir(bc->home);
-                bc->away = false;
+        if (breadcrumb->away) {
+                chdir(breadcrumb->home);
+                breadcrumb->away = false;
         }
 }
 
@@ -257,12 +257,12 @@ void dlist_print(const char *path, int options)
 {
         LIST_HEAD(list);
         struct dlist_node *tmp;
-        struct breadcrumb_t nav;
+        struct nav_t nav;
         DIR *dir;
 
         dir = opendir(path);
 
-        cwd_shift(&nav, path); 
+        nav_shift(&nav, path); 
 
         dlist_load(&list, dir, options);
 
@@ -272,7 +272,7 @@ void dlist_print(const char *path, int options)
 
         dlist_del(&list);
 
-        cwd_revert(&nav);
+        nav_revert(&nav);
 }
 
 

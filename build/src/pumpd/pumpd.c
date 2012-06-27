@@ -5,9 +5,9 @@
 #include <stdarg.h>
 #include <signal.h>
 #include <unistd.h>
-#include <pthread.h>
 
 #include "pumpd.h"
+#include "pumps.h"
 #include "../common/error.h"
 #include "../common/daemon.h"
 #include "../common/file.h"
@@ -15,8 +15,6 @@
 #include "../common/configfiles.h"
 #include "../common/textutils.h"
 #include "../common/dir.h"
-#include "../common/lib/pth/thread.h"
-
 
 
 /******************************************************************************
@@ -67,9 +65,7 @@ void pumpd(struct dpx_t *dpx)
                         tempname(id);
 
                         /* Spawn a pump handler with that name */
-                        /*spawn_pump_handler(dpx->buf, id);*/
-                        struct pump_t *p = new_pump(dpx->buf, id, P_FORK);
-                        open_pump(p);
+                        open_pump(new_pump(dpx->buf, id, P_FORK));
 
                         /* Wait for pump handler to create files */
                         while (!exists(CHANNEL(id)))

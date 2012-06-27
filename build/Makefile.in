@@ -71,7 +71,7 @@ am_pmp_OBJECTS = src/pump/pump.$(OBJEXT) src/pump/meta.$(OBJEXT) \
 	src/common/sha256/sha2.$(OBJEXT)
 pmp_OBJECTS = $(am_pmp_OBJECTS)
 pmp_LDADD = $(LDADD)
-am_pumpd_OBJECTS = src/pumpd/pumpd.$(OBJEXT) \
+am_pumpd_OBJECTS = src/pumpd/pumpd.$(OBJEXT) src/pumpd/pumps.$(OBJEXT) \
 	src/common/daemon.$(OBJEXT) src/common/channel.$(OBJEXT) \
 	src/common/util.$(OBJEXT) src/common/textutils.$(OBJEXT) \
 	src/common/file.$(OBJEXT) src/common/dir.$(OBJEXT) \
@@ -238,6 +238,7 @@ pmp_SOURCES = src/pump/pump.c              \
                 src/common/sha256/sha2.c
 
 pumpd_SOURCES = src/pumpd/pumpd.c            \
+                src/pumpd/pumps.c            \
                 src/common/daemon.c          \
                 src/common/channel.c         \
                 src/common/util.c            \
@@ -380,6 +381,8 @@ src/pumpd/$(DEPDIR)/$(am__dirstamp):
 	@: > src/pumpd/$(DEPDIR)/$(am__dirstamp)
 src/pumpd/pumpd.$(OBJEXT): src/pumpd/$(am__dirstamp) \
 	src/pumpd/$(DEPDIR)/$(am__dirstamp)
+src/pumpd/pumps.$(OBJEXT): src/pumpd/$(am__dirstamp) \
+	src/pumpd/$(DEPDIR)/$(am__dirstamp)
 pumpd$(EXEEXT): $(pumpd_OBJECTS) $(pumpd_DEPENDENCIES) $(EXTRA_pumpd_DEPENDENCIES) 
 	@rm -f pumpd$(EXEEXT)
 	$(LINK) $(pumpd_OBJECTS) $(pumpd_LDADD) $(LIBS)
@@ -398,6 +401,7 @@ mostlyclean-compile:
 	-rm -f src/pump/meta.$(OBJEXT)
 	-rm -f src/pump/pump.$(OBJEXT)
 	-rm -f src/pumpd/pumpd.$(OBJEXT)
+	-rm -f src/pumpd/pumps.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
@@ -414,6 +418,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/pump/$(DEPDIR)/meta.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/pump/$(DEPDIR)/pump.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/pumpd/$(DEPDIR)/pumpd.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/pumpd/$(DEPDIR)/pumps.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
