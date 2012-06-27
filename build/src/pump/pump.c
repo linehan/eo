@@ -14,6 +14,8 @@
 #include "../common/curses.h"
 #include "../common/configfiles.h"
 #include "../common/textutils.h"
+#include "../common/hashes/hash.h"
+#include "../common/lib/bloom/bloom.h"
 
 
 /******************************************************************************
@@ -81,6 +83,10 @@ void pump_list(char *path)
         struct dpx_t dpx;
         char abspath[255];
 
+        /*static struct bloom_t *bloom;*/
+
+        /*bloom = bloom_new(250000, 3, fnv_hash, sdbm_hash, djb2_hash);*/
+
         if (is_relpath(path))
                 rel2abs(path, abspath);
         else
@@ -98,20 +104,41 @@ void pump_list(char *path)
         /* Close the control channel and open the new channel */
         dpx_close(&dpx);
         dpx_open(&dpx, CHANNEL(dpx.buf), CH_SUB);
-        dpx_send(&dpx, "ack"); // Tell the pump that we're ready to receive
+        dpx_send(&dpx, "ack"); // Tell pump we received "done"
 
         /* Receive file listing until "done" message from pump */
         for (;;) {
                 dpx_read(&dpx);
                 if (STRCMP(dpx.buf, "done")) {
                         dpx_send(&dpx, "ack"); // Tell pump we received "done"
-                        break;
+                        continue;
                 }
-                printf("%s\n", dpx.buf);
+                /*if (bloom_check(bloom, dpx.buf)) {*/
+                        /*continue;*/
+                /*} else {*/
+                        /*bloom_add(bloom, dpx.buf);*/
+                        printf("%s\n", dpx.buf);
+                /*}*/
         }
-        /*cmp_dir(abspath, F_REG);*/
+        /*bloom_del(bloom);*/
         dpx_close(&dpx);
 }
+
+
+void pump_print(char *path)
+{
+        char abspath[255];
+
+        if (is_relpath(path))
+                rel2abs(path, abspath);
+        else
+                strcpy(abspath, path);
+
+        dlist_print(abspath, F_REG);
+}
+
+
+
 
 
 /******************************************************************************
@@ -135,6 +162,9 @@ int main(int argc, char *argv[])
 
         else if (isarg(1, ":-"))
                 (ARG(2)) ? pump_list(ARG(2)) : usage();
+
+        else if (isarg(1, "::"))
+                (ARG(2)) ? pump_print(ARG(2)) : usage();
 
         return 0;
 }

@@ -16,25 +16,29 @@ man1_MANS     = doc/pumpd.man doc/pmp.man
 
 bin_PROGRAMS  = pmp pumpd
 
-pmp_SOURCES   = src/pump/pump.c          \
-                src/pump/meta.c          \
-                src/common/daemon.c      \
-                src/common/channel.c     \
-                src/common/util.c        \
-                src/common/textutils.c   \
-                src/common/file.c        \
-                src/common/error.c       \
-                src/common/curses.c      \
+pmp_SOURCES   = src/pump/pump.c              \
+                src/pump/meta.c              \
+                src/common/daemon.c          \
+                src/common/channel.c         \
+                src/common/util.c            \
+                src/common/textutils.c       \
+                src/common/file.c            \
+                src/common/dir.c             \
+                src/common/error.c           \
+                src/common/curses.c          \
+                src/common/lib/bloom/bloom.c \
                 src/common/sha256/sha2.c
 
 
-pumpd_SOURCES = src/pumpd/pumpd.c        \
-                src/common/daemon.c      \
-                src/common/channel.c     \
-                src/common/util.c        \
-                src/common/textutils.c   \
-                src/common/file.c        \
-                src/common/error.c       \
+pumpd_SOURCES = src/pumpd/pumpd.c            \
+                src/common/daemon.c          \
+                src/common/channel.c         \
+                src/common/util.c            \
+                src/common/textutils.c       \
+                src/common/file.c            \
+                src/common/dir.c             \
+                src/common/error.c           \
+                src/common/lib/bloom/bloom.c \
                 src/common/sha256/sha2.c
 
 

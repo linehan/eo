@@ -13,6 +13,7 @@
 #include "../common/channel.h"
 #include "../common/configfiles.h"
 #include "../common/textutils.h"
+#include "../common/dir.h"
 
 
 /******************************************************************************
@@ -41,10 +42,12 @@ void do_pump(struct dpx_t *dpx, const char *path)
         /* Wait for client to connect to channel */
         dpx_read(dpx);
 
+        rediff:
+
         /* Write each filename into the channel */
-        for (file  = getfile(dir, F_REG); 
+        for (file  = getdiff(dir, F_REG); 
              file != NULL; 
-             file  = getfile(NULL, F_REG)) 
+             file  = getdiff(NULL, F_REG)) 
         {
                 dpx_send(dpx, file);
         }
@@ -55,11 +58,15 @@ void do_pump(struct dpx_t *dpx, const char *path)
         /* Wait for further instructions */
         dpx_read(dpx);
 
-        if (STRCMP(dpx->buf, "ack")) {
-                closedir(dir);
-                dpx_close(dpx);
-                dpx_remove(dpx->path);
+        if (!(STRCMP(dpx->buf, "STOP"))) {
+                sleep(1);
+                goto rediff;
         }
+
+        closedir(dir);
+        dpx_close(dpx);
+        dpx_remove(dpx->path);
+
         exit(0);
 }
 

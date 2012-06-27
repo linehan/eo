@@ -65,14 +65,18 @@ am__dirstamp = $(am__leading_dot)dirstamp
 am_pmp_OBJECTS = src/pump/pump.$(OBJEXT) src/pump/meta.$(OBJEXT) \
 	src/common/daemon.$(OBJEXT) src/common/channel.$(OBJEXT) \
 	src/common/util.$(OBJEXT) src/common/textutils.$(OBJEXT) \
-	src/common/file.$(OBJEXT) src/common/error.$(OBJEXT) \
-	src/common/curses.$(OBJEXT) src/common/sha256/sha2.$(OBJEXT)
+	src/common/file.$(OBJEXT) src/common/dir.$(OBJEXT) \
+	src/common/error.$(OBJEXT) src/common/curses.$(OBJEXT) \
+	src/common/lib/bloom/bloom.$(OBJEXT) \
+	src/common/sha256/sha2.$(OBJEXT)
 pmp_OBJECTS = $(am_pmp_OBJECTS)
 pmp_LDADD = $(LDADD)
 am_pumpd_OBJECTS = src/pumpd/pumpd.$(OBJEXT) \
 	src/common/daemon.$(OBJEXT) src/common/channel.$(OBJEXT) \
 	src/common/util.$(OBJEXT) src/common/textutils.$(OBJEXT) \
-	src/common/file.$(OBJEXT) src/common/error.$(OBJEXT) \
+	src/common/file.$(OBJEXT) src/common/dir.$(OBJEXT) \
+	src/common/error.$(OBJEXT) \
+	src/common/lib/bloom/bloom.$(OBJEXT) \
 	src/common/sha256/sha2.$(OBJEXT)
 pumpd_OBJECTS = $(am_pumpd_OBJECTS)
 pumpd_LDADD = $(LDADD)
@@ -221,24 +225,28 @@ AUTOMAKE_OPTIONS = foreign subdir-objects
 #                  support
 #             
 man1_MANS = doc/pumpd.man doc/pmp.man
-pmp_SOURCES = src/pump/pump.c          \
-                src/pump/meta.c          \
-                src/common/daemon.c      \
-                src/common/channel.c     \
-                src/common/util.c        \
-                src/common/textutils.c   \
-                src/common/file.c        \
-                src/common/error.c       \
-                src/common/curses.c      \
+pmp_SOURCES = src/pump/pump.c              \
+                src/pump/meta.c              \
+                src/common/daemon.c          \
+                src/common/channel.c         \
+                src/common/util.c            \
+                src/common/textutils.c       \
+                src/common/file.c            \
+                src/common/dir.c             \
+                src/common/error.c           \
+                src/common/curses.c          \
+                src/common/lib/bloom/bloom.c \
                 src/common/sha256/sha2.c
 
-pumpd_SOURCES = src/pumpd/pumpd.c        \
-                src/common/daemon.c      \
-                src/common/channel.c     \
-                src/common/util.c        \
-                src/common/textutils.c   \
-                src/common/file.c        \
-                src/common/error.c       \
+pumpd_SOURCES = src/pumpd/pumpd.c            \
+                src/common/daemon.c          \
+                src/common/channel.c         \
+                src/common/util.c            \
+                src/common/textutils.c       \
+                src/common/file.c            \
+                src/common/dir.c             \
+                src/common/error.c           \
+                src/common/lib/bloom/bloom.c \
                 src/common/sha256/sha2.c
 
 all: all-am
@@ -341,10 +349,21 @@ src/common/textutils.$(OBJEXT): src/common/$(am__dirstamp) \
 	src/common/$(DEPDIR)/$(am__dirstamp)
 src/common/file.$(OBJEXT): src/common/$(am__dirstamp) \
 	src/common/$(DEPDIR)/$(am__dirstamp)
+src/common/dir.$(OBJEXT): src/common/$(am__dirstamp) \
+	src/common/$(DEPDIR)/$(am__dirstamp)
 src/common/error.$(OBJEXT): src/common/$(am__dirstamp) \
 	src/common/$(DEPDIR)/$(am__dirstamp)
 src/common/curses.$(OBJEXT): src/common/$(am__dirstamp) \
 	src/common/$(DEPDIR)/$(am__dirstamp)
+src/common/lib/bloom/$(am__dirstamp):
+	@$(MKDIR_P) src/common/lib/bloom
+	@: > src/common/lib/bloom/$(am__dirstamp)
+src/common/lib/bloom/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/common/lib/bloom/$(DEPDIR)
+	@: > src/common/lib/bloom/$(DEPDIR)/$(am__dirstamp)
+src/common/lib/bloom/bloom.$(OBJEXT):  \
+	src/common/lib/bloom/$(am__dirstamp) \
+	src/common/lib/bloom/$(DEPDIR)/$(am__dirstamp)
 src/common/sha256/$(am__dirstamp):
 	@$(MKDIR_P) src/common/sha256
 	@: > src/common/sha256/$(am__dirstamp)
@@ -373,8 +392,10 @@ mostlyclean-compile:
 	-rm -f src/common/channel.$(OBJEXT)
 	-rm -f src/common/curses.$(OBJEXT)
 	-rm -f src/common/daemon.$(OBJEXT)
+	-rm -f src/common/dir.$(OBJEXT)
 	-rm -f src/common/error.$(OBJEXT)
 	-rm -f src/common/file.$(OBJEXT)
+	-rm -f src/common/lib/bloom/bloom.$(OBJEXT)
 	-rm -f src/common/sha256/sha2.$(OBJEXT)
 	-rm -f src/common/textutils.$(OBJEXT)
 	-rm -f src/common/util.$(OBJEXT)
@@ -388,10 +409,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/common/$(DEPDIR)/channel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/common/$(DEPDIR)/curses.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/common/$(DEPDIR)/daemon.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/common/$(DEPDIR)/dir.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/common/$(DEPDIR)/error.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/common/$(DEPDIR)/file.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/common/$(DEPDIR)/textutils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/common/$(DEPDIR)/util.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/common/lib/bloom/$(DEPDIR)/bloom.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/common/sha256/$(DEPDIR)/sha2.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/pump/$(DEPDIR)/meta.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/pump/$(DEPDIR)/pump.Po@am__quote@
@@ -598,6 +621,8 @@ distclean-generic:
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
 	-rm -f src/common/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/common/$(am__dirstamp)
+	-rm -f src/common/lib/bloom/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/common/lib/bloom/$(am__dirstamp)
 	-rm -f src/common/sha256/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/common/sha256/$(am__dirstamp)
 	-rm -f src/pump/$(DEPDIR)/$(am__dirstamp)
@@ -613,7 +638,7 @@ clean: clean-am
 clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf src/common/$(DEPDIR) src/common/sha256/$(DEPDIR) src/pump/$(DEPDIR) src/pumpd/$(DEPDIR)
+	-rm -rf src/common/$(DEPDIR) src/common/lib/bloom/$(DEPDIR) src/common/sha256/$(DEPDIR) src/pump/$(DEPDIR) src/pumpd/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -659,7 +684,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf src/common/$(DEPDIR) src/common/sha256/$(DEPDIR) src/pump/$(DEPDIR) src/pumpd/$(DEPDIR)
+	-rm -rf src/common/$(DEPDIR) src/common/lib/bloom/$(DEPDIR) src/common/sha256/$(DEPDIR) src/pump/$(DEPDIR) src/pumpd/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

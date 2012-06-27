@@ -27,12 +27,6 @@ char *gethome(void);
 int tempname(char *templ);
 int tempdir(char *templ);
 
-//void list_dir(DIR *dir, int options);
-void cmp_dir(const char *path, int options);
-
-int filecount(DIR *dir, int options);
-const char *getfile(DIR *dir, int options);
-
 void get_tokenf(char *dst, char B, char S, char C, const char *tok, const char *path);
 char *tokenf(char B, char S, char C, const char *tok, const char *path);
 
