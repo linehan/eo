@@ -82,12 +82,12 @@ void pump_logic(const char *logic)
 }
 
 
-void pump_list(char *path)
+void pump_list(char *abspath)
 {
         struct dpx_t dpx;
-        char abspath[PATHSIZE];
+        /*char abspath[PATHSIZE];*/
 
-        make_path_absolute(abspath, path);
+        /*make_path_absolute(abspath, path);*/
 
         /* Subscribe to the pump daemon's control channel */
         dpx_open(&dpx, CH("control"), CH_SUB);
@@ -136,10 +136,10 @@ void pump_list(char *path)
  */ 
 void pump_print(char *path)
 {
-        char abspath[PATHSIZE];
+        /*char abspath[PATHSIZE];*/
 
-        make_path_absolute(abspath, path);
-        dlist_print(abspath, F_REG);
+        /*make_path_absolute(abspath, path);*/
+        dlist_print(path, F_REG);
 }
 
 

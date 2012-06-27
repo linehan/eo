@@ -24,6 +24,7 @@
 #include "textutils.h"
 #include "list/list.h"
 #include "lib/bloom/bloom.h"
+#include "bits.h"
 
 
 /****************************************************************************** 
@@ -237,6 +238,8 @@ void dlist_print(const char *path, int options)
         DIR *dir;
 
         dir = opendir(path);
+
+        printf("path is: %s\n", path);
 
         dlist_load(&list, dir, options);
 

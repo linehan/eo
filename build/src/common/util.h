@@ -379,9 +379,6 @@ extern int __build_bug_on_failed;
 #define STR(a) #a
 #define EXP(a) a
 
-#define haszero(v)    (((v) - 0x01010101UL) & ~(v) & 0x80808080UL)
-#define hasvalue(x,n) (haszero((x) ^ (~0UL/255 * (n))))
-
 #include <string.h>
 
 static inline char *CONCAT(const char *a, const char *b)
