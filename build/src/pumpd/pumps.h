@@ -8,6 +8,7 @@ struct pump_t *__pump_fw;
 
 struct pump_t *new_pump(char *target, char *channel, int mode);
 void          open_pump(struct pump_t *p);
-void            do_pump(struct pump_t *p);
+void          kill_pump(struct pump_t *p);
+void         pump_files(struct pump_t *p);
 
 #endif
