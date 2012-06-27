@@ -25,7 +25,6 @@ pmp_SOURCES   = src/pump/pump.c              \
                 src/common/file.c            \
                 src/common/dir.c             \
                 src/common/error.c           \
-                src/common/curses.c          \
                 src/common/lib/bloom/bloom.c \
                 src/common/sha256/sha2.c
 

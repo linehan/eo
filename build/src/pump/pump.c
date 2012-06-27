@@ -11,10 +11,8 @@
 #include "../common/util.h"
 #include "../common/daemon.h"
 #include "../common/channel.h"
-#include "../common/curses.h"
 #include "../common/configfiles.h"
 #include "../common/textutils.h"
-#include "../common/hashes/hash.h"
 #include "../common/lib/bloom/bloom.h"
 
 
@@ -23,7 +21,9 @@
  ******************************************************************************/
 
 /**
- * usage -- Print the usage message to stdout and exit
+ * usage 
+ * `````
+ * Print the usage message to stdout and exit
  * Returns nothing.
  */
 void usage(void)
@@ -34,7 +34,9 @@ void usage(void)
 
 
 /**
- * pump_init -- Initialize a pump in the current working directory
+ * pump_init 
+ * `````````
+ * Initialize a pump in the current working directory
  * Returns nothing.
  */
 void pump_init(void)
@@ -65,7 +67,9 @@ void pump_init(void)
 
 
 /**
- * pump_logic -- Specify the logic that will drive the pump
+ * pump_logic 
+ * ``````````
+ * Specify the logic that will drive the pump
  * @statement: the logic statement
  * Returns nothing.
  */
@@ -81,63 +85,62 @@ void pump_logic(const char *logic)
 void pump_list(char *path)
 {
         struct dpx_t dpx;
-        char abspath[255];
+        char abspath[PATHSIZE];
 
-        /*static struct bloom_t *bloom;*/
-
-        /*bloom = bloom_new(250000, 3, fnv_hash, sdbm_hash, djb2_hash);*/
-
-        if (is_relpath(path))
-                rel2abs(path, abspath);
-        else
-                strcpy(abspath, path);
+        make_path_absolute(abspath, path);
 
         /* Subscribe to the pump daemon's control channel */
-        dpx_open(&dpx, CHANNEL("control"), CH_SUB);
-
+        dpx_open(&dpx, CH("control"), CH_SUB);
         dpx_send(&dpx, abspath); // Send the path we want to be listed
-        dpx_read(&dpx);          // Wait for channel to connect to... 
+        dpx_read(&dpx);          // Wait for response... 
 
-        /* Print the channel (diagnostic) */
-        printf("name: %s\nchan: %s\n\n", dpx.buf, CHANNEL(dpx.buf));
+        /* (diagnostic) */
+        printf("targ: %s\n", abspath);
+        printf("name: %s\nchan: %s\n\n", dpx.buf, CH(dpx.buf));
 
-        /* Close the control channel and open the new channel */
+        /* 
+         * Close the control channel and open 
+         * the channel that control sent us.
+         */ 
         dpx_close(&dpx);
-        dpx_open(&dpx, CHANNEL(dpx.buf), CH_SUB);
-        dpx_send(&dpx, "ack"); // Tell pump we received "done"
+        dpx_open(&dpx, CH(dpx.buf), CH_SUB);
+        dpx_send(&dpx, "ack"); // Tell pump we have arrived 
 
-        /* Receive file listing until "done" message from pump */
+        /* 
+         * Verify path with pump driver 
+         */
+        dpx_read(&dpx);
+        printf("pump reports path: %s\n", dpx.buf);
+        dpx_send(&dpx, "ack");
+
+        /* 
+         * Receive file listing until "done" message 
+         * is received from the pump 
+         */
         for (;;) {
                 dpx_read(&dpx);
                 if (STRCMP(dpx.buf, "done")) {
                         dpx_send(&dpx, "ack"); // Tell pump we received "done"
                         continue;
                 }
-                /*if (bloom_check(bloom, dpx.buf)) {*/
-                        /*continue;*/
-                /*} else {*/
-                        /*bloom_add(bloom, dpx.buf);*/
-                        printf("%s\n", dpx.buf);
-                /*}*/
+                printf("%s\n", dpx.buf);
         }
-        /*bloom_del(bloom);*/
         dpx_close(&dpx);
 }
 
 
+/**
+ * pump_print
+ * ``````````
+ * Print the filenames of a directory.
+ */ 
 void pump_print(char *path)
 {
-        char abspath[255];
+        char abspath[PATHSIZE];
 
-        if (is_relpath(path))
-                rel2abs(path, abspath);
-        else
-                strcpy(abspath, path);
-
+        make_path_absolute(abspath, path);
         dlist_print(abspath, F_REG);
 }
-
-
 
 
 

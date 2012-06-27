@@ -66,7 +66,7 @@ am_pmp_OBJECTS = src/pump/pump.$(OBJEXT) src/pump/meta.$(OBJEXT) \
 	src/common/daemon.$(OBJEXT) src/common/channel.$(OBJEXT) \
 	src/common/util.$(OBJEXT) src/common/textutils.$(OBJEXT) \
 	src/common/file.$(OBJEXT) src/common/dir.$(OBJEXT) \
-	src/common/error.$(OBJEXT) src/common/curses.$(OBJEXT) \
+	src/common/error.$(OBJEXT) \
 	src/common/lib/bloom/bloom.$(OBJEXT) \
 	src/common/sha256/sha2.$(OBJEXT)
 pmp_OBJECTS = $(am_pmp_OBJECTS)
@@ -234,7 +234,6 @@ pmp_SOURCES = src/pump/pump.c              \
                 src/common/file.c            \
                 src/common/dir.c             \
                 src/common/error.c           \
-                src/common/curses.c          \
                 src/common/lib/bloom/bloom.c \
                 src/common/sha256/sha2.c
 
@@ -353,8 +352,6 @@ src/common/dir.$(OBJEXT): src/common/$(am__dirstamp) \
 	src/common/$(DEPDIR)/$(am__dirstamp)
 src/common/error.$(OBJEXT): src/common/$(am__dirstamp) \
 	src/common/$(DEPDIR)/$(am__dirstamp)
-src/common/curses.$(OBJEXT): src/common/$(am__dirstamp) \
-	src/common/$(DEPDIR)/$(am__dirstamp)
 src/common/lib/bloom/$(am__dirstamp):
 	@$(MKDIR_P) src/common/lib/bloom
 	@: > src/common/lib/bloom/$(am__dirstamp)
@@ -390,7 +387,6 @@ pumpd$(EXEEXT): $(pumpd_OBJECTS) $(pumpd_DEPENDENCIES) $(EXTRA_pumpd_DEPENDENCIE
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f src/common/channel.$(OBJEXT)
-	-rm -f src/common/curses.$(OBJEXT)
 	-rm -f src/common/daemon.$(OBJEXT)
 	-rm -f src/common/dir.$(OBJEXT)
 	-rm -f src/common/error.$(OBJEXT)
@@ -407,7 +403,6 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@src/common/$(DEPDIR)/channel.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/common/$(DEPDIR)/curses.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/common/$(DEPDIR)/daemon.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/common/$(DEPDIR)/dir.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/common/$(DEPDIR)/error.Po@am__quote@

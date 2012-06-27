@@ -1,3 +1,0 @@
-[submodule "build/src/lib/bloom"]
-	path = build/src/lib/bloom
-	url = https://github.com/linehan/bloom.git

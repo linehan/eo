@@ -41,6 +41,8 @@ void do_pump(struct dpx_t *dpx, const char *path)
 
         /* Wait for client to connect to channel */
         dpx_read(dpx);
+        dpx_send(dpx, path); /* Make sure path is correct */
+        dpx_read(dpx);
 
         rediff:
 
@@ -76,7 +78,7 @@ void do_pump(struct dpx_t *dpx, const char *path)
  * @path: Marshalling path for the pump 
  * @chan: unique identifier for the channel 
  */
-void spawn_pump_handler(const char *path, const char *chan)
+void spawn_pump_handler(char *path, char *chan)
 {
         struct dpx_t dpx;
 

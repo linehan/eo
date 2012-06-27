@@ -1,7 +1,7 @@
 #ifndef _DIR_LISTING_H
 #define _DIR_LISTING_H
 
-#include "list.h"
+#include "list/list.h"
 
 void dlist_print(const char *path, int options);
 void dlist_load(struct list_head *head, DIR *dir, int filter);

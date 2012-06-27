@@ -122,25 +122,51 @@ char *gethome(void)
 
 
 /**
- * rel2abs -- resolve a relative path to an absolute path
+ * scwd -- get the current working directory
  */
-void rel2abs(char *rel, char *abs)
+char *scwd(void)
 {
-        if ((getcwd(abs, PATHSIZE)) == NULL)
+        static char buf[PATHSIZE];
+
+        if ((getcwd(buf, PATHSIZE)) == NULL)
                 bye("Could not stat working directory.");
 
-        strlcat(abs, CONCAT("/", rel), 255);
+        return buf;
 }
+
 
 
 /**
  * is_relpath -- check if path is relative
  */
-bool is_relpath(char *path)
+bool is_relpath(const char *path)
 {
         return (path[0] == '/') ? false : true;
 }
 
+
+
+/**
+ * make_path_absolute -- resolve a relative path to an absolute path
+ */
+void make_path_absolute(char *buf, const char *path)
+{
+        /*
+         * If it's already an absolute path, simply copy 
+         * it into the buffer and return.
+         */
+        if (!is_relpath(path)) {
+                buf = strlcpy(buf, path, strlen(path));
+                return;
+        }
+
+        /* 
+         * Otherwise, get the current working directory
+         * and append the relative path to it.
+         */
+        snprintf(buf, PATHSIZE, "%s/%s", scwd(), path);
+        /*strlcat(buf, CONCAT("/", path), PATHSIZE);*/
+}
 
 
 

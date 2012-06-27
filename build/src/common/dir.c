@@ -22,7 +22,7 @@
 #include "error.h"
 #include "util.h"
 #include "textutils.h"
-#include "list.h"
+#include "list/list.h"
 #include "lib/bloom/bloom.h"
 
 
@@ -119,10 +119,9 @@ const char *getdiff(DIR *dir, int filter)
         static DIR *_dir;
 
         if (dir != NULL) {
+                _dir = dir;
                 if (!bloom)
                         bloom = bloom_new(250000, 3, fnv_hash, sdbm_hash, djb2_hash);
-
-                _dir  = dir;
         }
 
         while ((dirp = readdir(_dir)), dirp != NULL) {
