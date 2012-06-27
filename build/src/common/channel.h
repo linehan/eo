@@ -44,5 +44,6 @@ void dpx_link  (struct dpx_t *dpx);
 
 void dpx_load  (struct dpx_t *dpx, const char *msg);
 void dpx_flush (struct dpx_t *dpx);
+void dpx_kill  (struct dpx_t *dpx, int signo);
 
 #endif

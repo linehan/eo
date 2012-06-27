@@ -50,9 +50,53 @@ struct pump_t {
         struct pth_t watcher;    // Watcher thread for DIR I/O 
         char target[PATHSIZE];   // Directory to be pumped
         char channel[PATHSIZE];  // Channel identification string
-        DIR *stream;             // Where the money comes out
-        int dirfd;
+        DIR *dir;                // Where the money comes out
+        int  dir_fd;             // File descriptor version of above
 };
+
+
+/*
+ * NOTICE 
+ * Because each process has its own stack, and a pump object maps
+ * reasonably well to an individual process, the global variable 
+ * "current_pump" is not as global as it seems. We need it to have
+ * global scope within a process context so that the signal handler
+ * can feed it to kill_pump() before the process terminates.
+ */
+struct pump_t *current_pump;
+
+
+/**
+ * catch_signal
+ * ````````````
+ * Call kill_pump() to perform cleanup before process termination.
+ *
+ * @signo : signal number sent from the kernel
+ * Returns: does not return.
+ */
+void catch_signal(int signo)
+{
+        if (current_pump)
+                kill_pump(current_pump);
+
+        signal(signo, SIG_DFL);
+        raise(signo);
+}
+
+
+/**
+ * register_pump
+ * `````````````
+ * Register the pump object and set the signal handlers.
+ *
+ * @p: pump object
+ * Returns: nothing.
+ */
+void register_pump(struct pump_t *p)
+{
+        current_pump = p;
+        sigreg(catch_signal);
+}
 
 
 /**
@@ -82,127 +126,6 @@ struct pump_t *new_pump(char *target, char *channel, int mode)
 
 
 /**
- * pump_files 
- * ``````````
- * Transmit filenames in the target directory to the client.
- *
- * @p    : pointer to an initialized pump object 
- * Return: does not return.
- *
- * NOTES
- * Once this function is entered, the pump object and the worker thread
- * associated with it will only exist for the duration of the client's
- * connection. If a disconnection occurs, the channel and memory will
- * be free'd and the process will be killed. 
- *
- */ 
-void pump_files(struct pump_t *p)
-{
-        const char *file;
-
-        /* Open directory stream */
-        p->stream = opendir(p->target);
-        p->dirfd  = dirfd(p->stream);
-
-        struct stat buf;
-        static time_t last;
-
-        /* Shift working directory to target */
-        nav_shift(&p->breadcrumb, p->target);
-
-        /* Wait for the client to connect to channel */
-        dpx_link(&p->dpx);
-        dpx_send(&p->dpx, p->target); // verification
-        dpx_read(&p->dpx);            // wait for ack
-
-        rediff:
-
-        /* Write each filename into the channel */
-        for (file  = getdiff(p->stream,  F_REG); 
-             file != NULL; 
-             file  = getdiff(NULL, F_REG)) 
-        {
-                dpx_send(&p->dpx, file);
-        }
-
-        dpx_send(&p->dpx, "DONE"); // notify client
-        dpx_read(&p->dpx);         // wait for instructions
-
-        /*
-         * Unless the client indicates that
-         * the pump should be suspended, wait
-         * one second and then jump back and
-         * begin processing the directory again.
-         */
-        if (!(STRCMP(p->dpx.buf, "STOP"))) {
-                last = time(NULL);
-                do { 
-                        fstat(p->dirfd, &buf);
-                        nsleep(100);
-                } while (buf.st_mtime <= last);
-
-                goto rediff;
-        }
-
-        exit(0);
-}
-
-
-/*
- * NOTICE 
- * Because each process has its own stack, and a pump object maps
- * reasonably well to an individual process, the global variable 
- * "current_pump" is able to maintain scope such that the signal
- * handler can feed it to kill_pump() when SHTF, and cleanup can
- * be performed in an orderly way before the process terminates. 
- */
-struct pump_t *current_pump;
-
-
-/**
- * catch_signal
- * ````````````
- * Call kill_pump() to perform cleanup before process termination.
- *
- * @signo : signal number sent from the kernel
- * Returns: does not return.
- */
-void catch_signal(int signo)
-{
-        if (current_pump)
-                kill_pump(current_pump);
-}
-
-
-/**
- * register_pump
- * `````````````
- * Register the pump object and set the signal handlers.
- *
- * @p: pump object
- * Returns: nothing.
- *
- * NOTE
- * We have to set "current_pump" in order for the signal handler
- * to perform appropriate cleanup. Remember, we should be in a 
- * worker process, so assigning the pump to a global variable is 
- * less global than it seems at first glance.
- */
-void register_pump(struct pump_t *p)
-{
-        current_pump = p;
-
-        signal(SIGABRT, catch_signal);
-        signal(SIGINT,  catch_signal);
-        signal(SIGTERM, catch_signal);
-        signal(SIGPIPE, catch_signal);
-        signal(SIGQUIT, catch_signal);
-        signal(SIGSTOP, catch_signal);
-        signal(SIGUSR1, catch_signal);
-}
-
-
-/**
  * kill_pump
  * `````````
  * Perform cleanup and arrange for an orderly termination of the process.
@@ -212,8 +135,8 @@ void register_pump(struct pump_t *p)
 void kill_pump(struct pump_t *p)
 {
         /* Close directory stream if it's open */
-        if (p->stream)
-                closedir(p->stream);
+        if (p->dir)
+                closedir(p->dir);
 
         /* Close and unlink files on disk */
         dpx_close(&p->dpx);
@@ -221,7 +144,6 @@ void kill_pump(struct pump_t *p)
 
         /* Restore current working directory */
         nav_revert(&p->breadcrumb);
-
 }
 
 
@@ -238,7 +160,6 @@ void kill_pump(struct pump_t *p)
  * in whatever elysian memory the kernel gives it. After this call,
  * responsibility for the transaction effectively transfers to the 
  * client. 
- *
  */ 
 void open_pump(struct pump_t *p)
 {
@@ -255,4 +176,102 @@ void open_pump(struct pump_t *p)
         /* Enter the loop driver */
         pump_files(p);
 }
+
+
+/**
+ * pump_idle
+ * `````````
+ * Listen on the open directory file descriptor and nanosleep.
+ *
+ * @p     : pointer to a running pump object
+ * @ns    : number of nanoseconds to sleep between stat calls
+ * Returns: When the directory has been modified
+ *
+ * NOTES
+ * The idle loop is pretty simple. The directory's file descriptor
+ * is queried using the fstat command, and the st_mtime member of
+ * the stat struct is examined. If its value is less than the time
+ * recorded when this function was called, the directory contents
+ * have not been modified, and we can continue idling. 
+ *
+ * USAGE 
+ * In practice, long nanoseconds may be hard to find. 
+ */
+void pump_idle(struct pump_t *p, long nanoseconds)
+{
+        time_t at_start;
+        struct stat buf;
+
+        at_start = time(NULL);
+
+        /* 
+         * If the file descriptor is rotten, return 
+         * immediately (no sleeping).
+         */
+        if (fstat(p->dir_fd, &buf) == EBADF)
+                return;
+
+        do { 
+                fstat(p->dir_fd, &buf);
+                nsleep(nanoseconds);
+
+        } while (buf.st_mtime <= at_start);
+}
+
+
+
+/**
+ * pump_files 
+ * ``````````
+ * Transmit filenames in the target directory to the client.
+ *
+ * @p    : pointer to an initialized pump object 
+ * Return: does not return.
+ *
+ * NOTES
+ * Once this function is entered, the pump object and the worker thread
+ * associated with it will only exist for the duration of the client's
+ * connection. If a disconnection occurs, the channel and memory will
+ * be free'd and the process will be killed. 
+ */ 
+void pump_files(struct pump_t *p)
+{
+        const char *file;
+
+        /* Open directory stream */
+        p->dir     = opendir(p->target);
+        p->dir_fd  = dirfd(p->dir);
+
+        /* Shift working directory to target */
+        nav_shift(&p->breadcrumb, p->target);
+
+        /* Wait for the client to connect to channel */
+        dpx_link(&p->dpx);
+        dpx_send(&p->dpx, p->target); // verify target 
+
+        rediff:
+
+        /* 
+         * Write each new filename into the channel. 
+         * Filenames that have already been sent are
+         * not yielded by getdiff, which keeps a Bloom
+         * filter to screen out the double-dippers. 
+         */
+        while ((file = getdiff(p->dir, F_REG))) {
+                dpx_send(&p->dpx, file);
+        }
+
+        dpx_send(&p->dpx, "DONE"); // notify client
+        dpx_read(&p->dpx);         // wait for instructions
+
+        /*
+         * Idle the pump until the directory contents 
+         * are modified.
+         */
+        pump_idle(p, 100);
+        goto rediff;
+
+        exit(0);
+}
+
 

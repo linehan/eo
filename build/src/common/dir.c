@@ -110,10 +110,13 @@ const char *getfile(DIR *dir, int filter)
 }
 
 
+
+
+
 /**
  * getdiff
  */
-const char *getdiff(DIR *dir, int filter)
+const char *_getdiff(DIR *dir, int filter)
 {
         static struct bloom_t *bloom;
         struct dirent *dirp;
@@ -158,6 +161,26 @@ const char *getdiff(DIR *dir, int filter)
         rewinddir(_dir);
         return NULL;
 }
+
+const char *getdiff(DIR *dir, int filter)
+{
+        static bool running = false;
+        const char *filename;
+        DIR *_dir = NULL; 
+
+        if (!running) {
+                _dir    = dir;
+                running = true;
+        }
+
+        filename = _getdiff(_dir, filter);
+
+        if (filename == NULL)
+                running = false;
+
+        return filename;
+}
+
 
 
 void nav_mark(struct nav_t *breadcrumb)

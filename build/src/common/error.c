@@ -4,6 +4,8 @@
 #include <errno.h>
 #include <stdarg.h>
 
+#include "error.h"
+
 #define USE_ERRNO_H
 
 #ifdef USE_ERRNO_H
@@ -135,36 +137,21 @@ void abort_report(const char *fmt, ...)
  *
  ******************************************************************************/
 
-/**
- * handle_signal_simple -- clean up and exit on receipt of certain signals
- * @signo: signal number
- */
-/*void handle_signal_verbose(int signo, siginfo_t *info, void *context)*/
-/*{*/
-        /*handle_signal_simple(signo);*/
-/*}*/
-
-
-/*[> The new signal handling configuration <]*/
-/*const struct sigaction new_action = {*/
-        /*.sa_handler   = &handle_signal_simple,*/
-        /*.sa_mask      = 0,*/
-        /*.sa_flags     = 0,*/
-        /*.sa_sigaction = &handle_signal_verbose,*/
-/*};*/
-
-/*struct sigaction old_action = {0}; [> Default configuration <]*/
-
 
 /**
- * init_signal_handlers -- provide the handler functions to the system 
+ * sigreg -- register a function to handle standard signals
  */
-/*void init_signal_handlers(void)*/
-/*{*/
-        /*sigaction(SIGINT,  &new_action, &old_action);*/
-        /*sigaction(SIGSEGV, &new_action, &old_action);*/
-        /*sigaction(SIGABRT, &new_action, &old_action); [> assert uses abort() <]*/
-/*}*/
-
+void sigreg(sig_handler_t handler)
+{
+        signal(SIGINT,  handler);
+        signal(SIGABRT, handler);
+        signal(SIGINT,  handler);
+        signal(SIGTERM, handler);
+        signal(SIGPIPE, handler);
+        signal(SIGQUIT, handler);
+        signal(SIGSTOP, handler);
+        signal(SIGUSR1, handler);
+        signal(SIGUSR2, handler);
+}
 
 

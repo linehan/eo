@@ -478,5 +478,12 @@ void dpx_link(struct dpx_t *dpx)
 }
 
 
+/**
+ * dpx_kill -- signal the other end of a duplex link using the stored PID
+ */
+void dpx_kill(struct dpx_t *dpx, int signo)
+{
+        kill(dpx->remote_pid, signo);
+}
 
 

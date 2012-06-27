@@ -10,5 +10,6 @@ struct pump_t *new_pump(char *target, char *channel, int mode);
 void          open_pump(struct pump_t *p);
 void          kill_pump(struct pump_t *p);
 void         pump_files(struct pump_t *p);
+void          pump_idle(struct pump_t *p, long nanoseconds);
 
 #endif

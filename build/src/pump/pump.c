@@ -94,24 +94,13 @@ void catchsig(int signo)
         raise(signo);
 }
 
-void regsig(void)
-{
-        signal(SIGABRT, catchsig);
-        signal(SIGINT,  catchsig);
-        signal(SIGTERM, catchsig);
-        signal(SIGPIPE, catchsig);
-        signal(SIGQUIT, catchsig);
-        signal(SIGSTOP, catchsig);
-        signal(SIGUSR1, catchsig);
-}
-
 
 void pump_list(char *path)
 {
         struct dpx_t dpx;
         char abspath[PATHSIZE];
 
-        regsig();
+        sigreg(catchsig);
 
         make_path_absolute(abspath, path);
 
@@ -132,16 +121,19 @@ void pump_list(char *path)
         dpx_close(&dpx);
         dpx_open(&dpx, CH(dpx.buf), CH_SUB);
         dpx_link(&dpx);
-        /*dpx_send(&dpx, "ack"); // Tell pump we have arrived */
+
+        /*
+         * Print the pump server's PID (diagnostic) and register
+         * it with the signal handler so we can tell it we hung up.
+         */
+        printf("pump PID: %d\n", dpx.remote_pid);
+        bigpid = dpx.remote_pid;
 
         /* 
          * Verify path with pump driver 
          */
         dpx_read(&dpx);
         printf("pump reports path: %s\n", dpx.buf);
-        dpx_send(&dpx, "ack");
-        printf("pump PID: %d\n", dpx.remote_pid);
-        bigpid = dpx.remote_pid;
 
         /* 
          * Receive file listing until "done" message 
