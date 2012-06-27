@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ipc.h>
+#include <stdarg.h>
 
 #include "file.h"
 #include "error.h"
@@ -439,5 +440,43 @@ void dpx_send(struct dpx_t *dpx, const char *msg)
         dpx_load(dpx, msg);
         dpx_write(dpx);
 }
+
+
+/**
+ * dpx_form -- write formatted transmission
+ */
+void dpx_form(struct dpx_t *dpx, const char *fmt, ...) 
+{
+        va_list args;
+
+        va_start(args, fmt);
+        vsnprintf(dpx->buf, MIN_PIPESIZE, fmt, args);
+        va_end(args);
+
+        dpx_write(dpx);
+}       
+
+
+/**
+ * dpx_link -- wait until a handshake and PID exchange can be completed
+ */
+void dpx_link(struct dpx_t *dpx)
+{
+        pid_t pid = getpid();
+
+        if (dpx->role == PUBLISH) {
+                dpx_read(dpx);
+                dpx->remote_pid = atoi(dpx->buf);
+                dpx_form(dpx, "%d", pid);
+                dpx_read(dpx);
+        } else if (dpx->role == SUBSCRIBE) {
+                dpx_form(dpx, "%d", pid);
+                dpx_read(dpx);
+                dpx->remote_pid = atoi(dpx->buf);
+                dpx_send(dpx, "ack");
+        }
+}
+
+
 
 

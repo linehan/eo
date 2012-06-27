@@ -51,6 +51,7 @@ struct pump_t {
         char target[PATHSIZE];   // Directory to be pumped
         char channel[PATHSIZE];  // Channel identification string
         DIR *stream;             // Where the money comes out
+        int dirfd;
 };
 
 
@@ -101,12 +102,16 @@ void pump_files(struct pump_t *p)
 
         /* Open directory stream */
         p->stream = opendir(p->target);
+        p->dirfd  = dirfd(p->stream);
+
+        struct stat buf;
+        static time_t last;
 
         /* Shift working directory to target */
         nav_shift(&p->breadcrumb, p->target);
 
         /* Wait for the client to connect to channel */
-        dpx_read(&p->dpx);
+        dpx_link(&p->dpx);
         dpx_send(&p->dpx, p->target); // verification
         dpx_read(&p->dpx);            // wait for ack
 
@@ -130,7 +135,12 @@ void pump_files(struct pump_t *p)
          * begin processing the directory again.
          */
         if (!(STRCMP(p->dpx.buf, "STOP"))) {
-                sleep(1);
+                last = time(NULL);
+                do { 
+                        fstat(p->dirfd, &buf);
+                        nsleep(100);
+                } while (buf.st_mtime <= last);
+
                 goto rediff;
         }
 
@@ -188,6 +198,7 @@ void register_pump(struct pump_t *p)
         signal(SIGPIPE, catch_signal);
         signal(SIGQUIT, catch_signal);
         signal(SIGSTOP, catch_signal);
+        signal(SIGUSR1, catch_signal);
 }
 
 

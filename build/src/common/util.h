@@ -390,6 +390,17 @@ static inline char *CONCAT(const char *a, const char *b)
 }
 
 void sha256gen(char *hex, void *hash);
+void nsleep(long nanoseconds);
+
+
+static inline char *itoa(int i)
+{
+        static char buffer[4096];
+        snprintf(buffer, 4096, "%d", i);
+        
+        return buffer;
+}
+
 
 #ifdef __MERSENNE__
 #include "mersenne.h"

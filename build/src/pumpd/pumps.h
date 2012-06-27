@@ -1,7 +1,7 @@
 #ifndef _PUMPS_H
 #define _PUMPS_H
 
-struct pump_t *__pump_fw;
+struct pump_t *__pump_fwr;
 
 #define P_FORK 1
 #define P_KEEP 0

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <signal.h>
 
 #include "pump.h"
 #include "meta.h"
@@ -82,15 +83,41 @@ void pump_logic(const char *logic)
 }
 
 
+int bigpid;
+
+void catchsig(int signo)
+{
+        if (bigpid != 0)
+                kill(bigpid, SIGUSR1);
+
+        signal(signo, SIG_DFL);
+        raise(signo);
+}
+
+void regsig(void)
+{
+        signal(SIGABRT, catchsig);
+        signal(SIGINT,  catchsig);
+        signal(SIGTERM, catchsig);
+        signal(SIGPIPE, catchsig);
+        signal(SIGQUIT, catchsig);
+        signal(SIGSTOP, catchsig);
+        signal(SIGUSR1, catchsig);
+}
+
+
 void pump_list(char *path)
 {
         struct dpx_t dpx;
         char abspath[PATHSIZE];
 
+        regsig();
+
         make_path_absolute(abspath, path);
 
         /* Subscribe to the pump daemon's control channel */
         dpx_open(&dpx, CH("control"), CH_SUB);
+
         dpx_send(&dpx, abspath); // Send the path we want to be listed
         dpx_read(&dpx);          // Wait for response... 
 
@@ -104,7 +131,8 @@ void pump_list(char *path)
          */ 
         dpx_close(&dpx);
         dpx_open(&dpx, CH(dpx.buf), CH_SUB);
-        dpx_send(&dpx, "ack"); // Tell pump we have arrived 
+        dpx_link(&dpx);
+        /*dpx_send(&dpx, "ack"); // Tell pump we have arrived */
 
         /* 
          * Verify path with pump driver 
@@ -112,6 +140,8 @@ void pump_list(char *path)
         dpx_read(&dpx);
         printf("pump reports path: %s\n", dpx.buf);
         dpx_send(&dpx, "ack");
+        printf("pump PID: %d\n", dpx.remote_pid);
+        bigpid = dpx.remote_pid;
 
         /* 
          * Receive file listing until "done" message 

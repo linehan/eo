@@ -62,3 +62,13 @@ void sha256gen(char *hex, void *hash)
 }
 
 
+/**
+ * nsleep -- nanosleep made easy
+ */
+void nsleep(long nanoseconds)
+{
+        const struct timespec ts = { .tv_nsec = nanoseconds };
+        nanosleep(&ts, NULL);
+}
+
+

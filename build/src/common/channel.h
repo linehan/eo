@@ -2,6 +2,7 @@
 #define _IPC_CHANNELS_H 
 
 #include <stdbool.h>
+#include <sys/types.h>
 
 #define MIN_PIPESIZE (4095) // 4096 - 1
 #define MAX_PATHSIZE (255)
@@ -20,6 +21,7 @@ struct dpx_t {
         char *path_pub;
         char *path_sub;
         char *path;
+        pid_t remote_pid;
 };
 
 #define CH_NEW 0x001
@@ -37,6 +39,8 @@ void dpx_close (struct dpx_t *dpx);
 void dpx_read  (struct dpx_t *dpx);
 void dpx_write (struct dpx_t *dpx);
 void dpx_send  (struct dpx_t *dpx, const char *msg);
+void dpx_form  (struct dpx_t *dpx, const char *fmt, ...);
+void dpx_link  (struct dpx_t *dpx);
 
 void dpx_load  (struct dpx_t *dpx, const char *msg);
 void dpx_flush (struct dpx_t *dpx);
