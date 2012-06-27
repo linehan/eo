@@ -25,6 +25,7 @@
 #include "list/list.h"
 #include "lib/bloom/bloom.h"
 #include "bits.h"
+#include "dir.h"
 
 
 /****************************************************************************** 
@@ -57,7 +58,7 @@ int filecount(DIR *dir, int filter)
                  * If the F_HID filter is not set, and the file
                  * is is hidden, i.e. preceded by a '.', move on.
                  */
-                if (!hasvalue(filter, F_HID) && dirp->d_name[0] == '.')
+                if (dirp->d_name[0] == '.')
                                 continue;
                 /* 
                  * If the file's type is included in the filter,
@@ -95,7 +96,7 @@ const char *getfile(DIR *dir, int filter)
                  * If the F_HID filter is not set, and the file
                  * is is hidden, i.e. preceded by a '.', move on.
                  */
-                if (dirp->d_name[0] == '.' && !hasvalue(filter, F_HID))
+                if (dirp->d_name[0] == '.')
                         continue;
                 /* 
                  * If the file's type is included in the filter,
@@ -135,7 +136,7 @@ const char *getdiff(DIR *dir, int filter)
                  * If the F_HID filter is not set, and the file
                  * is is hidden, i.e. preceded by a '.', move on.
                  */
-                if (dirp->d_name[0] == '.' && !hasvalue(filter, F_HID))
+                if (dirp->d_name[0] == '.')
                         continue;
 
                 /*
@@ -158,6 +159,26 @@ const char *getdiff(DIR *dir, int filter)
         return NULL;
 }
 
+
+void cwd_mark(struct breadcrumb_t *bc)
+{
+        strlcpy(bc->home, scwd(), PATHSIZE); 
+}
+
+void cwd_shift(struct breadcrumb_t *bc, const char *path)
+{
+        cwd_mark(bc);
+        chdir(path);
+        bc->away = true;
+}
+
+void cwd_revert(struct breadcrumb_t *bc)
+{
+        if (bc->away) {
+                chdir(bc->home);
+                bc->away = false;
+        }
+}
 
 
 
@@ -195,19 +216,20 @@ void dlist_load(struct list_head *head, DIR *dir, int filter)
                  * If the F_HID filter is not set, and the file
                  * is is hidden, i.e. preceded by a '.', move on.
                  */
-                if (!hasvalue(filter, F_HID) && dirp->d_name[0] == '.')
+                if (dirp->d_name[0] == '.')
                         continue;
                 /* 
                  * If the file's type is included in the filter,
                  * add it to the list. 
                  */
-                if ((hasvalue(filter, F_TYPE(dstat.st_mode)))) {
+                if ((F_TYPE(dstat.st_mode) == F_REG)) {
                         struct dlist_node *new;
                         new = calloc(1, sizeof(struct dlist_node));
-                        strlcat(new->filename, dirp->d_name, PATHSIZE);
+                        strcpy(new->filename, dirp->d_name);
                         list_add(head, &new->node);
                 }
         }
+        rewinddir(dir);
 }
 
 
@@ -235,11 +257,12 @@ void dlist_print(const char *path, int options)
 {
         LIST_HEAD(list);
         struct dlist_node *tmp;
+        struct breadcrumb_t nav;
         DIR *dir;
 
         dir = opendir(path);
 
-        printf("path is: %s\n", path);
+        cwd_shift(&nav, path); 
 
         dlist_load(&list, dir, options);
 
@@ -248,6 +271,8 @@ void dlist_print(const char *path, int options)
         }
 
         dlist_del(&list);
+
+        cwd_revert(&nav);
 }
 
 

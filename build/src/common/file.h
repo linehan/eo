@@ -18,6 +18,7 @@ void sclose(FILE *file);
 void sunlink(const char *path);
 void smkdir(const char *path, int perms);
 void srmdir(const char *path);
+char *scwd(void);
 
 bool is_relpath(const char *path);
 void make_path_absolute(char *buf, const char *path);
@@ -91,7 +92,7 @@ char *tokenf(char B, char S, char C, const char *tok, const char *path);
  * as. So as not to step on the toes of the other filetype
  * macros, we define another macro
  */
-#define F_HID (0160000)   // Filter for hidden files
+//#define F_HID (0160000)   // Filter for hidden files
 /* 
  * That signals the intention to test for hidden files, which
  * again must be implementation-defined. This is just to

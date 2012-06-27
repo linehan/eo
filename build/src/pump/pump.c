@@ -82,12 +82,12 @@ void pump_logic(const char *logic)
 }
 
 
-void pump_list(char *abspath)
+void pump_list(char *path)
 {
         struct dpx_t dpx;
-        /*char abspath[PATHSIZE];*/
+        char abspath[PATHSIZE];
 
-        /*make_path_absolute(abspath, path);*/
+        make_path_absolute(abspath, path);
 
         /* Subscribe to the pump daemon's control channel */
         dpx_open(&dpx, CH("control"), CH_SUB);
@@ -139,7 +139,16 @@ void pump_print(char *path)
         /*char abspath[PATHSIZE];*/
 
         /*make_path_absolute(abspath, path);*/
-        dlist_print(path, F_REG);
+        dlist_print(path, 0);
+}
+
+
+void pump_paths(void)
+{
+        printf("CFG_PATH: %s\n", CFG_PATH);
+        printf("PID_PATH: %s\n", PID_PATH);
+        printf("FIFO_PATH: %s\n", FIFO_PATH);
+        printf("HOME_DIR: %s\n", HOME_DIR);
 }
 
 
@@ -168,6 +177,9 @@ int main(int argc, char *argv[])
 
         else if (isarg(1, "::"))
                 (ARG(2)) ? pump_print(ARG(2)) : usage();
+
+        else if (isarg(1, "paths"))
+                pump_paths();
 
         return 0;
 }

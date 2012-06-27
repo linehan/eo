@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <signal.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include "pumpd.h"
 #include "../common/error.h"
@@ -14,85 +15,7 @@
 #include "../common/configfiles.h"
 #include "../common/textutils.h"
 #include "../common/dir.h"
-
-
-/******************************************************************************
- * PUMP HANDLER OPERATION
- * 
- * The pump daemon is intended to handle marshalling operations for the
- * inputs specified by the pump program. Once these inputs are marshalled,
- * they can be yielded back to the pump client as required. The job of
- * the client is simply to deliver the individual inputs to the pump logic.
- *
- ******************************************************************************/
-
-/**
- * do_pump -- Marshal the inputs specified by the pump client 
- * @dpx : pointer to a duplex channel
- * @path: directory to be marshalled
- * Returns nothing.
- */ 
-void do_pump(struct dpx_t *dpx, const char *path)
-{
-        DIR  *dir;
-        const char *file;
-
-        dir = opendir(path);
-
-        /* Wait for client to connect to channel */
-        dpx_read(dpx);
-        dpx_send(dpx, path); /* Make sure path is correct */
-        dpx_read(dpx);
-
-        rediff:
-
-        /* Write each filename into the channel */
-        for (file  = getdiff(dir, F_REG); 
-             file != NULL; 
-             file  = getdiff(NULL, F_REG)) 
-        {
-                dpx_send(dpx, file);
-        }
-
-        /* Notify when all filenames have been written */
-        dpx_send(dpx, "done");
-
-        /* Wait for further instructions */
-        dpx_read(dpx);
-
-        if (!(STRCMP(dpx->buf, "STOP"))) {
-                sleep(1);
-                goto rediff;
-        }
-
-        closedir(dir);
-        dpx_close(dpx);
-        dpx_remove(dpx->path);
-
-        exit(0);
-}
-
-
-/**
- * spawn_pump_handler -- Create a process to handle a pump client request
- * @path: Marshalling path for the pump 
- * @chan: unique identifier for the channel 
- */
-void spawn_pump_handler(char *path, char *chan)
-{
-        struct dpx_t dpx;
-
-        if ((daemonize()) == -1) // See daemon.c
-                return;
-
-        // ---------- process is now a daemon ---------- */
-
-        /* Open a duplex channel as publisher */
-        dpx_open(&dpx, CHANNEL(chan), CH_NEW | CH_PUB);
-
-        /* Enter the loop driver */
-        do_pump(&dpx, path);
-}
+#include "../common/lib/pth/thread.h"
 
 
 
@@ -144,7 +67,9 @@ void pumpd(struct dpx_t *dpx)
                         tempname(id);
 
                         /* Spawn a pump handler with that name */
-                        spawn_pump_handler(dpx->buf, id);
+                        /*spawn_pump_handler(dpx->buf, id);*/
+                        struct pump_t *p = new_pump(dpx->buf, id, P_FORK);
+                        open_pump(p);
 
                         /* Wait for pump handler to create files */
                         while (!exists(CHANNEL(id)))
