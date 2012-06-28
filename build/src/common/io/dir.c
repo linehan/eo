@@ -2,30 +2,18 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <errno.h>
-#include <unistd.h>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#include <pwd.h>
-#include <grp.h>
-#include <time.h>
-#include <fcntl.h>
-#include <string.h>
-#include <stdarg.h>
-#include <locale.h>
-#include <langinfo.h>
 
-#include "file.h"
-#include "error.h"
-#include "util.h"
-#include "textutils.h"
-#include "list/list.h"
-#include "lib/bloom/bloom.h"
-#include "bits.h"
+#include "../textutils.h"
+#include "../util.h"
+#include "../error.h"
+#include "../bits.h"
+#include "../lib/bloom/bloom.h"
 #include "dir.h"
+#include "file.h"
 
 
 /****************************************************************************** 
@@ -188,8 +176,9 @@ struct dirent *_diterate(DIR *dir, int filter)
  * @filter: a set of predicates (see note on file predicates)
  * Return : struct dirent pointing to the current item
  *
- * NOTES
- * This is intended for internal use within this source file.
+ * NOTE
+ * All the working directory jumps are addressing a bug outlined
+ * in the notes for _diterate(), above.
  */
 struct dirent *diterate(DIR *dir, int filter)
 {
@@ -205,10 +194,12 @@ struct dirent *diterate(DIR *dir, int filter)
                 cwd_setjump(&cwd, getdirpath(dir));
         }
 
-        cwd_jump(&cwd);
+        /* Jump to directory root */
+        cwd_jump(&cwd); 
 
         entry = _diterate(_dir, filter);
 
+        /* Return to working directory */
         cwd_jump(&cwd);
 
         if (entry == NULL)

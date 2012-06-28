@@ -7,9 +7,9 @@
 #include <sys/param.h>
 #include <sys/ipc.h>
 
-#include "error.h"
-#include "file.h"
-#include "textutils.h"
+#include "../io/file.h"
+#include "../error.h"
+#include "../textutils.h"
 #include "daemon.h"
 
 

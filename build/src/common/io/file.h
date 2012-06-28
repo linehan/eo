@@ -1,12 +1,9 @@
 #ifndef _MY_FILE_LIB_H
 #define _MY_FILE_LIB_H
 
-#include "../common/util.h"
 #include <stdbool.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#include <unistd.h>
-#include <pwd.h>
 
 
 /* Limits 

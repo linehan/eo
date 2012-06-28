@@ -18,13 +18,13 @@ bin_PROGRAMS  = pmp pumpd
 
 pmp_SOURCES   = src/pump/pump.c              \
                 src/pump/meta.c              \
-                src/common/daemon.c          \
-                src/common/channel/channel.c \
-                src/common/channel/fifo.c    \
+                src/common/ipc/daemon.c      \
+                src/common/ipc/channel.c     \
+                src/common/ipc/fifo.c        \
+                src/common/io/file.c         \
+                src/common/io/dir.c          \
                 src/common/util.c            \
                 src/common/textutils.c       \
-                src/common/file.c            \
-                src/common/dir.c             \
                 src/common/error.c           \
                 src/common/lib/bloom/bloom.c \
                 src/common/sha256/sha2.c
@@ -32,13 +32,13 @@ pmp_SOURCES   = src/pump/pump.c              \
 
 pumpd_SOURCES = src/pumpd/pumpd.c            \
                 src/pumpd/pumps.c            \
-                src/common/daemon.c          \
-                src/common/channel/channel.c \
-                src/common/channel/fifo.c    \
+                src/common/ipc/daemon.c      \
+                src/common/ipc/channel.c     \
+                src/common/ipc/fifo.c        \
+                src/common/io/file.c         \
+                src/common/io/dir.c          \
                 src/common/util.c            \
                 src/common/textutils.c       \
-                src/common/file.c            \
-                src/common/dir.c             \
                 src/common/error.c           \
                 src/common/lib/bloom/bloom.c \
                 src/common/sha256/sha2.c

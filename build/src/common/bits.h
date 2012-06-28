@@ -46,6 +46,8 @@
  ******************************************************************************/
 
 #include <limits.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 #define SEGSIZE CHAR_BIT // Number of bits in a word of the bitstring
 

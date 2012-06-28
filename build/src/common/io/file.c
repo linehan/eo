@@ -2,14 +2,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdint.h>
 #include <stdbool.h>
-
-#include <time.h>
-#include <string.h>
-#include <stdarg.h>
-#include <locale.h>
-#include <langinfo.h>
 
 #include <unistd.h>
 #include <dirent.h>
@@ -21,9 +14,9 @@
 #include <grp.h>
 
 #include "file.h"
-#include "error.h"
-#include "util.h"
-#include "textutils.h"
+#include "../error.h"
+#include "../util.h"
+#include "../textutils.h"
 
 
 /******************************************************************************

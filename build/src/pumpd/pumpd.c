@@ -8,13 +8,16 @@
 
 #include "pumpd.h"
 #include "pumps.h"
-#include "../common/error.h"
-#include "../common/daemon.h"
-#include "../common/file.h"
-#include "../common/channel/channel.h"
+
+#include "../common/ipc/daemon.h"
+#include "../common/ipc/channel.h"
+#include "../common/io/file.h"
+#include "../common/io/dir.h"
+
 #include "../common/configfiles.h"
 #include "../common/textutils.h"
-#include "../common/dir.h"
+#include "../common/error.h"
+
 
 
 /******************************************************************************
