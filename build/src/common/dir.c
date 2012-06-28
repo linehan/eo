@@ -140,37 +140,28 @@
  * stream just happens to coincide with the current working directory, 
  * in which case it works as intended.
  *
- * The solution is to give stat() the true path.
+ * The solution was to write the function getdirpath() (see file.c) and
+ * use it to set the cwd before the call to _diterate() in the wrapper 
+ * function diterate(), and then revert the directory once _diterate()
+ * returned. It works... for now.
  */
 struct dirent *_diterate(DIR *dir, int filter)
 {
         struct dirent *entry;
         struct stat dstat;
-        static struct cwd_t cwd;
+
         static DIR *_dir;
-        static int _dir_fd;
-        static char dirpath[PATHSIZE];
-        static char fdpath[PATHSIZE];
+
 
         if (dir != NULL) {
                 _dir = dir;
-                _dir_fd = dirfd(dir);
-                snprintf(fdpath, PATHSIZE, "/proc/self/fd/%d", _dir_fd);
-                readlink(fdpath, dirpath, PATHSIZE);
-                cwd_mark(&cwd);
         }
 
         while ((entry = readdir(_dir)), entry != NULL) {
 
-                cwd_shift(&cwd, dirpath);
-
                 /* If we cannot stat a file, we move on. */
-                if (stat(entry->d_name, &dstat) == -1) {
-                        cwd_revert(&cwd);
+                if (stat(entry->d_name, &dstat) == -1)
                         continue;
-                }
-
-                cwd_revert(&cwd);
 
                 /* If file is hidden and we don't have F_HID, move on */
                 if (entry->d_name[0] == '.')
@@ -202,6 +193,8 @@ struct dirent *_diterate(DIR *dir, int filter)
  */
 struct dirent *diterate(DIR *dir, int filter)
 {
+        /* Used to resolve relative paths */
+        static struct cwd_t cwd;
         static bool running = false;
         struct dirent *entry;
         DIR *_dir = NULL; 
@@ -209,9 +202,14 @@ struct dirent *diterate(DIR *dir, int filter)
         if (!running) {
                 _dir    = dir;
                 running = true;
+                cwd_setjump(&cwd, getdirpath(dir));
         }
 
+        cwd_jump(&cwd);
+
         entry = _diterate(_dir, filter);
+
+        cwd_jump(&cwd);
 
         if (entry == NULL)
                 running = false;

@@ -170,6 +170,44 @@ void smkdir(const char *path, int perms)
 
 
 /**
+ * getdirpath
+ * ``````````
+ * Get the full path of an open directory stream.
+ *
+ * @dir  : pointer to an open directory stream
+ * Return: path in a static buffer
+ * 
+ * CAVEAT
+ * This is NOT portable, because it relies explicitly on the organization
+ * of file descriptors in the Linux filesystem. This is the technique used
+ * by lsof.
+ */
+const char *getdirpath(DIR *dir)
+{
+        static char dirpath[PATHSIZE];
+        char linkpath[PATHSIZE];
+        int  dir_fd;
+
+        /* Determine file descriptor of the DIR stream */
+        dir_fd = dirfd(dir);
+
+        /* 
+         * Construct the path of the symlink representing
+         * the file descriptor to the filesystem (Linux only).
+         */ 
+        snprintf(linkpath, PATHSIZE, "/proc/self/fd/%d", dir_fd);
+
+        /* 
+         * Resolve the symlink path to its target, which will
+         * be the path of the DIR stream.
+         */
+        readlink(linkpath, dirpath, PATHSIZE);
+
+        return dirpath;
+}
+
+
+/**
  * gethome_uid 
  * ```````````
  * Get the home directory of user with 'uid'
@@ -465,6 +503,38 @@ void cwd_revert(struct cwd_t *breadcrumb)
         }
 }
 
+
+/**
+ * cwd_setjump
+ * ```````````
+ * Set the home and alternate directories to be jumped between. 
+ *
+ * @breadcrumb: pointer to an awd_t
+ * @path      : path to an alternate directory
+ * Return     : nothing
+ */
+void cwd_setjump(struct cwd_t *breadcrumb, const char *path)
+{
+        cwd_mark(breadcrumb);
+        strlcpy(breadcrumb->jump, path, PATHSIZE);
+}
+
+
+/**
+ * cwd_jump
+ * ````````
+ * Jump between the home directory and the jump directory.
+ *
+ * @breadcrumb: pointer to a cwd_t
+ * Return     : nothing
+ */
+void cwd_jump(struct cwd_t *breadcrumb)
+{
+        if (breadcrumb->away)
+                cwd_revert(breadcrumb);
+        else
+                cwd_shift(breadcrumb, breadcrumb->jump);
+}
 
 
 /****************************************************************************** 

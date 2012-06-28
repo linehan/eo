@@ -37,6 +37,7 @@ const char *sperm(__mode_t mode);
 ``````````````````````````````````````````````````````````````````````````````*/
 char *scwd(void);
 
+const char *getdirpath(DIR *dir);
 bool is_relpath(const char *path);
 void make_path_absolute(char *buf, const char *path);
 
@@ -48,11 +49,18 @@ int tempname(char *templ);
 
 /* Current working directory tracking 
 ``````````````````````````````````````````````````````````````````````````````*/
-struct cwd_t { char home[PATHSIZE]; bool away; };
+struct cwd_t { 
+        char home[PATHSIZE]; 
+        char jump[PATHSIZE];
+        bool away; 
+};
 
-void cwd_mark  (struct cwd_t *breadcrumb);
-void cwd_shift (struct cwd_t *breadcrumb, const char *path);
-void cwd_revert(struct cwd_t *breadcrumb);
+void cwd_mark   (struct cwd_t *breadcrumb);
+void cwd_shift  (struct cwd_t *breadcrumb, const char *path);
+void cwd_revert (struct cwd_t *breadcrumb);
+void cwd_setjump(struct cwd_t *breadcrumb, const char *path);
+void cwd_jump   (struct cwd_t *breadcrumb);
+
 
 
 /* Text file parsing 
