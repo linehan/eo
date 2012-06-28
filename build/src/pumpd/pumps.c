@@ -45,7 +45,7 @@
 
 struct pump_t {
         int mode;                // Used by pump daemon
-        struct nav_t breadcrumb; // Tracks working directory
+        struct cwd_t breadcrumb; // Tracks working directory
         struct dpx_t dpx;        // Duplex channel link
         struct pth_t watcher;    // Watcher thread for DIR I/O 
         char target[PATHSIZE];   // Directory to be pumped
@@ -136,14 +136,14 @@ void kill_pump(struct pump_t *p)
 {
         /* Close directory stream if it's open */
         if (p->dir)
-                closedir(p->dir);
+                sdclose(p->dir);
 
         /* Close and unlink files on disk */
         dpx_close(&p->dpx);
         dpx_remove(p->dpx.path);
 
         /* Restore current working directory */
-        nav_revert(&p->breadcrumb);
+        cwd_revert(&p->breadcrumb);
 }
 
 
@@ -238,11 +238,11 @@ void pump_files(struct pump_t *p)
         const char *file;
 
         /* Open directory stream */
-        p->dir     = opendir(p->target);
+        p->dir     = sdopen(p->target);
         p->dir_fd  = dirfd(p->dir);
 
         /* Shift working directory to target */
-        nav_shift(&p->breadcrumb, p->target);
+        cwd_shift(&p->breadcrumb, p->target);
 
         /* Wait for the client to connect to channel */
         dpx_link(&p->dpx);

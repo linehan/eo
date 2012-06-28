@@ -4,19 +4,21 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <pwd.h>
-#include <grp.h>
+
 #include <time.h>
-#include <fcntl.h>
 #include <string.h>
 #include <stdarg.h>
 #include <locale.h>
 #include <langinfo.h>
+
+#include <unistd.h>
+#include <dirent.h>
+#include <fcntl.h>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <pwd.h>
+#include <grp.h>
 
 #include "file.h"
 #include "error.h"
@@ -36,6 +38,7 @@
  * funneled the calls into this interface. 
  *
  ******************************************************************************/
+
 
 /**
  * sopen 
@@ -58,17 +61,51 @@ FILE *sopen(const char *path, const char *mode)
 
 
 /**
+ * sdopen
+ * ``````
+ * Open a stream pointer to the directory identified by 'path'.
+ *
+ * @path : path to the desired directory
+ * Return: pointer to an open DIR stream
+ */
+DIR *sdopen(const char *path)
+{
+        DIR *dir;
+
+        if (dir = opendir(path), dir == NULL)
+                bye("Could not open directory %s", path);
+
+        return dir;
+}
+
+
+/**
  * sclose 
  * ``````
  * Close a FILE stream pointer safely
  *
- * @file : pointer to a file stream 
+ * @file : pointer to an open file stream 
  * Return: nothing.
  */
 void sclose(FILE *file)
 {
         if (fclose(file) == EOF)
                 bye("Could not close file");
+}
+
+
+/**
+ * sdclose 
+ * ```````
+ * Close a DIR stream pointer safely
+ *
+ * @dir  : pointer to an open directory stream 
+ * Return: nothing.
+ */
+void sdclose(DIR *dir)
+{
+        if (closedir(dir) == EOF)
+                bye("Could not close directory");
 }
 
 
@@ -271,7 +308,6 @@ int tempname(char *template)
 }
 
 
-
 /******************************************************************************
  * FILE PREDICATES 
  * 
@@ -280,6 +316,7 @@ int tempname(char *template)
  * open files for which the caller has a stream pointer, and files that may
  * or may not be open, for which the caller has a pathname. 
  ******************************************************************************/
+
 
 /**
  * exists
@@ -370,6 +407,66 @@ const char *sperm(__mode_t mode)
 }
 
 
+/******************************************************************************
+ * CURRENT WORKING DIRECTORY TRACKING
+ *
+ * Provide a very simplistic structure for marking the current working 
+ * directory, changing it to another path, and later reverting to the 
+ * marked directory. Basically it cleans up some of the messiness involved,
+ * making the code that uses it less distracting.
+ *
+ ******************************************************************************/
+
+
+/**
+ * cwd_mark
+ * ````````
+ * Mark the current working directory.
+ *
+ * @breadcrumb: pointer to an awd_t
+ * Return     : nothing
+ */
+void cwd_mark(struct cwd_t *breadcrumb)
+{
+        strlcpy(breadcrumb->home, scwd(), PATHSIZE); 
+}
+
+
+/**
+ * cwd_shift
+ * `````````
+ * Change the current working directory.
+ *
+ * @breadcrumb: pointer to an awd_t
+ * @path      : path of the new working directory
+ * Return     : nothing
+ */
+void cwd_shift(struct cwd_t *breadcrumb, const char *path)
+{
+        cwd_mark(breadcrumb);
+        chdir(path);
+        breadcrumb->away = true;
+}
+
+
+/**
+ * cwd_revert
+ * ``````````
+ * Revert the current working directory to the previously-marked path.
+ *
+ * @breadcrumb: pointer to an awd_t
+ * Return     : nothing
+ */
+void cwd_revert(struct cwd_t *breadcrumb)
+{
+        if (breadcrumb->away) {
+                chdir(breadcrumb->home);
+                breadcrumb->away = false;
+        }
+}
+
+
+
 /****************************************************************************** 
  * TEXT FILE PARSING
  * 
@@ -383,14 +480,20 @@ const char *sperm(__mode_t mode)
  * and these are delimited by a comment character.
  *
  ******************************************************************************/
+
+
 /**
- * get_tokenf -- return a token from the file at 'path'
+ * get_tokenf 
+ * ``````````
+ * Get a token from the file at 'path'.
+ *
  * @dest : the destination buffer (token value will be placed here)
  * @token: the token to be scanned for
  * @B    : the breakpoint character (separates tuples)
  * @S    : the separator between identifier and value of the tuple
  * @C    : the comment delimiter character
  * @path : the path of the file to be parsed
+ * Return: nothing
  */
 void get_tokenf(char *dst, char B, char S, char C, const char *tok, const char *path)
 {
@@ -429,9 +532,12 @@ void get_tokenf(char *dst, char B, char S, char C, const char *tok, const char *
 
 
 /**
- * token -- return token at 'path' as a statically allocated string
+ * token
+ * `````
+ * Get token at 'path' as a statically allocated string.
  * @path : the path of the file to be parsed
  * @token: the token to be scanned for
+ * Return: token in a statically-allocated buffer.
  */
 char *tokenf(char B, char S, char C, const char *tok, const char *path)
 {

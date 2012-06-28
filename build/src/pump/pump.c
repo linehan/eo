@@ -158,7 +158,18 @@ void pump_list(char *path)
  */ 
 void pump_print(char *path)
 {
-        dlist_print(path, 0);
+        const char *filename;
+        DIR *dir;
+
+        dir = sdopen(path);
+
+        while ((filename = getfile(dir, F_REG))) {
+                printf("%s\n", filename);
+        }
+
+        sdclose(dir);
+
+        return;
 }
 
 
