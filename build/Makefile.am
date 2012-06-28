@@ -19,7 +19,8 @@ bin_PROGRAMS  = pmp pumpd
 pmp_SOURCES   = src/pump/pump.c              \
                 src/pump/meta.c              \
                 src/common/daemon.c          \
-                src/common/channel.c         \
+                src/common/channel/channel.c \
+                src/common/channel/fifo.c    \
                 src/common/util.c            \
                 src/common/textutils.c       \
                 src/common/file.c            \
@@ -32,7 +33,8 @@ pmp_SOURCES   = src/pump/pump.c              \
 pumpd_SOURCES = src/pumpd/pumpd.c            \
                 src/pumpd/pumps.c            \
                 src/common/daemon.c          \
-                src/common/channel.c         \
+                src/common/channel/channel.c \
+                src/common/channel/fifo.c    \
                 src/common/util.c            \
                 src/common/textutils.c       \
                 src/common/file.c            \

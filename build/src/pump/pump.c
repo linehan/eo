@@ -11,7 +11,7 @@
 #include "../common/error.h"
 #include "../common/util.h"
 #include "../common/daemon.h"
-#include "../common/channel.h"
+#include "../common/channel/channel.h"
 #include "../common/configfiles.h"
 #include "../common/textutils.h"
 #include "../common/lib/bloom/bloom.h"

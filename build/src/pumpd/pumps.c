@@ -12,7 +12,7 @@
 #include "../common/error.h"
 #include "../common/daemon.h"
 #include "../common/file.h"
-#include "../common/channel.h"
+#include "../common/channel/channel.h"
 #include "../common/configfiles.h"
 #include "../common/textutils.h"
 #include "../common/dir.h"
@@ -217,7 +217,6 @@ void pump_idle(struct pump_t *p, long nanoseconds)
 
         } while (buf.st_mtime <= at_start);
 }
-
 
 
 /**

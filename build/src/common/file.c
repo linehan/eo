@@ -25,18 +25,26 @@
 
 
 /******************************************************************************
- * GENERAL FILE OPERATIONS 
+ * SAFE GENERAL FILE OPERATIONS 
  * 
- * Small functions that safely handle common file operations such as opening
- * and closing a file. They provide a layer of security as well as error
- * reporting.
+ * Small functions that wrap common file operations with exception handling
+ * so that we can flexibly arrange for contingencies if we want to. For the
+ * moment, they simply abort execution, following the principle of "failing
+ * badly." 
+ *
+ * The behavior could always be altered with minimal effort, now that we've
+ * funneled the calls into this interface. 
+ *
  ******************************************************************************/
 
 /**
- * sopen -- open a stream pointer to the file identified by 'path' safely
- * @path: path to the desired file 
- * @mode: mode to open file with
- * Returns a pointer to a FILE stream
+ * sopen 
+ * `````
+ * Open a stream pointer to the file identified by 'path' safely
+ *
+ * @path : path to the desired file 
+ * @mode : mode to open file with
+ * Return: a pointer to a FILE stream
  */
 FILE *sopen(const char *path, const char *mode)
 {
@@ -50,9 +58,12 @@ FILE *sopen(const char *path, const char *mode)
 
 
 /**
- * sclose -- close a stream pointer safely
- * @file: pointer to a file stream 
- * Returns nothing
+ * sclose 
+ * ``````
+ * Close a FILE stream pointer safely
+ *
+ * @file : pointer to a file stream 
+ * Return: nothing.
  */
 void sclose(FILE *file)
 {
@@ -62,8 +73,12 @@ void sclose(FILE *file)
 
 
 /**
- * sunlink -- unlink safely 
- * @path: path of file to be removed
+ * sunlink 
+ * ```````
+ * Unlink a path from the filesystem
+ *
+ * @path : path of file to be removed
+ * Return: nothing.
  */
 void sunlink(const char *path)
 {
@@ -73,8 +88,12 @@ void sunlink(const char *path)
 
 
 /**
- * srmdir -- remove a directory safely
- * @path: path of the directory to be removed
+ * srmdir 
+ * ``````
+ * Remove a directory safely
+ *
+ * @path : path of the directory to be removed
+ * Return: nothing.
  */
 void srmdir(const char *path)
 {
@@ -84,8 +103,12 @@ void srmdir(const char *path)
 
 
 /**
- * smkdir -- create a new directory safely
- * @path: path of the directory to be created
+ * smkdir 
+ * ``````
+ * Create a new directory safely
+ *
+ * @path : path of the directory to be created
+ * Return: nothing.
  */
 void smkdir(const char *path, int perms)
 {
@@ -94,9 +117,28 @@ void smkdir(const char *path, int perms)
 }
 
 
+/******************************************************************************
+ * FILENAMES AND PATHS
+ *
+ * Retreive, transform and manipulate pathnames. Lots of hairy things like
+ * transforming relative to absolute and back, detecting the home directory
+ * of a user, etc. Creating a temporary name for a file or directory,
+ * retreiving and changing the current working directory.
+ *
+ * CAVEAT
+ * Pathnames are slow, prone to errors, and generally a pain in the ass.
+ * Try to avoid using these if an alternative exists.
+ *
+ ******************************************************************************/
+
+
 /**
- * gethome_uid -- return the home directory of user with 'uid'
- * @uid: uid of the user whose home directory you want
+ * gethome_uid 
+ * ```````````
+ * Get the home directory of user with 'uid'
+ *
+ * @uid  : uid of the user whose home directory you want
+ * Return: home directory path
  */
 char *gethome_uid(uid_t uid)
 {
@@ -111,7 +153,15 @@ char *gethome_uid(uid_t uid)
 
 
 /**
- * gethome -- return the home directory set in the environment variable $HOME
+ * gethome 
+ * ```````
+ * Get the home directory set in the current terminal environment.
+ *
+ * Return: home directory path
+ *
+ * NOTE
+ * This is literally returning the value of $HOME as set in the
+ * environment.
  */
 char *gethome(void)
 {
@@ -122,7 +172,11 @@ char *gethome(void)
 
 
 /**
- * scwd -- get the current working directory
+ * scwd
+ * ````
+ * Get the current working directory
+ * 
+ * Return: path of the current working directory.
  */
 char *scwd(void)
 {
@@ -135,9 +189,16 @@ char *scwd(void)
 }
 
 
-
 /**
- * is_relpath -- check if path is relative
+ * is_relpath 
+ * ``````````
+ * Check if path is relative
+ * 
+ * @path : path to be checked
+ * Return: true if path is relative, otherwise false
+ *
+ * FIXME
+ * This needs to be ... a little more sophisticated.
  */
 bool is_relpath(const char *path)
 {
@@ -147,7 +208,18 @@ bool is_relpath(const char *path)
 
 
 /**
- * make_path_absolute -- resolve a relative path to an absolute path
+ * make_path_absolute 
+ * ``````````````````
+ * Resolve a relative path to an absolute path
+ * 
+ * @buf  : destination of the absolute path
+ * @path : the raw path (may be relative)
+ * Return: nothing.
+ *
+ * USAGE
+ * 'buf' must be large enough to contain at least PATHSIZE 
+ * bytes. 'path' will be checked using is_relpath() to see 
+ * whether or not it needs to be converted.
  */
 void make_path_absolute(char *buf, const char *path)
 {
@@ -165,18 +237,22 @@ void make_path_absolute(char *buf, const char *path)
          * and append the relative path to it.
          */
         snprintf(buf, PATHSIZE, "%s/%s", scwd(), path);
-        /*strlcat(buf, CONCAT("/", path), PATHSIZE);*/
 }
 
 
-
-
-/******************************************************************************
- * FILE CREATION 
- ******************************************************************************/
-
 /**
- * tmpname -- return a temporary name according to a template "test.XXXXXX"
+ * tmpname
+ * ```````
+ * Generate a temporary name according to a template
+ * 
+ * @template: used to determine how many random bytes to make
+ * Return   : position of first random byte in name
+ *
+ * USAGE
+ * The template should be a string of characters, where 'X' 
+ * will be replaced with a random byte, e.g.
+ *
+ *      tmp.XXXXXX ----> tmp.042192
  */
 int tempname(char *template)
 {
@@ -195,20 +271,6 @@ int tempname(char *template)
 }
 
 
-int tempdir(char *template)
-{
-        char name[255];
-        int  start;
-
-        strcpy(name, template);
-
-        start = tempname(name);
-        if ((mkdir(name, 0700)), errno != EEXIST)
-                return 0;
-        else
-                return -1;
-}
-
 
 /******************************************************************************
  * FILE PREDICATES 
@@ -218,10 +280,14 @@ int tempdir(char *template)
  * open files for which the caller has a stream pointer, and files that may
  * or may not be open, for which the caller has a pathname. 
  ******************************************************************************/
+
 /**
- * exists -- test if a pathname is valid (i.e. the file it names exists)
- * @path: pathname to test
- * Returns true if pathname is valid, else returns false.
+ * exists
+ * ``````
+ * Test if a pathname is valid (i.e. the file it names exists)
+ *
+ * @path : pathname to test
+ * Return: true if pathname is valid, otherwise false.
  */
 bool exists(const char *path)
 {
@@ -231,7 +297,10 @@ bool exists(const char *path)
 
 
 /**
- * ftype -- return the type of a file
+ * ftype
+ * `````
+ * Get the type of a file from its path 
+ *
  * @path: pathname of the file to be typed
  * Returns a type value, one of the macros F_xxx defined above.
  */
@@ -247,17 +316,23 @@ int ftype(const char *path)
 
 
 /**
- * sperm -- format file information as a string, e.g. "drwxr-xr-x"
- * @mode: the file mode value (the st_mode member of a struct stat)
- * Returns a statically-allocated string formatted as seen above.
+ * sperm
+ * `````
+ * Format file information as a string, e.g. "drwxr-xr-x"
  *
- * NOTE 
+ * @mode : the file mode value (the st_mode member of a struct stat)
+ * Return: a statically-allocated string formatted as seen above.
+ *
+ * NOTES
+ * Adapted from an unsourced reproduction. I have added the switch
+ * statement to examine the full range of POSIX-supported filetypes.
+ *
+ * HISTORY 
  * I did not name this function. The original version is part of the
  * standard library in Solaris, but although it is referenced in the
  * example program given in man(3) stat, sperm is not included in most 
- * Unixes anymore. The disappointing consequence is that man sperm,
- * rather than satisfying one's curiosity, tends rather to deepen the 
- * ambiguity and doubt which surrounds the whole situation.
+ * Unices anymore. The disappointing consequence is that man sperm
+ * fails to satisfy the curious.
  */
 const char *sperm(__mode_t mode) 
 {

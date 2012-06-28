@@ -8,179 +8,11 @@
 #include <sys/ipc.h>
 #include <stdarg.h>
 
-#include "file.h"
-#include "error.h"
-#include "textutils.h"
+#include "../file.h"
+#include "../error.h"
+#include "../textutils.h"
 #include "channel.h"
-
-
-#define PERMS (0666)
-#define DIR_PERMS ((S_IRWXU | S_IRGRP | S_IROTH | S_IXOTH))
-
-
-/******************************************************************************
- * FIFOs (NAMED PIPES)
- * Private primitive calls intended to be used by the duplex API only.
- *
- * Primer
- * ------
- *
- * A named pipe is a native filetype in most Unix filesystems.
- * It behaves similarly to the shell's pipe functionality, although
- * the implementation is distinct.
- *
- * Unlike regular files, a named pipe must be opened twice, once 
- * for reading and once for writing. It enforces a first-in, first-out
- * data transfer between the 'write' file descriptor and the 'read' file
- * descriptor. 
- *
- * The file itself does not know and does not care about the identity of 
- * the reader or writer. This means the reader and writer need not be the 
- * same process. Two unrelated processes can communicate by sharing data 
- * through a named pipe, with synchronization being ensured by the FIFO 
- * nature of the information exchange.
- * 
- * Operation
- * ---------
- *
- * A FIFO follows these rules for reading and writing:
- * (Amended from Stevens[90]) 
- *
- * 0. A read requesting less data than is in the pipe or FIFO returns
- *    only the requested amount of data. The remainder is left in the
- *    FIFO and can be requested by subsequent reads.
- *
- * 1. A read requesting more data than is in the pipe or FIFO returns
- *    only the requested amount of data. The reader must be prepared
- *    to handle a return value that is less than the requested amount.
- *
- * 2. If the pipe or FIFO is empty, and if no processes have it open 
- *    for writing, a read returns 0, signifying EOF (end of file). 
- *    If the reader has specified O_NDELAY, it cannot tell if a return
- *    value of 0 means there is no data currently availible or if there
- *    are no writers left.
- *
- * 3. If a process writes less than the capacity of a pipe or FIFO
- *    (which is at least 4096 bytes) the write is guaranteed to be
- *    atomic. There is no guarantee otherwise.
- *
- * 4. If a process writes to a pipe or FIFO, but there are no processes 
- *    in existence that have it open for reading, the SIGPIPE signal is 
- *    generated, and the write returns 0 with errno set to EPIPE. If the 
- *    process has not handled the signal in some other way, the default 
- *    action is to terminate the process.
- *
- ******************************************************************************/
-
-/******************************************************************************
- * FIFO DISK FILES
- *
- * fifo_creat  -- create a new named pipe in the filesystem
- * fifo_remove -- remove a named pipe from the filesystem 
- *
- ******************************************************************************/
-/**
- * fifo_creat -- Create a new named pipe file
- * @path: path of the new file 
- * @perm: permissions
- */
-void fifo_creat(const char *path, int perm)
-{
-        if ((mknod(path, S_IFIFO | perm, 0)) == -1) {
-                bye("Fee! Fie! Foe! Fum! The FIFO failed to open!");
-        }
-}
-
-
-/**
- * fifo_remove -- Remove a named pipe from the filesystem 
- * @path: path of the new file 
- */
-void fifo_remove(const char *path)
-{
-        if ((unlink(path)) == -1) {
-                bye("Could not remove named pipe at %s", path);
-        }
-}
-
-
-/******************************************************************************
- * FIFO OPERATIONS 
- *
- * fifo_open  -- Open a named pipe with the specified mode.
- * fifo_close -- Close an open named pipe.
- *
- ******************************************************************************/
-/**
- * fifo_open -- Open a named pipe with the specified mode. 
- * @path: path to the already-created FIFO
- * @mode: Any OR'ed combination of O_RDONLY, O_WRONLY, and O_NDELAY 
- * Returns file descriptor for the FIFO 
- */
-int fifo_open(const char *path, mode_t mode)
-{
-        int fd;
-
-        if ((fd = open(path, mode)) < 0)
-                bye("daemon: Could not open fifo");
-
-        return fd;
-}
-
-
-/**
- * fifo_close -- Close an open named pipe. 
- * @fd: file descriptor of the file to be closed
- * Returns nothing 
- */
-void fifo_close(int fd)
-{
-        if ((close(fd)) < 0)
-                bye("daemon: Could not close fifo");
-}
-        
-
-/******************************************************************************
- * FIFO TRANSMISSION 
- *
- * fifo_read  -- Read the contents of a named pipe into a buffer.
- * fifo_write -- Write the contents of a buffer into a named pipe.
- *
- ******************************************************************************/
-/**
- * fifo_read  -- Read the contents of a named pipe into a buffer.
- * @fd : file descriptor
- * @buf: buffer to be written to fifo
- * @len: size of the buffer
- * Returns nothing
- */
-void fifo_read(int fd, void *buf, size_t len)
-{
-        #define NULterminate
-        size_t z;
-
-        if ((z = read(fd, buf, len)) == -1)
-                bye("daemon: Could not read from fifo");
-
-        #if defined(NULterminate)
-        ((char *)buf)[z] = '\0';
-        #endif
-}
-
-
-/**
- * fifo_write -- Write the contents of a buffer into a named pipe.
- * @fd : file descriptor
- * @buf: buffer to be written to fifo
- * @len: size of the buffer
- * Returns nothing
- */
-void fifo_write(int fd, void *buf, size_t len)
-{
-        if ((write(fd, buf, len)) == -1)
-                bye("daemon: Could not write to fifo");
-}
-
+#include "fifo.h"
 
 
 /******************************************************************************
@@ -268,19 +100,14 @@ void fifo_write(int fd, void *buf, size_t len)
  * 
  ******************************************************************************/
 
-/******************************************************************************
- * CHANNEL DISK FILES
- *
- * dpx_creat  -- create a new channel directory in the filesystem
- * dpx_remove -- remove a channel directory from the filesystem 
- *
- ******************************************************************************/
-
 /**
- * dpx_creat -- create a duplex channel in the filesystem
+ * dpx_creat 
+ * `````````
+ * Create a duplex channel in the filesystem
+ *
  * @path : path of the duplex directory
  * @perms: file permissions 
- * Returns nothing.
+ * Return: nothing.
  */
 void dpx_creat(const char *path)
 {
@@ -291,8 +118,12 @@ void dpx_creat(const char *path)
 
 
 /**
- * dpx_remove -- destroy named FIFOs for a duplex channel
- * @pub_path
+ * dpx_remove 
+ * ``````````
+ * Destroy named FIFOs for a duplex channel
+ *
+ * @path : remove the channel at directory 'path'
+ * Return: nothing
  */
 void dpx_remove(char *path)
 {
@@ -302,19 +133,15 @@ void dpx_remove(char *path)
 }
  
 
-/******************************************************************************
- * CHANNEL OPERATIONS 
- *
- * dpx_open  -- open a new channel 
- * dpx_close -- close a currently open channel 
- *
- ******************************************************************************/
-
 /**
- * dpx_open -- Open a new channel. 
- * @dpx : pointer to a duplex structure
- * @path: path where FIFOs will be created (path.pub/path.sub)
- * Returns nothing.
+ * dpx_open 
+ * ````````
+ * Open a new channel. 
+ *
+ * @dpx  : pointer to a duplex structure
+ * @path : path where FIFOs will be created (path.pub/path.sub)
+ * @mode : are we creating the FIFO files as we open?
+ * Return: nothing.
  */
 void dpx_open(struct dpx_t *dpx, const char *path, int mode)
 {
@@ -355,9 +182,12 @@ void dpx_open(struct dpx_t *dpx, const char *path, int mode)
 
 
 /**
- * dpx_close -- Close an open channel
- * @dpx: pointer to a duplex structure
- * Returns nothing.
+ * dpx_close 
+ * `````````
+ * Close an open channel
+ *
+ * @dpx  : pointer to a duplex structure
+ * Return: nothing.
  */
 void dpx_close(struct dpx_t *dpx)
 {
@@ -382,13 +212,20 @@ void dpx_close(struct dpx_t *dpx)
  * dpx_load  -- load a message into the transmission buffer 
  * dpx_flush -- fill the transmission buffer with 0's 
  * dpx_send  -- load and write the transmission buffer in one call 
+ * dpx_form  -- send formatted message
+ * dpx_link  -- handshake and exchange PIDs
+ * dpx_kill  -- signal the other terminal of a channel
  *
  ******************************************************************************/
 
+
 /**
- * dpx_read -- Read the channel into the transmission buffer 
- * @dpx: pointer to a duplex structure
- * Returns nothing.
+ * dpx_read 
+ * ````````
+ * Read the channel into the transmission buffer 
+ *
+ * @dpx  : pointer to a duplex structure
+ * Return: nothing.
  */
 void dpx_read(struct dpx_t *dpx)
 {
@@ -397,9 +234,12 @@ void dpx_read(struct dpx_t *dpx)
 
 
 /**
- * dpx_write -- Write the transmission buffer to the channel 
- * @dpx: pointer to a duplex structure
- * Returns nothing.
+ * dpx_write 
+ * `````````
+ * Write the transmission buffer to the channel 
+ *
+ * @dpx  : pointer to a duplex structure
+ * Return: nothing.
  */
 void dpx_write(struct dpx_t *dpx)
 {
@@ -408,10 +248,13 @@ void dpx_write(struct dpx_t *dpx)
 
 
 /**
- * dpx_load -- Load a message buffer into the transmission buffer 
- * @dpx: pointer to a duplex structure
- * @msg: message to be loaded in the duplex structure
- * Returns nothing.
+ * dpx_load 
+ * ````````
+ * Load a message buffer into the transmission buffer 
+ *
+ * @dpx  : pointer to a duplex structure
+ * @msg  : message to be loaded in the duplex structure
+ * Return: nothing.
  */
 void dpx_load(struct dpx_t *dpx, const char *msg)
 {
@@ -420,8 +263,12 @@ void dpx_load(struct dpx_t *dpx, const char *msg)
 
 
 /**
- * dpx_flush -- Fill the transmission buffer with 0's 
- * @dpx: pointer to a duplex structure
+ * dpx_flush 
+ * `````````
+ * Fill the transmission buffer with 0's 
+ *
+ * @dpx  : pointer to a duplex structure
+ * Return: nothing.
  */
 void dpx_flush(struct dpx_t *dpx)
 {
@@ -430,10 +277,13 @@ void dpx_flush(struct dpx_t *dpx)
 
 
 /**
- * dpx_send -- Load and write the transmission buffer in one call
- * @dpx: pointer to a duplex structure
- * @msg: message to be loaded into the duplex
- * Returns nothing.
+ * dpx_send 
+ * ````````
+ * Load and write the transmission buffer in one call
+ *
+ * @dpx  : pointer to a duplex structure
+ * @msg  : message to be loaded into the duplex
+ * Return: nothing.
  */
 void dpx_send(struct dpx_t *dpx, const char *msg)
 {
@@ -443,7 +293,20 @@ void dpx_send(struct dpx_t *dpx, const char *msg)
 
 
 /**
- * dpx_form -- write formatted transmission
+ * dpx_form 
+ * ````````
+ * Write a format string and arguments to the dpx buffer
+ *
+ * @dpx: pointer to a duplex structure 
+ * @fmt: format string 
+ * @...: variadic argument list
+ * 
+ * USAGE
+ * This wraps the vsnprintf function, and the calling convention
+ * is consistent with all the other format print functions, e.g.
+ *
+ *      dpx_form(&mydpx, "String %s occurs %d times\n", str, num);
+ *
  */
 void dpx_form(struct dpx_t *dpx, const char *fmt, ...) 
 {
@@ -458,7 +321,12 @@ void dpx_form(struct dpx_t *dpx, const char *fmt, ...)
 
 
 /**
- * dpx_link -- wait until a handshake and PID exchange can be completed
+ * dpx_link 
+ * ````````
+ * Wait until a handshake and PID exchange can be completed
+ *
+ * @dpx  : pointer to a duplex structure
+ * Return: nothing.
  */
 void dpx_link(struct dpx_t *dpx)
 {
@@ -479,11 +347,16 @@ void dpx_link(struct dpx_t *dpx)
 
 
 /**
- * dpx_kill -- signal the other end of a duplex link using the stored PID
+ * dpx_kill 
+ * ````````
+ * Signal the other end of a duplex link using the stored PID
+ * 
+ * @dpx  : pointer to a duplex structure
+ * @signo: signal to be raised
+ * Return: nothing.
  */
 void dpx_kill(struct dpx_t *dpx, int signo)
 {
         kill(dpx->remote_pid, signo);
 }
-
 

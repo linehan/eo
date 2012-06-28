@@ -11,7 +11,7 @@
 #include "../common/error.h"
 #include "../common/daemon.h"
 #include "../common/file.h"
-#include "../common/channel.h"
+#include "../common/channel/channel.h"
 #include "../common/configfiles.h"
 #include "../common/textutils.h"
 #include "../common/dir.h"
@@ -33,6 +33,7 @@
  * pumpd_stat    # Return the status of the daemon
  *
  ******************************************************************************/
+
 
 /**
  * usage 
@@ -56,8 +57,7 @@ void usage(void)
  */
 void pumpd_init(void)
 {
-        /* Reset permissions mask */
-        umask(0); 
+        umask(0); // clear 
 
         /* Create configuration directory if none present */
         if (!exists(CFG_PATH))
@@ -130,7 +130,7 @@ void pumpd_start(void)
         if ((daemonize()) == -1) // See daemon.c
                 return;
 
-        // ---------- process is now a daemon ---------- */
+        /* ---------- process is now a daemon ---------- */
 
         /* Create a new pidfile */
         pidfile(PID_PATH, "w+");
