@@ -27,7 +27,7 @@ pmp_SOURCES   = src/pump/pump.c              \
                 src/common/textutils.c       \
                 src/common/error.c           \
                 src/common/lib/bloom/bloom.c \
-                src/common/sha256/sha2.c
+                src/common/lib/sha256/sha2.c
 
 
 pumpd_SOURCES = src/pumpd/pumpd.c            \
@@ -41,7 +41,7 @@ pumpd_SOURCES = src/pumpd/pumpd.c            \
                 src/common/textutils.c       \
                 src/common/error.c           \
                 src/common/lib/bloom/bloom.c \
-                src/common/sha256/sha2.c
+                src/common/lib/sha256/sha2.c
 
 
 
