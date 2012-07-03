@@ -417,3 +417,48 @@ void *memem(const void *haystack, const void *needle)
         return NULL;
 }
 
+
+size_t tonext(char *str, char tok)
+{
+        char *match;
+        size_t len;
+       
+        len = strlen(str);
+
+        match = (char *)memchar(str, tok, len);
+
+        return len - strlen(match);
+}
+
+
+
+void trim(char *new, const char *old)
+{
+        size_t len;
+        size_t quotespan;
+        int i;
+        int k;
+
+        len = strlen(old);
+
+        for (i=0; i<len; i++) {
+                if (old[i] == ' ')
+                        continue;
+
+                if (old[i] == '"') {
+                        quotespan = tonext(&old[i], '"');
+                        slcat(new, &old[i], quotespan);
+                        i += quotespan;
+                        k += quotespan;
+                        continue;
+                }
+
+                new[k++] = old[i];
+        }
+        new[k] = '\0';
+}
+
+                        
+
+
+

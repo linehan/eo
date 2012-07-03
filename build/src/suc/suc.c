@@ -196,24 +196,23 @@ void suc_logic(char *path)
 }
 
 
-
-
 char *suc_mvinline(const char *filename, const char *command)
 {
         static char new[4096];
 
         bounce(new, 4096, "echo %s | %s", filename, command);
 
+        if (rename(filename, new) == -1)
+                bye("Could not rename");
+
         return new;
-        /*rename(filename, new);*/
 }
 
 
 void suc_at(const char *segment)
 {
-        char full[4096];
-        char lside[4096];
-        char rside[4096];
+        char full[4096], lside[4096], rside[4096], try[4096];
+        char lnice[4096], rnice[4096];
         char *tmp;
 
         slcpy(full, segment, 4096);
@@ -226,9 +225,15 @@ void suc_at(const char *segment)
 
         slcpy(lside, full, 4096);
 
-        printf("lside: %s\nrside:%s\n", lside, rside);
+        trim(lnice, lside);
+        make_path_absolute(try, lnice);
 
-        printf("rename %s to: %s\n", lside, suc_mvinline(lside, rside));
+        /*trim(rnice, rside);*/
+
+        printf("lside: %s\nrside:%s\n", try, rside);
+
+        tmp = suc_mvinline(try, rside); 
+        printf("renamed %s to: %s\n", try, tmp);
 }
         
 
