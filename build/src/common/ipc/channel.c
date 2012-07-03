@@ -8,7 +8,7 @@
 #include <sys/ipc.h>
 #include <stdarg.h>
 
-#include "../file.h"
+#include "../io/file.h"
 #include "../error.h"
 #include "../textutils.h"
 #include "channel.h"
@@ -153,13 +153,13 @@ void dpx_open(struct dpx_t *dpx, const char *path, int mode)
         dpx->role = CH_ROLE(mode);
 
         /* Set the path of the channel's disk files */
-        dpx->path = bdup(path);
+        dpx->path = sdup(path);
 
         /* Open the file descriptors in the appropriate order */
         if (dpx->role == PUBLISH) {
                 /* Set the publish and subscribe paths */
-                dpx->path_pub = bdup(CONCAT(path, "/pub"));
-                dpx->path_sub = bdup(CONCAT(path, "/sub"));
+                dpx->path_pub = sdup(CONCAT(path, "/pub"));
+                dpx->path_sub = sdup(CONCAT(path, "/sub"));
 
                 /* Open the publish and subscribe paths */ 
                 dpx->fd_sub = fifo_open(dpx->path_sub, O_RDONLY);
@@ -168,8 +168,8 @@ void dpx_open(struct dpx_t *dpx, const char *path, int mode)
 
         } else if (dpx->role == SUBSCRIBE) {
                 /* Set the publish and subscribe paths */ 
-                dpx->path_pub = bdup(CONCAT(path, "/sub"));
-                dpx->path_sub = bdup(CONCAT(path, "/pub"));
+                dpx->path_pub = sdup(CONCAT(path, "/sub"));
+                dpx->path_sub = sdup(CONCAT(path, "/pub"));
 
                 /* Open the publish and subscribe paths */ 
                 dpx->fd_pub = fifo_open(dpx->path_pub, O_WRONLY);
@@ -258,7 +258,7 @@ void dpx_write(struct dpx_t *dpx)
  */
 void dpx_load(struct dpx_t *dpx, const char *msg)
 {
-        strlcpy(dpx->buf, msg, MIN_PIPESIZE);
+        slcpy(dpx->buf, msg, MIN_PIPESIZE);
 }
 
 
@@ -272,7 +272,7 @@ void dpx_load(struct dpx_t *dpx, const char *msg)
  */
 void dpx_flush(struct dpx_t *dpx)
 {
-        bzero(dpx->buf, MIN_PIPESIZE);
+        empty(dpx->buf, MIN_PIPESIZE);
 }
 
 

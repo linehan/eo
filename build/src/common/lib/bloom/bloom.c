@@ -1,6 +1,6 @@
 /******************************************************************************
  * bloom.c
-   ======= 
+ * ======= 
  * Bloom filters
  *
  * HISTORY 
@@ -118,7 +118,7 @@
 #define ROUND(size) ((size + CHAR_BIT - 1) / CHAR_BIT)
 
 
-/******************************************************************************
+/**
  * bloom_new  Allocate and return a pointer to a new Bloom filter.
  * `````````
  * @size  : size of the bit array in the filter
@@ -127,8 +127,7 @@
  *
  * USAGE
  * For best results, make 'size' a power of 2.
- *
- ******************************************************************************/
+ */
 struct bloom_t *bloom_new(size_t size, size_t num_hashes, ...)
 {
         struct bloom_t *bloom;
@@ -171,13 +170,12 @@ struct bloom_t *bloom_new(size_t size, size_t num_hashes, ...)
 }
 
 
-/******************************************************************************
+/**
  * bloom_del  Delete a Bloom filter.
  * `````````
  * @bloom : The condemned. 
  * Returns: nothing. 
- *
- ******************************************************************************/
+ */
 void bloom_del(struct bloom_t *bloom)
 {
         free(bloom->a);
@@ -186,7 +184,7 @@ void bloom_del(struct bloom_t *bloom)
 }
 
 
-/******************************************************************************
+/**
  * bloom_add  Add a string to a Bloom filter.
  * `````````
  * @bloom : Bloom filter
@@ -195,8 +193,7 @@ void bloom_del(struct bloom_t *bloom)
  *
  * CAVEAT 
  * Once a string has been added to the filter, it cannot be "removed"!
- *
- ******************************************************************************/
+ */
 void bloom_add(struct bloom_t *bloom, const char *s)
 {
         unsigned int hash;
@@ -209,7 +206,7 @@ void bloom_add(struct bloom_t *bloom, const char *s)
 }
 
 
-/******************************************************************************
+/**
  * bloom_check  Determine if a string is in the Bloom filter. 
  * ```````````
  * @bloom : Bloom filter
@@ -246,8 +243,7 @@ void bloom_add(struct bloom_t *bloom, const char *s)
  * 
  * In this way, the Bloom filter can answer NO with absolute surety, but
  * can only speak a qualified YES.
- *
- ******************************************************************************/
+ */
 bool bloom_check(struct bloom_t *bloom, const char *s)
 {
         unsigned int hash;

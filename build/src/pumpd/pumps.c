@@ -120,8 +120,8 @@ struct pump_t *new_pump(char *target, char *channel, int mode)
 
         new->mode = mode;
 
-        strlcpy(new->target, target, PATHSIZE);
-        strlcpy(new->channel, channel, PATHSIZE);
+        slcpy(new->target, target, PATHSIZE);
+        slcpy(new->channel, channel, PATHSIZE);
 
         return new;
 }

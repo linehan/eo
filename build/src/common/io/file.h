@@ -32,7 +32,8 @@ const char *sperm(__mode_t mode);
 
 /* Filenames and pathnames 
 ``````````````````````````````````````````````````````````````````````````````*/
-char *scwd(void);
+const char *scwd(void);
+const char *curdir(void);
 
 const char *getdirpath(DIR *dir);
 bool is_relpath(const char *path);
@@ -68,6 +69,11 @@ char    *tokenf(char, char, char, const char *tok, const char *path);
 /* Macros for most common scenario */
 #define get_token(dst, tok, path) get_tokenf(dst, '\n', ' ', '#', tok, path)
 #define token(tok, path)          tokenf('\n', ' ', '#', tok, path)
+
+
+/* Pipes 
+``````````````````````````````````````````````````````````````````````````````*/
+void bounce(char *buf, size_t max, const char *fmt, ...);
 
 
 

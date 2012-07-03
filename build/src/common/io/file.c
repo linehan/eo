@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdarg.h>
 
 #include <unistd.h>
 #include <dirent.h>
@@ -12,6 +13,8 @@
 #include <sys/stat.h>
 #include <pwd.h>
 #include <grp.h>
+
+#include <libgen.h>
 
 #include "file.h"
 #include "../error.h"
@@ -161,6 +164,21 @@ void smkdir(const char *path, int perms)
  *
  ******************************************************************************/
 
+/**
+ * curdir
+ *
+ * Return: the name of the current directory (not the full path)
+ */
+const char *curdir(void)
+{
+        static char cwd[PATHSIZE];
+
+        slcpy(cwd, scwd(), PATHSIZE);
+
+        return basename(cwd);
+}
+
+
 
 /**
  * getdirpath
@@ -246,7 +264,7 @@ char *gethome(void)
  * 
  * Return: path of the current working directory.
  */
-char *scwd(void)
+const char *scwd(void)
 {
         static char buf[PATHSIZE];
 
@@ -296,7 +314,7 @@ void make_path_absolute(char *buf, const char *path)
          * it into the buffer and return.
          */
         if (!is_relpath(path)) {
-                strlcpy(buf, path, strlen(path));
+                slcpy(buf, path, strlen(path));
                 return;
         }
 
@@ -459,7 +477,7 @@ const char *sperm(__mode_t mode)
  */
 void cwd_mark(struct cwd_t *breadcrumb)
 {
-        strlcpy(breadcrumb->home, scwd(), PATHSIZE); 
+        slcpy(breadcrumb->home, scwd(), PATHSIZE); 
 }
 
 
@@ -509,7 +527,7 @@ void cwd_revert(struct cwd_t *breadcrumb)
 void cwd_setjump(struct cwd_t *breadcrumb, const char *path)
 {
         cwd_mark(breadcrumb);
-        strlcpy(breadcrumb->jump, path, PATHSIZE);
+        slcpy(breadcrumb->jump, path, PATHSIZE);
 }
 
 
@@ -609,4 +627,31 @@ char *tokenf(char B, char S, char C, const char *tok, const char *path)
         return buffer;
 }
 
+
+
+
+/****************************************************************************** 
+ * PIPES 
+ * 
+ ******************************************************************************/
+
+void bounce(char *buf, size_t max, const char *fmt, ...)
+{
+        FILE *fp;
+        char command[4096];
+        size_t len; 
+        va_list args;
+
+        /* Write formatted output to stream */
+        va_start(args, fmt);
+        vsnprintf(command, 4096, fmt, args);
+        va_end(args);
+
+        /* If you want to read output from command */
+        fp = popen(command, "r"); 
+        /* read output from command */
+        fgets(buf, max, fp);
+                                                           
+        fclose(fp);
+}
 

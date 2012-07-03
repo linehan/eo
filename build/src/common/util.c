@@ -5,7 +5,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "sha256/sph_sha2.h"
+#include "lib/sha256/sph_sha2.h"
 
 
 /**

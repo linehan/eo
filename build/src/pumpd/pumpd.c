@@ -82,7 +82,6 @@ void pumpd_init(void)
  * for a client to provide it with a path, then it creates a pump to
  * handle that path and tells the client and pump what channel to meet
  * up on. 
- *
  */
 void pumpd(struct dpx_t *dpx)
 {
@@ -90,7 +89,7 @@ void pumpd(struct dpx_t *dpx)
 
         for (;;) {
                 /* Load the tempfile template */
-                strlcpy(id, "XXXXXX", PATHSIZE);
+                slcpy(id, "XXXXXX", PATHSIZE);
 
                 /* Wait for a pump request */
                 dpx_read(dpx);
@@ -122,7 +121,6 @@ void pumpd(struct dpx_t *dpx)
  *
  * FIXME
  * This needs to be factored with pump_open() in pumps.c 
- *
  */
 void pumpd_start(void)
 {

@@ -8,7 +8,7 @@
 #include <sys/ipc.h>
 #include <stdarg.h>
 
-#include "../file.h"
+#include "../io/file.h"
 #include "../error.h"
 #include "../textutils.h"
 #include "fifo.h"

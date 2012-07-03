@@ -12,22 +12,23 @@ LDFLAGS=-lpanel -lncursesw
 #                  support
 #             
 
-man1_MANS     = doc/pumpd.man doc/pmp.man
+man1_MANS     = doc/pumpd.man doc/suc.man
 
-bin_PROGRAMS  = pmp pumpd
+bin_PROGRAMS  = suc pumpd
 
-pmp_SOURCES   = src/pump/pump.c              \
-                src/pump/meta.c              \
-                src/common/ipc/daemon.c      \
-                src/common/ipc/channel.c     \
-                src/common/ipc/fifo.c        \
-                src/common/io/file.c         \
-                src/common/io/dir.c          \
-                src/common/util.c            \
-                src/common/textutils.c       \
-                src/common/error.c           \
-                src/common/lib/bloom/bloom.c \
-                src/common/lib/sha256/sha2.c
+suc_SOURCES   =  src/suc/suc.c                \
+                 src/suc/meta.c               \
+                 src/suc/parse.c              \
+                 src/common/ipc/daemon.c      \
+                 src/common/ipc/channel.c     \
+                 src/common/ipc/fifo.c        \
+                 src/common/io/file.c         \
+                 src/common/io/dir.c          \
+                 src/common/util.c            \
+                 src/common/textutils.c       \
+                 src/common/error.c           \
+                 src/common/lib/bloom/bloom.c \
+                 src/common/lib/sha256/sha2.c
 
 
 pumpd_SOURCES = src/pumpd/pumpd.c            \

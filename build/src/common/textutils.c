@@ -17,6 +17,7 @@
  * along with this program; if not, write to the Free Software Foundation, 
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 #define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
@@ -29,23 +30,29 @@
 
 
 /**
- * bwipe -- given a character buffer, set the contents to '\0'
- * @str : pointer to a character buffer
- * @len : size of the character buffer
+ * empty 
+ * `````
+ * Given a character buffer, set the contents to '\0'.
+ *
+ * @str  : pointer to a byte buffer
+ * @len  : size of the byte buffer
+ * Return: nothing.
  */
-void bwipe(char *str)
+void empty(char *str)
 {
         memset(str, '\0', strlen(str));
 }
 
 
 /**
- * bdup -- copy *str to a newly-alloc'd buffer, and return a pointer to it 
+ * sdup 
+ * ````
+ * Copy *str to a newly-alloc'd buffer, and return a pointer to it.
  *
- * @str: pointer to a '\0'-terminated char string
- *  RET: pointer to a copy of *str, else NULL.
+ * @str  : pointer to a '\0'-terminated char string
+ * Return: pointer to a copy of *str, else NULL.
  */
-char *bdup(const char *str)
+char *sdup(const char *str)
 {
         char *copy;
         size_t len;
@@ -57,48 +64,33 @@ char *bdup(const char *str)
 }
 
 
-/*
- * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
+/**
+ * slcpy
+ * `````
+ * Writes at most len characters from src to dst.
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * @dst  : destination buffer
+ * @src  : source buffer
+ * @len  : length of source buffer
+ * Return: number of bytes written.
  */
-
-/*
- * Copy src to string dst of size siz.  At most siz-1 characters
- * will be copied.  Always NUL terminates (unless siz == 0).
- * Returns strlen(src); if retval >= siz, truncation occurred.
- */
-size_t strlcpy(char *dst, const char *src, size_t siz)
+size_t slcpy(char *dst, const char *src, size_t siz)
 {
-        char *d;
         const char *s;
+        char *d;
         size_t n;
 
         d = dst;
         s = src;
         n = siz;
 
-        /* 
-         * Copy as many bytes from src as 
-         * will fit in dst 
-         */
+        /* Copy as many bytes from src as will fit in dst */
         if (n != 0) {
                 while (--n != 0) {
                         if ((*d++ = *s++) == '\0')
-                        break;
+                                break;
                 }
         }
-
         /* 
          * Not enough room in dst, add NUL 
          * and traverse the rest of src 
@@ -112,29 +104,18 @@ size_t strlcpy(char *dst, const char *src, size_t siz)
         return(s - src - 1); /* count does not include NUL */
 }
 
-/*
- * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
+
+/**
+ * slcat
+ * `````
+ * Concatenates src and dst in dst.
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * @dst  : destination buffer
+ * @src  : source buffer
+ * @siz  : size of source buffer
+ * Return: Number of bytes concatenated
  */
-/*
- * Appends src to string dst of size siz (unlike strncat, siz is the
- * full size of dst, not space left).  At most siz-1 characters
- * will be copied.  Always NUL terminates (unless siz <= strlen(dst)).
- * Returns strlen(src) + MIN(siz, strlen(initial dst)).
- * If retval >= siz, truncation occurred.
- */
-size_t strlcat(char *dst, const char *src, size_t siz)
+size_t slcat(char *dst, const char *src, size_t siz)
 {
         char *d;
         const char *s;
@@ -171,12 +152,14 @@ size_t strlcat(char *dst, const char *src, size_t siz)
 }
 
 
-
-
 /**
- * match -- locate first occurance of string 'needle' in string 'haystack'
+ * match 
+ * `````
+ * Locate first occurance of string 'needle' in string 'haystack'
+ *
  * @haystack: the string being searched for a match
  * @needle  : the pattern being matched in 'haystack'
+ * Return   : The first occurance of 'needle'
  */
 char *match(const char *haystack, const char *needle)
 {
@@ -198,9 +181,13 @@ char *match(const char *haystack, const char *needle)
 
 
 /**
- * field -- return pointer to a delimited substring (not including delimiter)
+ * field 
+ * `````
+ * Return pointer to a delimited substring (not including delimiter)
+ *
  * @str  : the string being matched against
  * @delim: the delimiter to be searched for
+ * Return: pointer to the start of the substring
  */
 char *field(const char *string, const char *delimiter)
 {
@@ -220,11 +207,14 @@ char *field(const char *string, const char *delimiter)
 
 
 /**
- * pumpf -- write a formatted character string into an auto-allocated buffer
+ * pumpf 
+ * `````
+ * Write a formatted character string into an auto-allocated buffer
+ *
  * @strp : pointer to a character buffer (will be allocated)
  * @fmt  : format string
  * @...  : format string arguments
- * @ret  : length of the formatted string at *strp
+ * Return: length of the formatted string at *strp
  */
 void pumpf(char **strp, const char *fmt, ...) 
 {
@@ -370,5 +360,60 @@ char *trimws(char *str)
         *(end+1) = '\0';
 
         return str;
+}
+
+
+/* Copyright (C) 1991,92,93,94,96,97,98,2000,2004,2007 Free Software Foundation, Inc.
+*  This file is part of the GNU C Library.
+*
+*  This program is free software; you can redistribute it and/or modify
+*  it under the terms of the GNU General Public License as published by
+*  the Free Software Foundation; either version 2, or (at your option)
+*  any later version.
+*
+*  This program is distributed in the hope that it will be useful,
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*  GNU General Public License for more details.
+*
+*  You should have received a copy of the GNU General Public License along
+*  with this program; if not, write to the Free Software Foundation,
+*  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
+
+#ifndef _LIBC
+# define __builtin_expect(expr, val)   (expr)
+#endif
+
+
+/* Return the first occurrence of NEEDLE in HAYSTACK.  */
+void *memem(const void *haystack, const void *needle)
+{
+        const char *begin;
+        const char *final;
+        size_t len_haystack;
+        size_t len_needle;
+
+        len_haystack = strlen((const char*)haystack);
+        len_needle   = strlen((const char*)needle);
+       
+        final = (const char *)haystack + (len_haystack - len_needle);
+
+        /* The first occurrence of the empty string is deemed to occur at
+        the beginning of the string.  */
+        if (len_needle == 0)
+                return (void *) haystack;
+
+        /* Sanity check, otherwise the loop might search through the whole
+        memory.  */
+        if (__builtin_expect (len_haystack < len_needle, 0))
+                return NULL;
+
+        for (begin = (const char *)haystack; begin <= final; ++begin) {
+                if (begin[0] == ((const char *) needle)[0]
+                && !memcmp((const void *)&begin[1], (const void *)((const char *)needle+1), len_needle-1))
+                        return (void *)begin;
+        }
+
+        return NULL;
 }
 
