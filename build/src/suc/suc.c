@@ -93,7 +93,8 @@ void suc_list(char *path)
 
         sigreg(catchsig);
 
-        make_path_absolute(abspath, path);
+        slcpy(abspath, path, PATHSIZE);
+        make_path_absolute(abspath);
 
         /* Subscribe to the pump daemon's control channel */
         dpx_open(&dpx, CH("control"), CH_SUB);
@@ -159,7 +160,6 @@ void suc_print(char *path)
         while ((filename = getfile(dir, F_REG))) {
                 printf("%s\n", filename);
         }
-
         sdclose(dir);
 
         return;
@@ -196,70 +196,52 @@ void suc_logic(char *path)
 }
 
 
-char *suc_mvinline(const char *filename, const char *command)
+
+void catenate(char *dest, size_t len, int argc, char *argv[])
 {
-        static char new[4096];
+        int i;
 
-        bounce(new, 4096, "echo %s | %s", filename, command);
-
-        if (rename(filename, new) == -1)
-                bye("Could not rename");
-
-        return new;
+        for (i=0; i<argc; i++) {
+                slcat(dest, argv[i], len);
+                slcat(dest, " ", len);
+        }
 }
-
-
-void suc_at(const char *segment)
-{
-        char full[4096], lside[4096], rside[4096], try[4096];
-        char lnice[4096], rnice[4096];
-        char *tmp;
-
-        slcpy(full, segment, 4096);
-
-        tmp = (char *)memchar(full, '@', 4096);
-
-        slcpy(rside, (tmp+1), 4096);
-
-        *tmp = '\0';
-
-        slcpy(lside, full, 4096);
-
-        trim(lnice, lside);
-        make_path_absolute(try, lnice);
-
-        /*trim(rnice, rside);*/
-
-        printf("lside: %s\nrside:%s\n", try, rside);
-
-        tmp = suc_mvinline(try, rside); 
-        printf("renamed %s to: %s\n", try, tmp);
-}
-        
 
 
 void suc_parse(int argc, char *argv[])
 {
-        struct parse_t *p;
-
-        char buf[4096];
+        struct routine_t *r;
+        char buf[LINESIZE];
         int i;
 
-        printf("You said:\n\n");
-        for (i=0; i<argc; i++) {
-                slcat(buf, argv[i], 4096);
-                slcat(buf, " ", 4096);
+        catenate(buf, LINESIZE, argc, argv); 
+        r = parse(buf);
+
+        for (i=0; i<r->n; i++) {
+                printf("operation %d: %s\n", i, symbol_text[r->op[i]->tag]);
+                printf("command: %s\n", r->op[i]->command);
         }
 
-        p = parse(buf);
-        for (i=0; i<p->n; i++) {
-                printf("segment %d: %s\n", i, p->node[i]);
+
+        char *filename;
+        DIR *dir;
+        char file[PATHSIZE];
+        char path[PATHSIZE];
+
+        slcpy(path, r->op[0]->command, PATHSIZE);
+        make_path_absolute(path);
+
+        dir = sdopen(path);
+
+        while ((filename = getfile(dir, F_REG))) {
+                slcpy(file, filename, PATHSIZE);
+                printf("before: %s\n", file);
+                for (i=0; i<r->n; i++) {
+                        r->op[i]->op(r->op[i], file);
+                }
+                printf("after: %s\n\n", file);
         }
-        for (i=0; i<p->n; i++) {
-                if (memchar(p->node[i], '@', strlen(p->node[i])))
-                        suc_at(p->node[i]);
-        }
-        printf("\n%s\n", buf);
+        sdclose(dir);
 }
 
 
@@ -281,8 +263,8 @@ int main(int argc, char *argv[])
         else if (isarg(1, "init"))
                 suc_init();
 
-        else if (isarg(1, "parse"))
-                suc_parse(argc, argv);
+        /*else if (isarg(1, "parse"))*/
+                /*suc_parse(argc, argv);*/
 
         /*else if (isarg(1, "at"))*/
                 /*suc_at();*/
@@ -299,7 +281,7 @@ int main(int argc, char *argv[])
                 suc_list(ARG(1));
 
         else if (isarg(2, ":"))
-                suc_print(ARG(1));
+                suc_parse(argc, argv);
 
         return 0;
 }

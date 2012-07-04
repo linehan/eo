@@ -37,12 +37,14 @@ const char *curdir(void);
 
 const char *getdirpath(DIR *dir);
 bool is_relpath(const char *path);
-void make_path_absolute(char *buf, const char *path);
+void make_path_absolute(char *path);
 
 char *gethome_uid(uid_t uid);
 char *gethome(void);
 
 int tempname(char *templ);
+
+void srename(const char *oldname, const char *newname);
 
 
 /* Current working directory tracking 

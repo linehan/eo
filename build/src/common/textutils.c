@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 
 /**
@@ -61,6 +62,41 @@ char *sdup(const char *str)
         copy = malloc(len);
 
         return copy ? memcpy(copy, str, len) : NULL;
+}
+
+/**
+ * sldup
+ * `````
+ * Copy *str to a newly-alloc'd buffer of size len, and return a pointer to it.
+ *
+ * @str  : pointer to a '\0'-terminated char string
+ * @len  : size of buffer (including '\0')
+ * Return: pointer to a copy of *str, else NULL.
+ */
+char *sldup(const char *str, size_t len)
+{
+        char *copy;
+        size_t max;
+
+        max = strlen(str) + 1;
+
+        if (len > max) {
+                len = max-1;
+
+                if ((copy = malloc(len))) {
+                        memcpy(copy, str, len);
+                        copy[len] = '\0';
+                        return copy;
+                } else {
+                        return NULL;
+                }
+        } else {
+                if ((copy = malloc(len)))
+                if (memcpy(copy, str, len), copy)
+                        return copy;
+                else
+                        return NULL;
+        }
 }
 
 
@@ -363,22 +399,24 @@ char *trimws(char *str)
 }
 
 
-/* Copyright (C) 1991,92,93,94,96,97,98,2000,2004,2007 Free Software Foundation, Inc.
-*  This file is part of the GNU C Library.
-*
-*  This program is free software; you can redistribute it and/or modify
-*  it under the terms of the GNU General Public License as published by
-*  the Free Software Foundation; either version 2, or (at your option)
-*  any later version.
-*
-*  This program is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU General Public License for more details.
-*
-*  You should have received a copy of the GNU General Public License along
-*  with this program; if not, write to the Free Software Foundation,
-*  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
+/* 
+ * Copyright (C) 1991,92,93,94,96,97,98,2000,2004,2007 Free Software Foundation, Inc.
+ *  This file is part of the GNU C Library.
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation,
+ *  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  
+ */
 
 #ifndef _LIBC
 # define __builtin_expect(expr, val)   (expr)
@@ -386,7 +424,7 @@ char *trimws(char *str)
 
 
 /* Return the first occurrence of NEEDLE in HAYSTACK.  */
-void *memem(const void *haystack, const void *needle)
+void *textutils_memmem(const void *haystack, const void *needle)
 {
         const char *begin;
         const char *final;
@@ -417,6 +455,40 @@ void *memem(const void *haystack, const void *needle)
         return NULL;
 }
 
+char *textutils_strstr(const char *h, const char *n)
+{
+        const char *begin;
+        const char *end;
+        size_t hlen;
+        size_t nlen;
+
+        hlen = strlen(h);
+        nlen = strlen(n);
+       
+        end = h + (hlen - nlen);
+
+        /* 
+         * The first occurrence of the empty string is deemed to occur at
+         * the beginning of the string.  
+         */
+        if (nlen == 0)
+                return h;
+
+        /* 
+         * Sanity check, otherwise the loop might search through the whole
+         * memory.  
+         */
+        if (__builtin_expect (hlen < nlen, 0))
+                return NULL;
+
+        for (begin=h; begin<=end; ++begin) {
+                if (begin[0] == n[0]
+                && !memcmp((const void *)(begin+1),(const void *)(n+1),nlen-1))
+                        return begin;
+        }
+        return NULL;
+}
+
 
 size_t tonext(char *str, char tok)
 {
@@ -432,31 +504,100 @@ size_t tonext(char *str, char tok)
 
 
 
-void trim(char *new, const char *old)
-{
-        size_t len;
-        size_t quotespan;
-        int i;
-        int k;
-
-        len = strlen(old);
-
-        for (i=0; i<len; i++) {
-                if (old[i] == ' ')
-                        continue;
-
-                if (old[i] == '"') {
-                        quotespan = tonext(&old[i], '"');
-                        slcat(new, &old[i], quotespan);
-                        i += quotespan;
-                        k += quotespan;
-                        continue;
-                }
-
-                new[k++] = old[i];
+bool is_ws(char c) {
+        switch (c) {
+        case ' ':
+        case '\n':
+        case '\t':
+        case '\f':
+        case '\r':
+                return true;
+        default:
+                return false;
         }
-        new[k] = '\0';
 }
+
+
+
+void trim(char *s) 
+{
+        char *p;
+        size_t l;
+       
+        p = s;
+        l = strlen(p);
+
+        while (isspace(p[(l-1)])) 
+                p[--l] = 0;
+
+        while (*p && isspace(*p)) 
+                ++p, --l;
+
+        memmove(s, p, (l+1));
+}
+
+char *trimdup(char * s) 
+{
+        size_t l;
+       
+        l = strlen(s);
+
+        while (isspace(s[(l-1)])) 
+                --l;
+        while (*s && isspace(*s)) 
+                ++s, --l;
+
+        return sldup(s, l);
+}
+
+
+int ntok(const char *str, const char *tok)
+{
+        size_t toklen;
+        char *sub;
+
+        int count=0;
+
+        toklen = strlen(tok);
+
+        for (sub  = (char *)memmem(str, tok);
+             sub != NULL;
+             sub  = (char *)memmem((sub+toklen), tok))
+        {
+                count++;
+        }
+
+        return count;
+}
+
+
+
+
+/*void trim(char *new, const char *old)*/
+/*{*/
+        /*size_t len;*/
+        /*size_t quotespan;*/
+        /*int i;*/
+        /*int k=0;*/
+
+        /*len = strlen(old);*/
+
+        /*for (i=0; i<len; i++) {*/
+                /*if (old[i] == ' ')*/
+                        /*continue;*/
+
+                /*if (old[i] == '"') {*/
+                        /*quotespan = tonext(&old[i], '"');*/
+                        /*slcat(new, &old[i], quotespan);*/
+                        /*i += quotespan;*/
+                        /*k += quotespan;*/
+                        /*continue;*/
+                /*}*/
+
+                /*new[k++] = old[i];*/
+        /*}*/
+        /*new[k] = '\0';*/
+/*}*/
 
                         
 

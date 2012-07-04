@@ -14,7 +14,13 @@ void chrswp(char *src, char at, char with, size_t len);
 size_t slcpy(char *dst, const char *src, size_t siz);
 size_t slcat(char *dst, const char *src, size_t siz);
 
-void *memem(const void *haystack, const void *needle);
-void trim(char *new, const char *old);
+#define memmem textutils_memmem
+void *textutils_memmem(const void *haystack, const void *needle);
+#define strstr textutils_strstr 
+char *textutils_strstr(const char *h, const char *n);
+
+void trim(char *str);
+char *trimdup(char *str);
+int ntok(const char *str, const char *tok);
 
 #endif

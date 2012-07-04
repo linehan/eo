@@ -19,61 +19,184 @@
 #include "../common/lib/bloom/bloom.h"
 
 
-static const char *SYMBOL[]={":", "{}", "@"};
+/*
+ * We split a script into parts:
+ *
+ *      suc ~/dir : {@} "tr '[A-Z]' '[a-z]'" : mv {} jpg/
+ *
+ *      |----------|--------------------------|-----------|
+ *     
+ *       statement0         statement1         statement2
+ *
+ *  
+ * statement0:
+ *
+ *      suc <directory>
+ *
+ * statement1:
+ *      
+ *      {@} "tr '[A-Z]' '[a-z]'"
+ *      ``` ````````````````````
+ *       |           |
+ *    operator    operand
+ *
+ * statement2:
+ *
+ *           operator
+ *          /
+ *      mv {} jpg/
+ *      ``````````
+ *       operand 
+ *
+ *
+ *
+ * {@} <TRANSFORM()> 
+ * is a unary prefix operator. It accepts a single operand in the form of a 
+ * shell directive.
+ *
+ * It will rename an iterated filename according to the result of the 
+ * <TRANSFORM()> operation as applied to the original filename.
+ *
+ * In shell script, the expanded operation might look like:
+ *
+ *      Given {@} "tr '[A-Z]' '[a-z]'" 
+ *
+ *      0. Expand 
+ *              {@}  --->  FileName.JPG
+ *
+ *      1. Transform
+ *              newname=$(echo FileName.JPG | "tr '[A-Z]' '[a-z]'")
+ *
+ *      2. Rename
+ *              mv FileName.JPG $newname 
+ *
+ * suc attempts to optimize some of the system calls involved, by using the
+ * low-level i/o functions where possible. Instead of mv, for example, {@}
+ * uses the rename() function.
+ *
+ * Generically, given {@} TRANSFORM(filename), the expansion proceeds:
+ *
+ *      0. Expand    
+ *              {@}  --->  <ITERATED FILENAME>
+ *
+ *      1. Transform 
+ *              <ALTERED FILENAME> := TRANSFORM(<ITERATED FILENAME>)
+ *
+ *      2. Rename    
+ *              rename(<ITERATED FILENAME>, <ALTERED FILENAME>)
+ * 
+ */
 
 
-int ntok(const char *str, const char *tok)
+/**
+ * op_transform
+ * ````````````
+ * Perform an in-place transform and rename. {@}
+ * 
+ * @self    : pointer to the operator object.
+ * @filename: name of the current file (may be altered).
+ * Return   : 0 on success, -1 on failure.
+ */
+int op_transform(void *self, char *filename)
 {
-        size_t toklen;
-        char *sub;
+        struct op_t *op = (struct op_t *)self;
+        static char new[PATHSIZE];
 
-        int count=0;
+        bounce(new, PATHSIZE, "echo %s | %s", filename, op->command);
 
-        toklen = strlen(tok);
+        srename(filename, new);
 
-        for (sub  = (char *)memem(str, tok);
-             sub != NULL;
-             sub  = (char *)memem((sub+toklen), tok))
-        {
-                count++;
-        }
+        slcpy(filename, new, PATHSIZE);
 
-        return count;
+        return 0;
 }
 
 
-
-
-
-
-struct parse_t *parse(const char *input)
+/**
+ * op_void
+ * ```````
+ * A do-nothing function stub for when there is no operation. 
+ * 
+ * @self    : pointer to the operator object.
+ * @filename: name of the current file (may be altered).
+ * Return   : 0 on success, -1 on failure.
+ */
+int op_void(void *self, char *filename)
 {
-        struct parse_t *new;
-        int seg;
-        int op;
-        char buffer[4096];
-        char *segment;
-        int n;
+        return 0;
+}
 
-        slcpy(buffer, input, 4096);
 
-        new = calloc(1, sizeof(struct parse_t));
+opf_t OPERATION[]={op_void, op_void, op_void, op_transform };
+const char *SYMBOL[]={"__VOID__", "suc", "{}", "{@}"};
 
-        n = ntok(input, ":");
-        /* For n tokens, there are n+1 segments (fencepost) */
-        new->node = malloc(n+1 * sizeof(char *));
 
-        int i = 0;
-        for (segment = strtok(buffer, ":");
-             segment != NULL;
-             segment = strtok(NULL, ":"))
-        {
-                new->node[i++] = sdup(segment);
+/**
+ * semantic_analyzer 
+ * `````````````````
+ * Semantic analyzer: detect and couple operators with logic and operands.
+ *
+ * @statement: A code statement which may or may not contain an operator. 
+ * Return    : Allocated semantic unit in the form of a struct op_t.
+ */
+struct op_t *semantic_analyzer(const char *statement)
+{
+        struct op_t *new; 
+        char *tmp;
+        int s;
+
+        new = malloc(sizeof(struct op_t)); 
+
+        for (s=0; s<4; s++) {
+                /* If the statement contains SYMBOL[s] */
+                if ((tmp = strstr(statement, SYMBOL[s]))) {
+                       new->command = trimdup((tmp + strlen(SYMBOL[s])));
+                       new->tag     = s;
+                       new->op      = OPERATION[s];
+                       return new;
+                } else {
+                        continue;
+                }
         }
-        new->n = i;
-                
+        /* The statement contained no symbols from the table. */
+        new->command = trimdup(symbol_text[VOID]);
+        new->tag     = VOID;
+        new->op      = NULL;
         return new;
 }
 
 
-         
+/**
+ * parser_analyzer 
+ * ```````````````
+ * Break an input string into statements and expressions. 
+ *
+ * @input: concatenated input string.
+ * Return: routine struct.
+ */
+struct routine_t *parser_analyzer(const char *input)
+{
+        #define DELIM ":"
+        struct routine_t *new;
+        char *code;
+        char *statement;
+        int i = 0;
+
+        code = sdup(input);
+
+        new     = malloc(sizeof(struct routine_t));
+        new->n  = (ntok(input, DELIM))+1; // fencepost
+        new->op = malloc(new->n * sizeof(struct op_t *));
+
+        for (statement = strtok(code, DELIM); 
+             statement; 
+             statement = strtok(NULL, DELIM))
+        {
+                new->op[i++] = semantic_analyzer(statement);
+        }
+
+        free(code);
+
+        return new;
+}
+

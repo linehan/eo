@@ -307,22 +307,22 @@ bool is_relpath(const char *path)
  * bytes. 'path' will be checked using is_relpath() to see 
  * whether or not it needs to be converted.
  */
-void make_path_absolute(char *buf, const char *path)
+void make_path_absolute(char *path)
 {
+        char buf[PATHSIZE];
         /*
          * If it's already an absolute path, simply copy 
          * it into the buffer and return.
          */
         if (!is_relpath(path)) {
-                slcpy(buf, path, strlen(path));
                 return;
         }
-
         /* 
          * Otherwise, get the current working directory
          * and append the relative path to it.
          */
-        snprintf(buf, PATHSIZE, "%s/%s", scwd(), path);
+        slcpy(buf, path, PATHSIZE);
+        snprintf(path, PATHSIZE, "%s/%s", scwd(), buf);
 }
 
 
@@ -354,6 +354,22 @@ int tempname(char *template)
                 start--;
         }
         return start;
+}
+
+
+void srename(const char *oldname, const char *newname)
+{
+        static char old[PATHSIZE];
+        static char new[PATHSIZE];
+
+        slcpy(old, oldname, PATHSIZE);
+        slcpy(new, newname, PATHSIZE);
+
+        make_path_absolute(old);
+        make_path_absolute(new);
+
+        if (rename(old, new) == -1)
+                bye("Could not rename");
 }
 
 
@@ -639,7 +655,6 @@ void bounce(char *buf, size_t max, const char *fmt, ...)
 {
         FILE *fp;
         char command[4096];
-        size_t len; 
         va_list args;
 
         /* Write formatted output to stream */
@@ -650,7 +665,7 @@ void bounce(char *buf, size_t max, const char *fmt, ...)
         /* If you want to read output from command */
         fp = popen(command, "r"); 
         /* read output from command */
-        fgets(buf, max, fp);
+        fscanf(fp, "%s", buf);
                                                            
         fclose(fp);
 }
