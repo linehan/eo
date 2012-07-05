@@ -1,33 +1,39 @@
 #ifndef __TEXTUTILS_H
 #define __TEXTUTILS_H
 
+/* Initialization ----------------------------------------------------------- */
 void szero(char *str);
 
+/* Safe strings ------------------------------------------------------------- */
 char  *sdup(const char *str);
-char *sldup(const char *str, size_t max);
-
+char  *sldup(const char *str, size_t max);
 size_t slcpy(char *dst, const char *src, size_t siz);
 size_t slcat(char *dst, const char *src, size_t siz);
+size_t sbif(char *l, char *r, const char *str, const char *tok);
 
+/* String sets -------------------------------------------------------------- */
+size_t catenate(char *dest, size_t max, int n, char *strings[]);
 char *match(const char *haystack, const char *needle);
 char *field(const char *string, const char *delimiter);
+int    ntok(const char *str, const char *tok);
+void chrswp(char *src, char at, char with, size_t len);
+
+/* Format print ------------------------------------------------------------- */
 void pumpf(char **strp, const char *fmt, ...);
 
-void *memchar(void *src_void, unsigned char c, size_t len);
-
+/* Whitespace --------------------------------------------------------------- */
 size_t trimcpy(char *dst, const char *src);
 char *trimws(char *str);
 
-void chrswp(char *src, char at, char with, size_t len);
-
-
-
+/* Raw memory --------------------------------------------------------------- */
 #define memmem textutils_memmem
-void *textutils_memmem(const void *haystack, const void *needle);
 #define strstr textutils_strstr 
-char *textutils_strstr(const char *h, const char *n);
+#define memchr textutils_memchr
+
+void *textutils_memmem(const void *haystack, const void *needle);
+char *textutils_strstr(const char *haystack, const char *needle);
+void *textutils_memchr(const void *src_void, int c, size_t len);
 
 
-int ntok(const char *str, const char *tok);
 
 #endif

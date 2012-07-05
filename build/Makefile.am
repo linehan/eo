@@ -24,6 +24,7 @@ suc_SOURCES   =  src/suc/suc.c                \
                  src/common/ipc/fifo.c        \
                  src/common/io/file.c         \
                  src/common/io/dir.c          \
+                 src/common/io/shell.c        \
                  src/common/util.c            \
                  src/common/textutils.c       \
                  src/common/error.c           \
@@ -38,6 +39,7 @@ pumpd_SOURCES = src/pumpd/pumpd.c            \
                 src/common/ipc/fifo.c        \
                 src/common/io/file.c         \
                 src/common/io/dir.c          \
+                src/common/io/shell.c        \
                 src/common/util.c            \
                 src/common/textutils.c       \
                 src/common/error.c           \

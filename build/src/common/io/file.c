@@ -664,29 +664,3 @@ char *tokenf(char B, char S, char C, const char *tok, const char *path)
 }
 
 
-
-
-/****************************************************************************** 
- * PIPES 
- * 
- ******************************************************************************/
-
-void bounce(char *buf, size_t max, const char *fmt, ...)
-{
-        FILE *fp;
-        char command[4096];
-        va_list args;
-
-        /* Write formatted output to stream */
-        va_start(args, fmt);
-        vsnprintf(command, 4096, fmt, args);
-        va_end(args);
-
-        /* If you want to read output from command */
-        fp = popen(command, "r"); 
-        /* read output from command */
-        fscanf(fp, "%s", buf);
-                                                           
-        fclose(fp);
-}
-

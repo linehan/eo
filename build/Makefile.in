@@ -66,8 +66,8 @@ am_pumpd_OBJECTS = src/pumpd/pumpd.$(OBJEXT) src/pumpd/pumps.$(OBJEXT) \
 	src/common/ipc/daemon.$(OBJEXT) \
 	src/common/ipc/channel.$(OBJEXT) src/common/ipc/fifo.$(OBJEXT) \
 	src/common/io/file.$(OBJEXT) src/common/io/dir.$(OBJEXT) \
-	src/common/util.$(OBJEXT) src/common/textutils.$(OBJEXT) \
-	src/common/error.$(OBJEXT) \
+	src/common/io/shell.$(OBJEXT) src/common/util.$(OBJEXT) \
+	src/common/textutils.$(OBJEXT) src/common/error.$(OBJEXT) \
 	src/common/lib/bloom/bloom.$(OBJEXT) \
 	src/common/lib/sha256/sha2.$(OBJEXT)
 pumpd_OBJECTS = $(am_pumpd_OBJECTS)
@@ -76,8 +76,8 @@ am_suc_OBJECTS = src/suc/suc.$(OBJEXT) src/suc/meta.$(OBJEXT) \
 	src/suc/parse.$(OBJEXT) src/common/ipc/daemon.$(OBJEXT) \
 	src/common/ipc/channel.$(OBJEXT) src/common/ipc/fifo.$(OBJEXT) \
 	src/common/io/file.$(OBJEXT) src/common/io/dir.$(OBJEXT) \
-	src/common/util.$(OBJEXT) src/common/textutils.$(OBJEXT) \
-	src/common/error.$(OBJEXT) \
+	src/common/io/shell.$(OBJEXT) src/common/util.$(OBJEXT) \
+	src/common/textutils.$(OBJEXT) src/common/error.$(OBJEXT) \
 	src/common/lib/bloom/bloom.$(OBJEXT) \
 	src/common/lib/sha256/sha2.$(OBJEXT)
 suc_OBJECTS = $(am_suc_OBJECTS)
@@ -235,6 +235,7 @@ suc_SOURCES = src/suc/suc.c                \
                  src/common/ipc/fifo.c        \
                  src/common/io/file.c         \
                  src/common/io/dir.c          \
+                 src/common/io/shell.c        \
                  src/common/util.c            \
                  src/common/textutils.c       \
                  src/common/error.c           \
@@ -248,6 +249,7 @@ pumpd_SOURCES = src/pumpd/pumpd.c            \
                 src/common/ipc/fifo.c        \
                 src/common/io/file.c         \
                 src/common/io/dir.c          \
+                src/common/io/shell.c        \
                 src/common/util.c            \
                 src/common/textutils.c       \
                 src/common/error.c           \
@@ -360,6 +362,8 @@ src/common/io/file.$(OBJEXT): src/common/io/$(am__dirstamp) \
 	src/common/io/$(DEPDIR)/$(am__dirstamp)
 src/common/io/dir.$(OBJEXT): src/common/io/$(am__dirstamp) \
 	src/common/io/$(DEPDIR)/$(am__dirstamp)
+src/common/io/shell.$(OBJEXT): src/common/io/$(am__dirstamp) \
+	src/common/io/$(DEPDIR)/$(am__dirstamp)
 src/common/$(am__dirstamp):
 	@$(MKDIR_P) src/common
 	@: > src/common/$(am__dirstamp)
@@ -414,6 +418,7 @@ mostlyclean-compile:
 	-rm -f src/common/error.$(OBJEXT)
 	-rm -f src/common/io/dir.$(OBJEXT)
 	-rm -f src/common/io/file.$(OBJEXT)
+	-rm -f src/common/io/shell.$(OBJEXT)
 	-rm -f src/common/ipc/channel.$(OBJEXT)
 	-rm -f src/common/ipc/daemon.$(OBJEXT)
 	-rm -f src/common/ipc/fifo.$(OBJEXT)
@@ -435,6 +440,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/common/$(DEPDIR)/util.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/common/io/$(DEPDIR)/dir.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/common/io/$(DEPDIR)/file.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/common/io/$(DEPDIR)/shell.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/common/ipc/$(DEPDIR)/channel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/common/ipc/$(DEPDIR)/daemon.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/common/ipc/$(DEPDIR)/fifo.Po@am__quote@

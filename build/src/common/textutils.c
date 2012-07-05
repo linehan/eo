@@ -33,7 +33,7 @@
 
 
 /**
- * empty 
+ * szero 
  * `````
  * Given a character buffer, set the contents to '\0'.
  *
@@ -160,11 +160,11 @@ size_t slcat(char *dst, const char *src, size_t siz)
          * Find the end of dst and adjust bytes 
          * left, but don't go past end 
          */
-        while (n-- != 0 && *d != '\0')
+        while (n--!=0 && *d!='\0')
                 d++;
 
         dlen = d - dst;
-        n = siz - dlen;
+        n    = siz - dlen;
 
         if (n == 0)
                 return(dlen + strlen(s));
@@ -178,7 +178,7 @@ size_t slcat(char *dst, const char *src, size_t siz)
         }
         *d = '\0';
 
-        return(dlen + (s - src)); /* count does not include NUL */
+        return (dlen + (s - src)); /* count does not include NUL */
 }
 
 
@@ -289,14 +289,16 @@ void pumpf(char **strp, const char *fmt, ...)
 
 
 /**
- * memchar -- search memory starting at src for character 'c'
+ * textutils_memchr
+ * ````````````````
+ * Search memory starting at src for character 'c'
  * If 'c' is found within 'len' characters of 'src', a pointer
  * to the character is returned. Otherwise, NULL is returned.
  */
-void *memchar(void *src_void, unsigned char c, size_t len)
+void *textutils_memchr(const void *src_void, int c, size_t len)
 {
-        const unsigned char *src = (const unsigned char *)src_void;
-        unsigned char d = c;
+        const int *src = (const int *)src_void;
+        int d = c;
 
         #if !defined(PREFER_SIZE_OVER_SPEED) && !defined(__OPTIMIZE_SIZE__)
         unsigned long *asrc;
@@ -341,7 +343,7 @@ void *memchar(void *src_void, unsigned char c, size_t len)
                  * If there are fewer than LONGBYTES characters left,
                  * we decay to the bytewise loop.
                  */
-                src = (unsigned char *)asrc;
+                src = (int *)asrc;
         }
         #endif /* !PREFER_SIZE_OVER_SPEED */
 
@@ -364,10 +366,9 @@ void *memchar(void *src_void, unsigned char c, size_t len)
 void chrswp(char *src, char at, char with, size_t len)
 {
         char *sub;
-        if ((sub = (char *)memchar(src, at, len)), sub!=NULL && *sub==at)
+        if ((sub = (char *)memchr(src, at, len)), sub!=NULL && *sub==at)
                 *sub = with;
 }
-
 
 char *trimws(char *str)
 {
@@ -466,7 +467,7 @@ char *textutils_strstr(const char *h, const char *n)
          * the beginning of the string.  
          */
         if (nlen == 0)
-                return h;
+                return (char *)h;
 
         /* 
          * Sanity check, otherwise the loop might search through the whole
@@ -478,9 +479,68 @@ char *textutils_strstr(const char *h, const char *n)
         for (begin=h; begin<=end; ++begin) {
                 if (begin[0] == n[0]
                 && !memcmp((const void *)(begin+1),(const void *)(n+1),nlen-1))
-                        return begin;
+                        return (char *)begin;
         }
         return NULL;
+}
+
+
+/**
+ * sbif
+ * ````
+ * Bifurcate a string at into two substrings if a token is found.
+ *
+ * @l    : destination of left side of string.
+ * @r    : destination of right side of string.
+ * @str  : original string.
+ * @tok  : token to split at.
+ * Return: nothing.
+ */
+size_t sbif(char *l, char *r, const char *str, const char *tok)
+{
+        const char *cur;
+        char *cpy;
+        size_t t_len;
+        size_t s_len;
+
+        s_len = strlen(str);
+        t_len = strlen(tok);
+       
+        if (t_len == 0)
+                return -1;
+
+        if (__builtin_expect (s_len < t_len, 0))
+                return -1;
+
+        cpy = l; // Start with the left string.
+
+        for (cur=str; *cur!='\0'; cur++) {
+                if (cur[0]==tok[0] && !memcmp((cur+1), (tok+1), (t_len-1))) {
+                       *cpy  = '\0';  // NUL-terminate left string.
+                        cpy  = r;     // We copy the right side now
+                        cur += t_len; // Move cursor past the token
+                }
+               *cpy = *cur;
+                cpy++;
+        }
+        *cpy = '\0'; // NUL-terminate right string.
+
+
+        return 1;
+}
+
+
+
+size_t catenate(char *dest, size_t max, int n, char *strings[])
+{
+        size_t len = 0;
+        int i;
+
+        for (i=0; i<n; i++) {
+                len += slcat(dest, strings[i], max);
+                len += slcat(dest, " ", max);
+        }
+        return len;
 }
 
 
@@ -491,7 +551,7 @@ size_t tonext(char *str, char tok)
        
         len = strlen(str);
 
-        match = (char *)memchar(str, tok, len);
+        match = (char *)memchr(str, tok, len);
 
         return len - strlen(match);
 }
@@ -547,37 +607,6 @@ size_t trimcpy(char *dst, const char *src)
 }
 
 
-
-/*void trimws(char *s) */
-/*{*/
-        /*char *p;*/
-        /*size_t l;*/
-       
-        /*p = s;*/
-        /*l = strlen(p);*/
-
-        /*while (isspace(p[(l-1)])) */
-                /*p[--l] = 0;*/
-
-        /*while (*p && isspace(*p)) */
-                /*++p, --l;*/
-
-        /*memmove(s, p, (l+1));*/
-/*}*/
-
-/*char *trimdup(char * s) */
-/*{*/
-        /*size_t len;*/
-       
-        /*len = strlen(s);*/
-
-        /*while (isspace(s[(l-1)])) */
-                /*--l;*/
-        /*while (*s && isspace(*s)) */
-                /*++s, --l;*/
-
-        /*return sldup(s, l);*/
-/*}*/
 
 
 int ntok(const char *str, const char *tok)

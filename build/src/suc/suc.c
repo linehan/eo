@@ -20,8 +20,6 @@
 #include "../common/lib/bloom/bloom.h"
 
 
-
-
 /******************************************************************************
  * SIGNAL HANDLING 
  ******************************************************************************/
@@ -55,8 +53,8 @@ void usage(void)
 
 
 /**
- * pump_init 
- * `````````
+ * suc_init 
+ * ````````
  * Initialize a pump in the current working directory.
  * 
  * Returns nothing.
@@ -144,69 +142,14 @@ void suc_list(char *path)
 
 
 /**
- * pump_print
- * ``````````
- * Print the filenames in the directory at path to stdout.
- * 
- * Returns nothing.
- */ 
-void suc_print(char *path)
-{
-        const char *filename;
-        DIR *dir;
-
-        dir = sdopen(path);
-
-        while ((filename = getfile(dir, F_REG))) {
-                printf("%s\n", filename);
-        }
-        sdclose(dir);
-
-        return;
-}
-
-
-/**
- * suc_logic
+ * suc_parse
  * `````````
- * Apply logic in .suc to each filename yielded by the iterator.
- * 
- * Returns nothing.
+ * Parse the arguments given to the suc invocation and run the program.
+ *
+ * @argc : the number of arguments received
+ * @argv : the arguments received
+ * Return: nothing
  */
-void suc_logic(char *path)
-{
-        struct pumpconfig_t config;
-        const char *filename;
-        DIR *dir;
-        static char buf[3000];
-
-        if (!is_pump(path))
-                bye("Current directory does not appear to be a pump.\n");
-
-        read_config(&config, "./.pump/config");
-
-        dir = sdopen(path);
-
-        while ((filename = getfile(dir, F_REG))) {
-                snprintf(buf, 3000, "./.pump/%s \"%s\" \"%s\"", config.link, config.base, filename);
-                printf("%s\n", buf);
-                system(buf);
-        }
-        sdclose(dir);
-}
-
-
-
-void catenate(char *dest, size_t len, int argc, char *argv[])
-{
-        int i;
-
-        for (i=0; i<argc; i++) {
-                slcat(dest, CONCAT(argv[i], " "), len);
-        }
-}
-
-
 void suc_parse(int argc, char *argv[])
 {
         struct routine_t *r;
@@ -238,20 +181,6 @@ int main(int argc, char *argv[])
 
         else if (isarg(1, "init"))
                 suc_init();
-
-        /*else if (isarg(1, "parse"))*/
-                /*suc_parse(argc, argv);*/
-
-        /*else if (isarg(1, "at"))*/
-                /*suc_at();*/
-
-        /* Default if no operator specified */
-        else if (!ARG(2))
-                suc_print(ARG(1));
-
-        /* Operators */
-        else if (isarg(2, ":L"))
-                suc_logic(ARG(1));
 
         else if (isarg(2, ":-"))
                 suc_list(ARG(1));
