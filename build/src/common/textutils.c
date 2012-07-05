@@ -29,6 +29,8 @@
 #include <ctype.h>
 #include <stdbool.h>
 
+#include "textutils.h"
+
 
 /**
  * empty 
@@ -36,10 +38,9 @@
  * Given a character buffer, set the contents to '\0'.
  *
  * @str  : pointer to a byte buffer
- * @len  : size of the byte buffer
  * Return: nothing.
  */
-void empty(char *str)
+void szero(char *str)
 {
         memset(str, '\0', strlen(str));
 }
@@ -64,6 +65,7 @@ char *sdup(const char *str)
         return copy ? memcpy(copy, str, len) : NULL;
 }
 
+
 /**
  * sldup
  * `````
@@ -73,30 +75,22 @@ char *sdup(const char *str)
  * @len  : size of buffer (including '\0')
  * Return: pointer to a copy of *str, else NULL.
  */
-char *sldup(const char *str, size_t len)
+char *sldup(const char *str, size_t max)
 {
         char *copy;
-        size_t max;
+        size_t len;
+        size_t end;
 
-        max = strlen(str) + 1;
+        len = strlen(str) + 1;
+        len = (len > max) ? max : len; // lesser of two weevils
+        end = len - 1;
 
-        if (len > max) {
-                len = max-1;
+        if (!(copy = calloc(1, len)))
+                return NULL;
 
-                if ((copy = malloc(len))) {
-                        memcpy(copy, str, len);
-                        copy[len] = '\0';
-                        return copy;
-                } else {
-                        return NULL;
-                }
-        } else {
-                if ((copy = malloc(len)))
-                if (memcpy(copy, str, len), copy)
-                        return copy;
-                else
-                        return NULL;
-        }
+        copy[end] = '\0';
+
+        return memcpy(copy, str, end);
 }
 
 
@@ -212,7 +206,7 @@ char *match(const char *haystack, const char *needle)
         if (len_needle > len_haystack)
                 return NULL;
 
-        return memmem(haystack, len_haystack, needle, len_needle);
+        return memmem(haystack, needle);
 }
 
 
@@ -519,36 +513,71 @@ bool is_ws(char c) {
 
 
 
-void trim(char *s) 
+
+
+/**
+ * trimcpy
+ * ```````
+ * Trim leading/trailing whitespace at src and copy result to dst
+ * 
+ * @dst  : destination buffer (must be allocated)
+ * @src  : source buffer
+ * Return: number of bytes written to dst.
+ */
+size_t trimcpy(char *dst, const char *src)
 {
-        char *p;
-        size_t l;
-       
-        p = s;
-        l = strlen(p);
+        const char *end;
 
-        while (isspace(p[(l-1)])) 
-                p[--l] = 0;
+        /* Leading */
+        while (isspace(*src))
+                src++; 
 
-        while (*p && isspace(*p)) 
-                ++p, --l;
+        /* All spaces */
+        if (*src == 0) 
+                return 0;
 
-        memmove(s, p, (l+1));
+        /* Trailing */
+        end = src + strlen(src) - 1;
+
+        while (end > src && isspace(*end)) 
+                end--;
+        end++;
+
+        return slcpy(dst, src, (end-src)+1); // slcpy adds NUL
 }
 
-char *trimdup(char * s) 
-{
-        size_t l;
+
+
+/*void trimws(char *s) */
+/*{*/
+        /*char *p;*/
+        /*size_t l;*/
        
-        l = strlen(s);
+        /*p = s;*/
+        /*l = strlen(p);*/
 
-        while (isspace(s[(l-1)])) 
-                --l;
-        while (*s && isspace(*s)) 
-                ++s, --l;
+        /*while (isspace(p[(l-1)])) */
+                /*p[--l] = 0;*/
 
-        return sldup(s, l);
-}
+        /*while (*p && isspace(*p)) */
+                /*++p, --l;*/
+
+        /*memmove(s, p, (l+1));*/
+/*}*/
+
+/*char *trimdup(char * s) */
+/*{*/
+        /*size_t len;*/
+       
+        /*len = strlen(s);*/
+
+        /*while (isspace(s[(l-1)])) */
+                /*--l;*/
+        /*while (*s && isspace(*s)) */
+                /*++s, --l;*/
+
+        /*return sldup(s, l);*/
+/*}*/
 
 
 int ntok(const char *str, const char *tok)
@@ -569,37 +598,4 @@ int ntok(const char *str, const char *tok)
 
         return count;
 }
-
-
-
-
-/*void trim(char *new, const char *old)*/
-/*{*/
-        /*size_t len;*/
-        /*size_t quotespan;*/
-        /*int i;*/
-        /*int k=0;*/
-
-        /*len = strlen(old);*/
-
-        /*for (i=0; i<len; i++) {*/
-                /*if (old[i] == ' ')*/
-                        /*continue;*/
-
-                /*if (old[i] == '"') {*/
-                        /*quotespan = tonext(&old[i], '"');*/
-                        /*slcat(new, &old[i], quotespan);*/
-                        /*i += quotespan;*/
-                        /*k += quotespan;*/
-                        /*continue;*/
-                /*}*/
-
-                /*new[k++] = old[i];*/
-        /*}*/
-        /*new[k] = '\0';*/
-/*}*/
-
-                        
-
-
 

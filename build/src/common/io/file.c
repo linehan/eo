@@ -292,7 +292,6 @@ bool is_relpath(const char *path)
 }
 
 
-
 /**
  * make_path_absolute 
  * ``````````````````
@@ -309,7 +308,7 @@ bool is_relpath(const char *path)
  */
 void make_path_absolute(char *path)
 {
-        char buf[PATHSIZE];
+        static char buf[PATHSIZE];
         /*
          * If it's already an absolute path, simply copy 
          * it into the buffer and return.
@@ -323,6 +322,27 @@ void make_path_absolute(char *path)
          */
         slcpy(buf, path, PATHSIZE);
         snprintf(path, PATHSIZE, "%s/%s", scwd(), buf);
+}
+
+
+/**
+ * absolute_path
+ * `````````````
+ * Returns the absolute path of the path supplied.
+ *
+ * @path : path to be expanded (possibly).
+ * Return: statically allocated string holding the absolute path.
+ */
+const char *absolute_path(const char *path)
+{
+        static char abspath[PATHSIZE];
+
+        /* Already absolute path */
+        if (!is_relpath(path))
+                return path;
+
+        snprintf(abspath, PATHSIZE, "%s/%s", scwd(), path);
+        return abspath;
 }
 
 

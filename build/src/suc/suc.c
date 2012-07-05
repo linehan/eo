@@ -9,6 +9,7 @@
 #include "meta.h"
 #include "parse.h"
 #include "../common/io/file.h"
+#include "../common/io/dir.h"
 #include "../common/ipc/daemon.h"
 #include "../common/ipc/channel.h"
 
@@ -19,7 +20,6 @@
 #include "../common/lib/bloom/bloom.h"
 
 
-static char LOGIC[20000];
 
 
 /******************************************************************************
@@ -202,8 +202,7 @@ void catenate(char *dest, size_t len, int argc, char *argv[])
         int i;
 
         for (i=0; i<argc; i++) {
-                slcat(dest, argv[i], len);
-                slcat(dest, " ", len);
+                slcat(dest, CONCAT(argv[i], " "), len);
         }
 }
 
@@ -211,37 +210,14 @@ void catenate(char *dest, size_t len, int argc, char *argv[])
 void suc_parse(int argc, char *argv[])
 {
         struct routine_t *r;
-        char buf[LINESIZE];
-        int i;
+        static char buf[LINESIZE];
+        char *filename;
 
         catenate(buf, LINESIZE, argc, argv); 
-        r = parse(buf);
+        r = parser_analyzer(buf);
 
-        for (i=0; i<r->n; i++) {
-                printf("operation %d: %s\n", i, symbol_text[r->op[i]->tag]);
-                printf("command: %s\n", r->op[i]->command);
-        }
-
-
-        char *filename;
-        DIR *dir;
-        char file[PATHSIZE];
-        char path[PATHSIZE];
-
-        slcpy(path, r->op[0]->command, PATHSIZE);
-        make_path_absolute(path);
-
-        dir = sdopen(path);
-
-        while ((filename = getfile(dir, F_REG))) {
-                slcpy(file, filename, PATHSIZE);
-                printf("before: %s\n", file);
-                for (i=0; i<r->n; i++) {
-                        r->op[i]->op(r->op[i], file);
-                }
-                printf("after: %s\n\n", file);
-        }
-        sdclose(dir);
+        while ((r->op[0]->op(r->op[0], &filename)) != -1)
+                r->op[1]->op(r->op[1], &filename);
 }
 
 

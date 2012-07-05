@@ -1,21 +1,21 @@
-#ifndef _PARSE_H
-#define _PARSE_H
+#ifndef _PARSER_H 
+#define _PARSER_H 
 
 
-struct parse_t {
-        int n;
-        char **node;
-};
+/* Operation function pointer type */
+typedef int (*opf_t)(void *self, char **filename);
 
-enum symbol_t { VOID, SUC, SUBSTITUTE, TRANSFORM };
-static const char *symbol_text[] = {"VOID", "SUC", "SUBSTITUTE", "TRANSFORM"};
+/* Operator tags */
+enum op_tag { VOI, SUC, SUB, FRM, FER, LAT };
+static const char *op_name[]={"VOI", "SUC", "SUB", "FRM", "FER", "LAT"};
 
-typedef int (*opf_t)(void *self, char *filename);
-
+/* 
+ * Operation type
+ */
 struct op_t {
+        enum op_tag tag;
         opf_t op;
-        enum symbol_t tag;
-        char *command;
+        char operand[4096];
 };
 
 
@@ -24,12 +24,6 @@ struct routine_t {
         struct op_t **op;
 };
 
-
-
-struct routine_t *parse(const char *input);
-char *suc_mvinline(const char *filename, const char *command);
-void suc_at(const char *segment);
-
-struct op_t *make_operation(const char *token);
+struct routine_t *parser_analyzer(const char *input);
 
 #endif

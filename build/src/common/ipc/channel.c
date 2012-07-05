@@ -272,7 +272,7 @@ void dpx_load(struct dpx_t *dpx, const char *msg)
  */
 void dpx_flush(struct dpx_t *dpx)
 {
-        empty(dpx->buf, MIN_PIPESIZE);
+        szero(dpx->buf);
 }
 
 

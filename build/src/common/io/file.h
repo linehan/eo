@@ -38,6 +38,7 @@ const char *curdir(void);
 const char *getdirpath(DIR *dir);
 bool is_relpath(const char *path);
 void make_path_absolute(char *path);
+const char *absolute_path(const char *path);
 
 char *gethome_uid(uid_t uid);
 char *gethome(void);
