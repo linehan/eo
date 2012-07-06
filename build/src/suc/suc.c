@@ -22,20 +22,42 @@
 
 /******************************************************************************
  * SIGNAL HANDLING 
+ *
+ * It is important that the suc client register itself with the signal 
+ * handler. Especially in the case when suc is using a sibling co-process
+ * to "share the load", any abnormal termination of the suc process will
+ * need to be caught, so that the co-process can be notified via SIGUSR1
+ * that the suc process has been terminated, and it needs to terminate as
+ * well.
  ******************************************************************************/
-int bigpid;
+int SUCPID;
 
 void catchsig(int signo)
 {
-        if (bigpid != 0)
-                kill(bigpid, SIGUSR1);
+        if (SUCPID != 0)
+                kill(SUCPID, SIGUSR1);
 
         signal(signo, SIG_DFL);
         raise(signo);
 }
 
+
 /******************************************************************************
  * SUC 
+ * 
+ * The suc client is the user-invoked side of the suc utility. Depending
+ * on the arguments specified, it will run in blocking or non-blocking 
+ * mode.
+ *
+ * In blocking mode, suc will be attached to a sibling process that will
+ * handle the iteration and the monitoring of the buffer, while the main
+ * suc process executes the specified logic on the values yielded by the
+ * other process.
+ *
+ * In non-blocking mode, suc will run in its own process. Once the set of
+ * values to be iterated over is exhausted, suc will terminate and return
+ * to the shell.
+ *
  ******************************************************************************/
 
 /**
@@ -84,6 +106,15 @@ void suc_init(void)
 }
 
 
+/**
+ * suc_pump
+ * ````````
+ * Run suc_process in perpetuity, with a co-process to help.
+ *
+ * @argc : the number of arguments received
+ * @argv : the arguments received
+ * Return: nothing
+ */
 void suc_pump(int argc, char *argv[])
 {
         struct routine_t *r;
@@ -103,11 +134,7 @@ void suc_pump(int argc, char *argv[])
         dpx_close(&dpx);
         dpx_olink(&dpx, CH(dpx.buf), CH_SUB);
 
-        /* Register the pump's PID so we can kill it on hangup. */  
-        bigpid = dpx.remote_pid;
-
-        /* Verify path with pump driver */
-        dpx_read(&dpx);
+        SUCPID = dpx.remote_pid; // See "Signal Handling", above.
 
         /* 
          * Receive filenames until a "DONE" message 
@@ -128,15 +155,15 @@ void suc_pump(int argc, char *argv[])
 
 
 /**
- * suc_parse
- * `````````
+ * suc_process
+ * ```````````
  * Parse the arguments given to the suc invocation and run the program.
  *
  * @argc : the number of arguments received
  * @argv : the arguments received
  * Return: nothing
  */
-void suc_parse(int argc, char *argv[])
+void suc_process(int argc, char *argv[])
 {
         struct routine_t *r;
         char *filename;
@@ -149,9 +176,7 @@ void suc_parse(int argc, char *argv[])
 
 
 
-/******************************************************************************
- * MAIN 
- ******************************************************************************/
+/* MAIN ***********************************************************************/
 int main(int argc, char *argv[]) 
 {
         load_env(&ENV);
@@ -159,22 +184,20 @@ int main(int argc, char *argv[])
         if (!ARG(1))
                 usage();
 
-        /* Command words */
         else if (isarg(1, "stat"))
                 print_config();
 
         else if (isarg(1, "init"))
                 suc_init();
 
-        else if (isarg(2, ":-")) {
+        else if (isarg(2, ":-"))
                 suc_pump(argc, argv);
-        }
 
         else if (isarg(2, "::"))
                 suc_pump(argc, argv);
 
         else if (isarg(2, ":"))
-                suc_parse(argc, argv);
+                suc_process(argc, argv);
 
         return 0;
 }

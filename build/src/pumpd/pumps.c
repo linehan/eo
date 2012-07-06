@@ -248,7 +248,6 @@ void pump_files(struct pump_t *p)
 
         /* Wait for the client to connect to channel */
         dpx_link(&p->dpx);
-        dpx_send(&p->dpx, p->target); // verify target 
 
         rediff:
 

@@ -205,17 +205,21 @@ struct op_t *semantic_analyzer(const char *statement)
 
         new = calloc(1, sizeof(struct op_t)); 
 
+        /* Search for tokens in the logic statement. */
         for (s=0; s<6; s++) {
-                /* If the statement contains SYMBOL[s] */
                 if ((tmp = strstr(statement, SYMBOL[s]))) {
-                        if (s == SUB) {
+                        switch (new->tag = s) {
+                        case SUB:
                                 trimcpy(new->operand, statement);
-                        } else {
-                                trimcpy(new->operand, (tmp + strlen(SYMBOL[s])));
-                                if (s == SUC)
-                                        make_path_absolute(new->operand);
+                                break;
+                        case SUC:
+                                trimcpy(new->operand, (tmp+strlen(SYMBOL[s])));
+                                make_path_absolute(new->operand);
+                                break;
+                        default:
+                                trimcpy(new->operand, (tmp+strlen(SYMBOL[s])));
+                                break;
                         }
-                        new->tag = s;
                         new->op  = OPERATION[s];
                         return new;
                 } else {
@@ -226,6 +230,7 @@ struct op_t *semantic_analyzer(const char *statement)
         slcpy(new->operand, op_name[VOI], 4096); 
         new->tag = VOI;
         new->op  = OPERATION[VOI];
+
         return new;
 }
 
@@ -257,7 +262,6 @@ struct routine_t *parser_analyzer(const char *input)
              statement = strtok(NULL, DELIM))
         {
                 new->op[i++] = semantic_analyzer(statement);
-                printf("%s: %s\n", op_name[new->op[(i-1)]->tag], new->op[(i-1)]->operand);
         }
 
         free(code);
@@ -281,7 +285,6 @@ struct routine_t *parse(int argc, char *argv[])
         struct routine_t *new;
 
         catenate(logic, LINESIZE, argc, argv); 
-
         new = parser_analyzer(logic);
 
         return new;
