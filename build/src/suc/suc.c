@@ -8,6 +8,7 @@
 #include "suc.h"
 #include "meta.h"
 #include "parse.h"
+#include "regex.h"
 #include "../common/io/file.h"
 #include "../common/io/dir.h"
 #include "../common/ipc/daemon.h"
@@ -175,6 +176,17 @@ void suc_process(int argc, char *argv[])
 }
 
 
+void suc_glob(const char *format, const char *string, const char *replacement)
+{
+        struct glob_t glob = {};
+
+        /*printf("fmt: %s\nstr:%s\nrep:%s\n", format, string, replacement);*/
+
+        globber(&glob, format, string, replacement);        
+
+        /*printf("globbed: %s\n", glob.big);*/
+}
+
 
 /* MAIN ***********************************************************************/
 int main(int argc, char *argv[]) 
@@ -189,6 +201,9 @@ int main(int argc, char *argv[])
 
         else if (isarg(1, "init"))
                 suc_init();
+
+        else if (isarg(1, "glob"))
+                suc_glob(argv[2], argv[3], argv[4]);
 
         else if (isarg(2, ":-"))
                 suc_pump(argc, argv);
