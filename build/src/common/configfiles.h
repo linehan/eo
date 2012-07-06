@@ -1,10 +1,11 @@
 #ifndef _PUMP_CONFIG_FILES_H
 #define _PUMP_CONFIG_FILES_H
 
+#include "textutils.h"
+
 /******************************************************************************
  * FILES AND DIRECTORIES 
  ******************************************************************************/
-
 /*
  * File permissions
  *
@@ -40,59 +41,82 @@
 
 /*
  * Home directory
- *
- * The configuration folder will be placed in the home directory
- * of the user who the process is associated with. See gethome()
- * in ../common/file.c.
+ * ``````````````
+ * Certain utility files will be placed in a folder in the home directory
+ * of the user associated with the process.
  */
-#define HOME_DIR  (gethome())
+static char *HOME = NULL;
 
 
-/*
- * Configuration files on disk
+#define CFG_NAME (".pipeutils")
+#define CFG_PATH (__cfg_path())
+/**
+ * __cfg_path
+ * ``````````
+ * Returns the path of the pipeutils configuration directory.
  *
+ * NOTES
  * The pump daemon maintains a number of files, all of which are
  * stored in a hidden directory, CFG_STEM, which resides in the
  * directory identified by CFG_PATH. 
  *
- * CFG_NAME     Name of the hidden directory
- * CFG_PATH     Path of the hidden directory
- *
+ * This is an implementation function that is called through the 
+ * CFG_PATH macro defined above.
  */
-#define CFG_STEM  ".pump"
-#define CFG_PATH  (CONCAT(HOME_DIR, "/"CFG_STEM"/"))
+static inline const char *__cfg_path(void)
+{
+        static char buf[PATHSIZE];
+        if (!HOME) HOME = sdup(gethome());
+        snprintf(buf, PATHSIZE, "%s/%s", HOME, CFG_NAME);
+        return buf;
+}
 
 
-/*
- * PID file
+#define PID_NAME  ("pumpd.pid") 
+#define PID_PATH  (__pid_path())
+/**
+ * __pid_path
+ * ``````````
+ * Returns the path of the pid file.
  *
+ * NOTES
  * In order to signal and stat the daemon, a client needs to know 
  * the pid (process id) of the daemon process. When the daemon is
  * started, it writes this number to the pid file.
+ *
+ * This is an implementation function that is called through the 
+ * PID_PATH macro defined above.
  */
-#define PID_NAME  "pumpd.pid"
-#define PID_PATH  (CONCAT(CFG_PATH, PID_NAME))
+static inline const char *__pid_path(void)
+{
+        static char buf[PATHSIZE];
+        if (!HOME) HOME = sdup(gethome());
+        snprintf(buf, PATHSIZE, "%s/%s/%s", HOME, CFG_NAME, PID_NAME);
+        return buf;
+}
 
 
-/*
- * FIFO files
+#define CHANNEL(stem) (__channel_path(stem))
+#define CH(stem)      (CHANNEL(stem))
+/**
+ * __channel_path
+ * ``````````````
+ * Returns the path of the channel identified by 'stem' 
+ * 
+ * @stem: identifier supplied by the pump daemon.
  *
- * Communication between the daemon and clients is performed via
- * FIFO files (named pipes). A number of these files may need to
- * be maintained, depending on the number of clients and the amount
- * of message multiplexing. 
- *
- * FIFOs which carry messages *to* the server are marked with the 
- * extension ".sub", while those carrying messages *from* the server 
- * are marked with the extension ".pub". 
- *
- * These extensions are automatically appended to the path supplied 
- * to the dpx_creat() function (see daemon.c).
+ * NOTES
+ * This is an implementation function that is called through the 
+ * CHANNEL or CH macros defined above.
  */
-#define FIFO_NAME     "fifo"
-#define FIFO_PATH     (CONCAT(CFG_PATH, FIFO_NAME))
-#define CHANNEL(stem) (CONCAT(CFG_PATH, stem))
-#define CH(stem)      (CONCAT(CFG_PATH, stem))
+static inline const char *__channel_path(const char *stem)
+{
+        static char buf[PATHSIZE];
+        if (!HOME) HOME = sdup(gethome());
+        snprintf(buf, PATHSIZE, "%s/%s/%s", HOME, CFG_NAME, stem);
+        return buf;
+}
+
 
 #endif
 

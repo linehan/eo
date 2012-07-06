@@ -143,13 +143,19 @@ void abort_report(const char *fmt, ...)
  */
 void sigreg(sig_handler_t handler)
 {
+        /* You say stop */
         signal(SIGINT,  handler);
         signal(SIGABRT, handler);
         signal(SIGINT,  handler);
         signal(SIGTERM, handler);
-        signal(SIGPIPE, handler);
         signal(SIGQUIT, handler);
         signal(SIGSTOP, handler);
+
+        /* I say go */
+        signal(SIGPIPE, handler);
+        signal(SIGSEGV, handler);
+
+        /* You say goodbye */
         signal(SIGUSR1, handler);
         signal(SIGUSR2, handler);
 }

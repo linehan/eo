@@ -21,6 +21,6 @@ struct routine_t {
         struct op_t **op;
 };
 
-struct routine_t *parser_analyzer(const char *input);
+struct routine_t *parse(int argc, char *argv[]);
 
 #endif

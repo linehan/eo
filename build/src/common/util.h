@@ -1,10 +1,6 @@
 #ifndef _PUMP_UTIL_H
 #define _PUMP_UTIL_H
 
-#define STRCMP(a,b) (strcmp((a),(b)) == 0) ? true : false
-
-#define isarg(n, string) (STRCMP(argv[(n)], (string)))
-#define ARG(n)           (argv[(n)])
 
 /******************************************************************************
  * THINGS I PILFERED FROM THE LINUX KERNEL
@@ -379,15 +375,7 @@ extern int __build_bug_on_failed;
 #define STR(a) #a
 #define EXP(a) a
 
-#include <string.h>
 
-static inline char *CONCAT(const char *a, const char *b)
-{
-        static char buffer[4096];
-        strcpy(buffer, a);
-        strcat(buffer, b);
-        return buffer;
-}
 
 void sha256gen(char *hex, void *hash);
 void nsleep(long nanoseconds);

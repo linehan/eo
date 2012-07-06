@@ -112,8 +112,8 @@
 void dpx_creat(const char *path)
 {
         smkdir(path, DIR_PERMS);
-        fifo_creat(CONCAT(path, "/sub"), PERMS);
-        fifo_creat(CONCAT(path, "/pub"), PERMS);
+        fifo_creat(concat(path, "/sub"), PERMS);
+        fifo_creat(concat(path, "/pub"), PERMS);
 }
 
 
@@ -125,10 +125,10 @@ void dpx_creat(const char *path)
  * @path : remove the channel at directory 'path'
  * Return: nothing
  */
-void dpx_remove(char *path)
+void dpx_remove(const char *path)
 {
-        fifo_remove(CONCAT(path, "/sub"));
-        fifo_remove(CONCAT(path, "/pub"));
+        fifo_remove(concat(path, "/sub"));
+        fifo_remove(concat(path, "/pub"));
         srmdir(path);
 }
  
@@ -158,8 +158,8 @@ void dpx_open(struct dpx_t *dpx, const char *path, int mode)
         /* Open the file descriptors in the appropriate order */
         if (dpx->role == PUBLISH) {
                 /* Set the publish and subscribe paths */
-                dpx->path_pub = sdup(CONCAT(path, "/pub"));
-                dpx->path_sub = sdup(CONCAT(path, "/sub"));
+                dpx->path_pub = sdup(concat(path, "/pub"));
+                dpx->path_sub = sdup(concat(path, "/sub"));
 
                 /* Open the publish and subscribe paths */ 
                 dpx->fd_sub = fifo_open(dpx->path_sub, O_RDONLY);
@@ -168,8 +168,8 @@ void dpx_open(struct dpx_t *dpx, const char *path, int mode)
 
         } else if (dpx->role == SUBSCRIBE) {
                 /* Set the publish and subscribe paths */ 
-                dpx->path_pub = sdup(CONCAT(path, "/sub"));
-                dpx->path_sub = sdup(CONCAT(path, "/pub"));
+                dpx->path_pub = sdup(concat(path, "/sub"));
+                dpx->path_sub = sdup(concat(path, "/pub"));
 
                 /* Open the publish and subscribe paths */ 
                 dpx->fd_pub = fifo_open(dpx->path_pub, O_WRONLY);
@@ -202,6 +202,7 @@ void dpx_close(struct dpx_t *dpx)
                 bye("close_dpx: Invalid duplex role");
         }
 }
+
 
 
 /******************************************************************************
@@ -293,8 +294,8 @@ void dpx_send(struct dpx_t *dpx, const char *msg)
 
 
 /**
- * dpx_form 
- * ````````
+ * dpx_sendf
+ * `````````
  * Write a format string and arguments to the dpx buffer
  *
  * @dpx: pointer to a duplex structure 
@@ -305,10 +306,10 @@ void dpx_send(struct dpx_t *dpx, const char *msg)
  * This wraps the vsnprintf function, and the calling convention
  * is consistent with all the other format print functions, e.g.
  *
- *      dpx_form(&mydpx, "String %s occurs %d times\n", str, num);
+ *      dpx_sendf(&mydpx, "String %s occurs %d times\n", str, num);
  *
  */
-void dpx_form(struct dpx_t *dpx, const char *fmt, ...) 
+void dpx_sendf(struct dpx_t *dpx, const char *fmt, ...) 
 {
         va_list args;
 
@@ -321,24 +322,73 @@ void dpx_form(struct dpx_t *dpx, const char *fmt, ...)
 
 
 /**
+ * dpx_ping
+ * ````````
+ * Identical to dpx_send, but waits for a response.
+ *
+ * @dpx  : pointer to a duplex structure
+ * @msg  : message to be loaded into the duplex
+ * Return: nothing.
+ */
+void dpx_ping(struct dpx_t *dpx, const char *msg)
+{
+        dpx_load(dpx, msg);
+        dpx_write(dpx);
+        dpx_read(dpx);
+}
+
+
+/**
+ * dpx_pingf
+ * `````````
+ * Identical to dpx_sendf, but waits for a response.
+ *
+ * @dpx: pointer to a duplex structure 
+ * @fmt: format string 
+ * @...: variadic argument list
+ * 
+ * USAGE
+ * This wraps the vsnprintf function, and the calling convention
+ * is consistent with all the other format print functions, e.g.
+ *
+ *      dpx_sendf(&mydpx, "String %s occurs %d times\n", str, num);
+ *
+ */
+void dpx_pingf(struct dpx_t *dpx, const char *fmt, ...) 
+{
+        va_list args;
+
+        va_start(args, fmt);
+        vsnprintf(dpx->buf, MIN_PIPESIZE, fmt, args);
+        va_end(args);
+
+        dpx_write(dpx);
+        dpx_read(dpx);
+}       
+
+
+/**
  * dpx_link 
  * ````````
- * Wait until a handshake and PID exchange can be completed
+ * Connect, handshake and exchange PIDs.
  *
  * @dpx  : pointer to a duplex structure
  * Return: nothing.
  */
 void dpx_link(struct dpx_t *dpx)
 {
-        pid_t pid = getpid();
+        pid_t pid;
+
+        /* Exchange PIDs */
+        pid = getpid();
 
         if (dpx->role == PUBLISH) {
                 dpx_read(dpx);
                 dpx->remote_pid = atoi(dpx->buf);
-                dpx_form(dpx, "%d", pid);
+                dpx_sendf(dpx, "%d", pid);
                 dpx_read(dpx);
         } else if (dpx->role == SUBSCRIBE) {
-                dpx_form(dpx, "%d", pid);
+                dpx_sendf(dpx, "%d", pid);
                 dpx_read(dpx);
                 dpx->remote_pid = atoi(dpx->buf);
                 dpx_send(dpx, "ack");

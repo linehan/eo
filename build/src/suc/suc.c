@@ -84,49 +84,33 @@ void suc_init(void)
 }
 
 
-void suc_list(char *path)
+void suc_pump(int argc, char *argv[])
 {
-        struct dpx_t dpx;
-        char abspath[PATHSIZE];
+        struct routine_t *r;
+        struct dpx_t dpx = {};
 
         sigreg(catchsig);
 
-        slcpy(abspath, path, PATHSIZE);
-        make_path_absolute(abspath);
+        r = parse(argc, argv);
 
         /* Subscribe to the pump daemon's control channel */
         dpx_open(&dpx, CH("control"), CH_SUB);
 
-        dpx_send(&dpx, abspath); // Send the path we want to be listed
-        dpx_read(&dpx);          // Wait for response... 
+        /* Send the directory we want sucked. */
+        dpx_ping(&dpx, r->op[0]->operand); 
 
-        /* (diagnostic) */
-        printf("targ: %s\n", abspath);
-        printf("name: %s\nchan: %s\n\n", dpx.buf, CH(dpx.buf));
-
-        /* 
-         * Close the control channel and open 
-         * the channel that control sent us.
-         */ 
+        /* Close control; open the channel control sent us. */ 
         dpx_close(&dpx);
-        dpx_open(&dpx, CH(dpx.buf), CH_SUB);
-        dpx_link(&dpx);
+        dpx_olink(&dpx, CH(dpx.buf), CH_SUB);
 
-        /*
-         * Print the pump server's PID (diagnostic) and register
-         * it with the signal handler so we can tell it we hung up.
-         */
-        printf("pump PID: %d\n", dpx.remote_pid);
+        /* Register the pump's PID so we can kill it on hangup. */  
         bigpid = dpx.remote_pid;
 
-        /* 
-         * Verify path with pump driver 
-         */
+        /* Verify path with pump driver */
         dpx_read(&dpx);
-        printf("pump reports path: %s\n", dpx.buf);
 
         /* 
-         * Receive file listing until "done" message 
+         * Receive filenames until a "DONE" message 
          * is received from the pump 
          */
         for (;;) {
@@ -135,7 +119,9 @@ void suc_list(char *path)
                         dpx_send(&dpx, "ack"); // Tell pump we received "done"
                         continue;
                 }
-                printf("%s\n", dpx.buf);
+                char *file = sldup(dpx.buf, PATHSIZE);
+                r->op[1]->op(r->op[1], &file);
+                free(file);
         }
         dpx_close(&dpx);
 }
@@ -153,11 +139,9 @@ void suc_list(char *path)
 void suc_parse(int argc, char *argv[])
 {
         struct routine_t *r;
-        static char buf[LINESIZE];
         char *filename;
 
-        catenate(buf, LINESIZE, argc, argv); 
-        r = parser_analyzer(buf);
+        r = parse(argc, argv);
 
         while ((r->op[0]->op(r->op[0], &filename)) != -1)
                 r->op[1]->op(r->op[1], &filename);
@@ -182,8 +166,12 @@ int main(int argc, char *argv[])
         else if (isarg(1, "init"))
                 suc_init();
 
-        else if (isarg(2, ":-"))
-                suc_list(ARG(1));
+        else if (isarg(2, ":-")) {
+                suc_pump(argc, argv);
+        }
+
+        else if (isarg(2, "::"))
+                suc_pump(argc, argv);
 
         else if (isarg(2, ":"))
                 suc_parse(argc, argv);

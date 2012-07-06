@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <signal.h>
+#include <string.h>
 
 #include "suc.h"
 #include "meta.h"
@@ -85,7 +86,6 @@ int op_sub(void *self, char **filename)
         static bool first = true;
         static char lside[LINESIZE];
         static char rside[LINESIZE];
-        static char shell[LINESIZE];
 
         struct op_t *op = (struct op_t *)self;
 
@@ -123,7 +123,7 @@ int op_suc(void *self, char **filename)
                 dir = sdopen(op->operand); // open the directory
         }
 
-        if ((*filename = (getfile(dir, F_REG)))) {
+        if ((*filename = getfile(dir, F_REG))) {
                 return 1;
         } else {
                 sdclose(dir);
@@ -171,6 +171,8 @@ int op_frm(void *self, char **filename)
 int op_lat(void *self, char **filename)
 {
         printf("%s\n", *filename);
+
+        return 1;
 }
 
 
@@ -207,10 +209,11 @@ struct op_t *semantic_analyzer(const char *statement)
                 /* If the statement contains SYMBOL[s] */
                 if ((tmp = strstr(statement, SYMBOL[s]))) {
                         if (s == SUB) {
-                                printf("%s\n", statement);
                                 trimcpy(new->operand, statement);
                         } else {
                                 trimcpy(new->operand, (tmp + strlen(SYMBOL[s])));
+                                if (s == SUC)
+                                        make_path_absolute(new->operand);
                         }
                         new->tag = s;
                         new->op  = OPERATION[s];
@@ -254,10 +257,36 @@ struct routine_t *parser_analyzer(const char *input)
              statement = strtok(NULL, DELIM))
         {
                 new->op[i++] = semantic_analyzer(statement);
+                printf("%s: %s\n", op_name[new->op[(i-1)]->tag], new->op[(i-1)]->operand);
         }
 
         free(code);
 
         return new;
 }
+
+
+/**
+ * parse
+ * `````
+ * Parses the content of the shell arguments into actionable logic.
+ *
+ * @argc: number of shell arguments
+ * @argv: vector of argument strings
+ * Return: a routine struct that will guide processing.
+ */
+struct routine_t *parse(int argc, char *argv[])
+{
+        static char logic[LINESIZE];
+        struct routine_t *new;
+
+        catenate(logic, LINESIZE, argc, argv); 
+
+        new = parser_analyzer(logic);
+
+        return new;
+}
+
+
+
 

@@ -572,9 +572,6 @@ bool is_ws(char c) {
 }
 
 
-
-
-
 /**
  * trimcpy
  * ```````
@@ -605,8 +602,6 @@ size_t trimcpy(char *dst, const char *src)
 
         return slcpy(dst, src, (end-src)+1); // slcpy adds NUL
 }
-
-
 
 
 int ntok(const char *str, const char *tok)

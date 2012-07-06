@@ -40,8 +40,8 @@ bool is_relpath(const char *path);
 void make_path_absolute(char *path);
 const char *absolute_path(const char *path);
 
-char *gethome_uid(uid_t uid);
-char *gethome(void);
+const char *gethome_uid(uid_t uid);
+const char *gethome(void);
 
 int tempname(char *templ);
 

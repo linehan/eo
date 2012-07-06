@@ -226,15 +226,13 @@ const char *getdirpath(DIR *dir)
  * @uid  : uid of the user whose home directory you want
  * Return: home directory path
  */
-char *gethome_uid(uid_t uid)
+const char *gethome_uid(uid_t uid)
 {
-        static char *path;
         struct passwd *pw;
        
-        pw   = getpwuid(uid);
-        path = pw->pw_dir;
+        pw = getpwuid(uid);
 
-        return path;
+        return pw->pw_dir;
 }
 
 
@@ -249,11 +247,9 @@ char *gethome_uid(uid_t uid)
  * This is literally returning the value of $HOME as set in the
  * environment.
  */
-char *gethome(void)
+const char *gethome(void)
 {
-        static char *path;
-        path = getenv("HOME");
-        return path;
+        return gethome_uid(getuid());
 }
 
 
