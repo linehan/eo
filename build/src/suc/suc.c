@@ -168,24 +168,17 @@ void suc_process(int argc, char *argv[])
 {
         struct routine_t *r;
         char *filename;
+        int i;
 
         r = parse(argc, argv);
 
-        while ((r->op[0]->op(r->op[0], &filename)) != -1)
-                r->op[1]->op(r->op[1], &filename);
+        while ((r->op[0]->op(r->op[0], &filename)) != -1) {
+                for (i=0; i<r->n; i++) {
+                        r->op[i]->op(r->op[i], &filename);
+                }
+        }
 }
 
-
-void suc_glob(const char *format, const char *string, const char *replacement)
-{
-        struct glob_t glob = {};
-
-        /*printf("fmt: %s\nstr:%s\nrep:%s\n", format, string, replacement);*/
-
-        globber(&glob, format, string, replacement);        
-
-        /*printf("globbed: %s\n", glob.big);*/
-}
 
 
 /* MAIN ***********************************************************************/
@@ -201,9 +194,6 @@ int main(int argc, char *argv[])
 
         else if (isarg(1, "init"))
                 suc_init();
-
-        else if (isarg(1, "glob"))
-                suc_glob(argv[2], argv[3], argv[4]);
 
         else if (isarg(2, ":-"))
                 suc_pump(argc, argv);

@@ -9,6 +9,7 @@
 #include "suc.h"
 #include "meta.h"
 #include "parse.h"
+#include "regex.h"
 #include "../common/io/file.h"
 #include "../common/io/dir.h"
 #include "../common/io/shell.h"
@@ -49,11 +50,12 @@ int op_suc(void *self, char **filename);
 int op_sub(void *self, char **filename);
 int op_frm(void *self, char **filename);
 int op_lat(void *self, char **filename);
+int op_fmt(void *self, char **filename);
 
 
 /* Symbol table */
-opf_t OPERATION[]={op_voi, op_suc, op_sub, op_frm, op_voi, op_lat};
-const char *SYMBOL[]={"__VOID__", "suc", "{}", "{@}", "__VOID__", "{#}"};
+opf_t OPERATION[]={op_voi, op_suc, op_sub, op_frm, op_voi, op_lat, op_fmt};
+const char *SYMBOL[]={"__VOID__", "suc", "{}", "{@}", "__VOID__", "{#}", "{%}"};
 
 
 /**
@@ -201,14 +203,18 @@ struct op_t *semantic_analyzer(const char *statement)
 {
         struct op_t *new; 
         char *tmp;
+        char *arg;
         int s;
 
         new = calloc(1, sizeof(struct op_t)); 
 
         /* Search for tokens in the logic statement. */
-        for (s=0; s<6; s++) {
+        for (s=0; s<7; s++) {
                 if ((tmp = strstr(statement, SYMBOL[s]))) {
                         switch (new->tag = s) {
+                        case FMT:
+                                trimcpy(new->operand, (tmp+strlen(SYMBOL[s])));
+                                break;
                         case SUB:
                                 trimcpy(new->operand, statement);
                                 break;
