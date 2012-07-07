@@ -195,6 +195,13 @@ int main(int argc, char *argv[])
         else if (isarg(1, "init"))
                 suc_init();
 
+        else if (isarg(1, "kleene")) {
+                if ((kleene(argv[2], argv[3])))
+                        printf("match\n");
+                else
+                        printf("no match\n");
+        }
+
         else if (isarg(2, ":-"))
                 suc_pump(argc, argv);
 

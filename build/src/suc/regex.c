@@ -20,6 +20,55 @@
 #include "regex.h"
 
 
+/**
+ * kleene
+ * ``````
+ * Tests whether a string conforms to a pattern containing Kleene stars.
+ *
+ * @pattern: the pattern to be matched
+ * @string : the string to be tested
+ * Return  : 1 if match, 0 if not match, -1 if bad pattern, -2 if bad string. 
+ */
+int kleene(const char *pat, const char *str)
+{
+        top:
+
+        /* Seek and check non-star characters */
+        while (*pat != '*') {
+                if (*str == *pat) {
+                        str++;
+                        pat++;
+                        if (*pat == '\0') {
+                                goto out;
+                        }
+                } else {
+                        goto out;
+                }
+        }
+
+        /* Move the cursor to the character after
+         * the asterisk, the "stop" character where
+         * wildcard matching will halt. */
+        if (*pat == '*') pat++;
+
+        /* Move the string cursor until it reaches
+         * the delimiter, or reaches the NUL. */
+        while (*str != *pat) {
+                if (*str == '\0') {
+                        goto out;
+                } else {
+                        str++;
+                }
+        }
+
+        goto top;
+
+        out:
+        return (*str == *pat) ? 1 : 0;
+}
+
+
+
 void globber(struct glob_t *glob, const char *str, int argc, char **argv) 
 {
         const char *delim;
@@ -141,13 +190,13 @@ int op_fmt(void *self, char **filename)
                         while (*p == ' ') p++;
                         arg[n++] = sldup(p, PATHSIZE);
                 }
-
                 init = true;
         }
 
         globber(&glob, *filename, n, (char **)arg);
 
-        slcpy(*filename, glob.big, PATHSIZE);
+        if (glob.big[0] != '\0')
+                slcpy(*filename, glob.big, PATHSIZE);
 
         return 0;
 }

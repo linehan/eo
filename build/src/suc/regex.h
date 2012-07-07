@@ -10,5 +10,6 @@ struct glob_t {
 
 void globber(struct glob_t *glob, const char *str, int n, char *argv[]);
 int op_fmt(void *self, char **filename);
+int kleene(const char *pat, const char *str);
 
 #endif
