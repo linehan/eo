@@ -76,7 +76,7 @@ char    *tokenf(char, char, char, const char *tok, const char *path);
 
 /* Pipes 
 ``````````````````````````````````````````````````````````````````````````````*/
-void bounce(char *buf, size_t max, const char *fmt, ...);
+int bounce(char *buf, size_t max, const char *fmt, ...);
 
 
 

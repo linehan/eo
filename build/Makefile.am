@@ -19,6 +19,7 @@ bin_PROGRAMS  = suc pumpd
 suc_SOURCES   =  src/suc/suc.c                \
                  src/suc/meta.c               \
                  src/suc/parse.c              \
+                 src/suc/ops.c                \
                  src/suc/regex.c              \
                  src/common/ipc/daemon.c      \
                  src/common/ipc/channel.c     \

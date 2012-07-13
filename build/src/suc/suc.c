@@ -148,7 +148,7 @@ void suc_pump(int argc, char *argv[])
                         continue;
                 }
                 char *file = sldup(dpx.buf, PATHSIZE);
-                r->op[1]->op(r->op[1], &file);
+                r->op[1]->op(r->op[1]->operand, &file);
                 free(file);
         }
         dpx_close(&dpx);
@@ -172,11 +172,11 @@ void suc_process(int argc, char *argv[])
 
         r = parse(argc, argv);
 
-        while ((r->op[0]->op(r->op[0], &filename)) != -1) {
-                for (i=0; i<r->n; i++) {
-                        r->op[i]->op(r->op[i], &filename);
+        while (r->op[0]->op(r->op[0]->operand, &filename), filename) {
+                for (i=1; i<r->n; i++) {
+                        r->op[i]->op(r->op[i]->operand, &filename);
                 }
-        }
+        } 
 }
 
 

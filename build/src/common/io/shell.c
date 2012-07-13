@@ -39,7 +39,7 @@ static inline int shell(char *buf, const char *cmd)
          * Scan the contents of the pipe descriptor into
          * the destination buffer.
          */
-        if ((fscanf(pipe, "%s", buf)) == 0)
+        if ((fgets(buf, LINESIZE, pipe)) == 0)
                 retval = 0;
         else
                 retval = 1;
@@ -59,10 +59,11 @@ static inline int shell(char *buf, const char *cmd)
  * @max  : size of destination buffer
  * @fmt  : format string
  * @...  : arguments for the format string
- * Return: nothing. 
+ * Return: shell return value. 
  */
-void bounce(char *buf, size_t max, const char *fmt, ...)
+int bounce(char *buf, size_t max, const char *fmt, ...)
 {
+        int ret;
         char cmd[LINESIZE];
         va_list args;
 
@@ -71,8 +72,10 @@ void bounce(char *buf, size_t max, const char *fmt, ...)
         vsnprintf(cmd, LINESIZE, fmt, args);
         va_end(args);
 
-        if (!(shell(buf, cmd)))
+        if ((ret = shell(buf, cmd)))
                 slcpy(buf, "", max);
+
+        return ret;
 }
 
 
@@ -91,19 +94,22 @@ void bounce(char *buf, size_t max, const char *fmt, ...)
  * will print to the stdout of the forked shell process instead of the
  * caller's process.
  */
-void echo(const char *fmt, ...)
+int echo(const char *fmt, ...)
 {
         char buf[LINESIZE];
         char cmd[LINESIZE];
         va_list args;
+        int status;
 
         /* Parse the format string into the command buffer */
         va_start(args, fmt);
         vsnprintf(cmd, LINESIZE, fmt, args);
         va_end(args);
 
-        if ((shell(buf, cmd)))
-                printf("%s\n", buf);
+        status = shell(buf, cmd);
+        printf("%s", buf);
+
+        return status;
 }
 
 

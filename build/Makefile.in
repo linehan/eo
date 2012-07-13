@@ -73,8 +73,8 @@ am_pumpd_OBJECTS = src/pumpd/pumpd.$(OBJEXT) src/pumpd/pumps.$(OBJEXT) \
 pumpd_OBJECTS = $(am_pumpd_OBJECTS)
 pumpd_LDADD = $(LDADD)
 am_suc_OBJECTS = src/suc/suc.$(OBJEXT) src/suc/meta.$(OBJEXT) \
-	src/suc/parse.$(OBJEXT) src/suc/regex.$(OBJEXT) \
-	src/common/ipc/daemon.$(OBJEXT) \
+	src/suc/parse.$(OBJEXT) src/suc/ops.$(OBJEXT) \
+	src/suc/regex.$(OBJEXT) src/common/ipc/daemon.$(OBJEXT) \
 	src/common/ipc/channel.$(OBJEXT) src/common/ipc/fifo.$(OBJEXT) \
 	src/common/io/file.$(OBJEXT) src/common/io/dir.$(OBJEXT) \
 	src/common/io/shell.$(OBJEXT) src/common/util.$(OBJEXT) \
@@ -231,6 +231,7 @@ man1_MANS = doc/pumpd.man doc/suc.man
 suc_SOURCES = src/suc/suc.c                \
                  src/suc/meta.c               \
                  src/suc/parse.c              \
+                 src/suc/ops.c                \
                  src/suc/regex.c              \
                  src/common/ipc/daemon.c      \
                  src/common/ipc/channel.c     \
@@ -411,6 +412,8 @@ src/suc/meta.$(OBJEXT): src/suc/$(am__dirstamp) \
 	src/suc/$(DEPDIR)/$(am__dirstamp)
 src/suc/parse.$(OBJEXT): src/suc/$(am__dirstamp) \
 	src/suc/$(DEPDIR)/$(am__dirstamp)
+src/suc/ops.$(OBJEXT): src/suc/$(am__dirstamp) \
+	src/suc/$(DEPDIR)/$(am__dirstamp)
 src/suc/regex.$(OBJEXT): src/suc/$(am__dirstamp) \
 	src/suc/$(DEPDIR)/$(am__dirstamp)
 suc$(EXEEXT): $(suc_OBJECTS) $(suc_DEPENDENCIES) $(EXTRA_suc_DEPENDENCIES) 
@@ -433,6 +436,7 @@ mostlyclean-compile:
 	-rm -f src/pumpd/pumpd.$(OBJEXT)
 	-rm -f src/pumpd/pumps.$(OBJEXT)
 	-rm -f src/suc/meta.$(OBJEXT)
+	-rm -f src/suc/ops.$(OBJEXT)
 	-rm -f src/suc/parse.$(OBJEXT)
 	-rm -f src/suc/regex.$(OBJEXT)
 	-rm -f src/suc/suc.$(OBJEXT)
@@ -454,6 +458,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/pumpd/$(DEPDIR)/pumpd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/pumpd/$(DEPDIR)/pumps.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/suc/$(DEPDIR)/meta.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/suc/$(DEPDIR)/ops.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/suc/$(DEPDIR)/parse.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/suc/$(DEPDIR)/regex.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/suc/$(DEPDIR)/suc.Po@am__quote@

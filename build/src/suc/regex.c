@@ -69,6 +69,7 @@ int kleene(const char *pat, const char *str)
 
 
 
+
 void globber(struct glob_t *glob, const char *str, int argc, char **argv) 
 {
         const char *delim;
@@ -113,7 +114,7 @@ void globber(struct glob_t *glob, const char *str, int argc, char **argv)
 
                 arg = argv[n++];
 
-                /* Copy argument into glob buffer */
+                /* Copy argument into glob buffer */ 
                 while (arg && *arg != '\0')
                         glob->big[j++] = *(arg++);
 
@@ -170,47 +171,39 @@ void globber(struct glob_t *glob, const char *str, int argc, char **argv)
 
 
 
-int op_fmt(void *self, char **filename)
-{
-        struct op_t *op = (struct op_t *)self;
-        struct glob_t glob = {};
-        int n=0;
-        const char *p;
-        static bool init = false;
-        static char *arg[20];
-        static char buf[PATHSIZE];
+/*int op_fmt(void *self, char **filename)*/
+/*{*/
+        /*struct op_t *op = (struct op_t *)self;*/
+        /*struct glob_t glob = {};*/
+        /*int n=0;*/
+        /*const char *p;*/
+        /*static bool init = false;*/
+        /*static char *arg[20];*/
+        /*static char buf[PATHSIZE];*/
+        /*static char buz[PATHSIZE];*/
 
-        if (!init) {
-                slcpy(buf, op->operand, PATHSIZE);
+        /*if (!init) {*/
+                /*slcpy(buf, op->operand, PATHSIZE);*/
 
-                for (p = strtok(buf, ",");
-                     p;
-                     p = strtok(NULL, ","))
-                {
-                        while (*p == ' ') p++;
-                        arg[n++] = sldup(p, PATHSIZE);
-                }
-                init = true;
-        }
+                /*for (p = strtok(buf, ",");*/
+                     /*p;*/
+                     /*p = strtok(NULL, ","))*/
+                /*{*/
+                        /*while (*p == ' ') p++;*/
+                        /*arg[n++] = sldup(p, PATHSIZE);*/
+                        /*printf("%s\n", arg[n-1]);*/
 
-        globber(&glob, *filename, n, (char **)arg);
+                /*}*/
+                /*init = true;*/
+        /*}*/
 
-        if (glob.big[0] != '\0')
-                slcpy(*filename, glob.big, PATHSIZE);
+        /*globber(buz, *filename, n, arg);*/
+        /*printf("%s\n", buz);*/
 
-        return 0;
-}
+        /*if (*buz != '\0')*/
+                /*slcpy(*filename, buz, PATHSIZE);*/
 
-        
-
-
-
-
-
-
-
-
-
+        /*return 0;*/
+/*}*/
 
         
-

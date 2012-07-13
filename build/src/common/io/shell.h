@@ -2,8 +2,8 @@
 #define _SHELL_H
 
 
-void bounce(char *buf, size_t max, const char *fmt, ...);
-void echo(const char *fmt, ...);
+int bounce(char *buf, size_t max, const char *fmt, ...);
+int echo(const char *fmt, ...);
 
 
 #endif
