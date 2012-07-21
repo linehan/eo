@@ -4,15 +4,15 @@
 #include <signal.h>
 #include <string.h>
 
-#include "suc.h"
+#include "eo.h"
 #include "meta.h"
 #include "parse.h"
-#include "../common/io/file.h"
-#include "../common/io/dir.h"
-#include "../common/io/shell.h"
+#include "common/io/file.h"
+#include "common/io/dir.h"
+#include "common/io/shell.h"
 
-#include "../common/error.h"
-#include "../common/textutils.h"
+#include "common/error.h"
+#include "common/textutils.h"
 
 #define TEST "*.%.*"
 
@@ -171,39 +171,3 @@ void globber(struct glob_t *glob, const char *str, int argc, char **argv)
 
 
 
-/*int op_fmt(void *self, char **filename)*/
-/*{*/
-        /*struct op_t *op = (struct op_t *)self;*/
-        /*struct glob_t glob = {};*/
-        /*int n=0;*/
-        /*const char *p;*/
-        /*static bool init = false;*/
-        /*static char *arg[20];*/
-        /*static char buf[PATHSIZE];*/
-        /*static char buz[PATHSIZE];*/
-
-        /*if (!init) {*/
-                /*slcpy(buf, op->operand, PATHSIZE);*/
-
-                /*for (p = strtok(buf, ",");*/
-                     /*p;*/
-                     /*p = strtok(NULL, ","))*/
-                /*{*/
-                        /*while (*p == ' ') p++;*/
-                        /*arg[n++] = sldup(p, PATHSIZE);*/
-                        /*printf("%s\n", arg[n-1]);*/
-
-                /*}*/
-                /*init = true;*/
-        /*}*/
-
-        /*globber(buz, *filename, n, arg);*/
-        /*printf("%s\n", buz);*/
-
-        /*if (*buz != '\0')*/
-                /*slcpy(*filename, buz, PATHSIZE);*/
-
-        /*return 0;*/
-/*}*/
-
-        

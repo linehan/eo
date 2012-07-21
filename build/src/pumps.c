@@ -6,19 +6,19 @@
 #include <signal.h>
 #include <unistd.h>
 
-#include "pumpd.h"
+#include "eod.h"
 #include "pumps.h"
 
-#include "../common/error.h"
-#include "../common/ipc/daemon.h"
-#include "../common/ipc/channel.h"
-#include "../common/ipc/thread.h"
+#include "common/error.h"
+#include "common/ipc/daemon.h"
+#include "common/ipc/channel.h"
+#include "common/ipc/thread.h"
 
-#include "../common/io/file.h"
-#include "../common/io/dir.h"
+#include "common/io/file.h"
+#include "common/io/dir.h"
 
-#include "../common/configfiles.h"
-#include "../common/textutils.h"
+#include "common/configfiles.h"
+#include "common/textutils.h"
 
 
 /******************************************************************************

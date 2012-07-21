@@ -5,18 +5,18 @@
 #include <unistd.h>
 
 #include "meta.h"
-#include "../common/io/file.h"
-#include "../common/textutils.h"
-#include "../common/error.h"
+#include "common/io/file.h"
+#include "common/textutils.h"
+#include "common/error.h"
 
 /* drwxr-xr-x */
 #define PUMP_DIR_MODE ((S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH))
 
 
 /* Pathnames indexed by file tag */
-#define pump_stem   "/.pump" 
-#define config_stem "/.pump/config"
-#define CONF_PATH   "./.pump/config"
+#define pump_stem   "/.eo" 
+#define config_stem "/.eo/config"
+#define CONF_PATH   "./.eo/config"
 
 
 /**

@@ -5,38 +5,38 @@
 #include <stdarg.h>
 #include <signal.h>
 
-#include "suc.h"
+#include "eo.h"
 #include "meta.h"
 #include "parse.h"
 #include "regex.h"
-#include "../common/io/file.h"
-#include "../common/io/dir.h"
-#include "../common/ipc/daemon.h"
-#include "../common/ipc/channel.h"
+#include "common/io/file.h"
+#include "common/io/dir.h"
+#include "common/ipc/daemon.h"
+#include "common/ipc/channel.h"
 
-#include "../common/error.h"
-#include "../common/util.h"
-#include "../common/configfiles.h"
-#include "../common/textutils.h"
-#include "../common/lib/bloom/bloom.h"
+#include "common/error.h"
+#include "common/util.h"
+#include "common/configfiles.h"
+#include "common/textutils.h"
+#include "common/lib/bloom/bloom.h"
 
 
 /******************************************************************************
  * SIGNAL HANDLING 
  *
- * It is important that the suc client register itself with the signal 
- * handler. Especially in the case when suc is using a sibling co-process
+ * It is important that the eo client register itself with the signal 
+ * handler. Especially in the case when eo is using a sibling co-process
  * to "share the load", any abnormal termination of the suc process will
  * need to be caught, so that the co-process can be notified via SIGUSR1
- * that the suc process has been terminated, and it needs to terminate as
+ * that the eo process has been terminated, and it needs to terminate as
  * well.
  ******************************************************************************/
-int SUCPID;
+int EOPID;
 
 void catchsig(int signo)
 {
-        if (SUCPID != 0)
-                kill(SUCPID, SIGUSR1);
+        if (EOPID != 0)
+                kill(EOPID, SIGUSR1);
 
         signal(signo, SIG_DFL);
         raise(signo);
@@ -44,19 +44,19 @@ void catchsig(int signo)
 
 
 /******************************************************************************
- * SUC 
+ * EO 
  * 
- * The suc client is the user-invoked side of the suc utility. Depending
+ * The eo client is the user-invoked side of the eo utility. Depending
  * on the arguments specified, it will run in blocking or non-blocking 
  * mode.
  *
- * In blocking mode, suc will be attached to a sibling process that will
+ * In blocking mode, eo will be attached to a sibling process that will
  * handle the iteration and the monitoring of the buffer, while the main
- * suc process executes the specified logic on the values yielded by the
+ * eo process executes the specified logic on the values yielded by the
  * other process.
  *
- * In non-blocking mode, suc will run in its own process. Once the set of
- * values to be iterated over is exhausted, suc will terminate and return
+ * In non-blocking mode, eo will run in its own process. Once the set of
+ * values to be iterated over is exhausted, eo will terminate and return
  * to the shell.
  *
  ******************************************************************************/
@@ -76,13 +76,13 @@ void usage(void)
 
 
 /**
- * suc_init 
- * ````````
+ * eo_init 
+ * ```````
  * Initialize a pump in the current working directory.
  * 
  * Returns nothing.
  */
-void suc_init(void)
+void eo_init(void)
 {
         struct pumpconfig_t config;
         unsigned long salt;
@@ -108,22 +108,19 @@ void suc_init(void)
 
 
 /**
- * suc_pump
- * ````````
- * Run suc_process in perpetuity, with a co-process to help.
+ * eo_pump
+ * ```````
+ * Run eo_process in perpetuity, with a co-process to help.
  *
  * @argc : the number of arguments received
  * @argv : the arguments received
  * Return: nothing
  */
-void suc_pump(int argc, char *argv[])
+void eo_pump(struct routine_t *r)
 {
-        struct routine_t *r;
         struct dpx_t dpx = {};
 
         sigreg(catchsig);
-
-        r = parse(argc, argv);
 
         /* Subscribe to the pump daemon's control channel */
         dpx_open(&dpx, CH("control"), CH_SUB);
@@ -135,7 +132,7 @@ void suc_pump(int argc, char *argv[])
         dpx_close(&dpx);
         dpx_olink(&dpx, CH(dpx.buf), CH_SUB);
 
-        SUCPID = dpx.remote_pid; // See "Signal Handling", above.
+        EOPID = dpx.remote_pid; // See "Signal Handling", above.
 
         /* 
          * Receive filenames until a "DONE" message 
@@ -156,21 +153,20 @@ void suc_pump(int argc, char *argv[])
 
 
 /**
- * suc_process
- * ```````````
+ * eo_process
+ * ``````````
  * Parse the arguments given to the suc invocation and run the program.
  *
  * @argc : the number of arguments received
  * @argv : the arguments received
  * Return: nothing
  */
-void suc_process(int argc, char *argv[])
+void eo_process(struct routine_t *r)
 {
-        struct routine_t *r;
         char *filename;
         int i;
 
-        r = parse(argc, argv);
+
 
         while (r->op[0]->op(r->op[0]->operand, &filename), filename) {
                 for (i=1; i<r->n; i++) {
@@ -179,6 +175,41 @@ void suc_process(int argc, char *argv[])
         } 
 }
 
+
+/**
+ * eo_prep
+ * ```````
+ * Validate and prepare the command line arguments for execution.
+ *
+ * @argc : number of arguments
+ * @argv : vector of arguments
+ * Return: nothing.
+ */
+void eo_prep(int argc, char *argv[])
+{
+        struct routine_t *r;
+
+        if (isarg(1, "stat"))
+                print_config();
+        else if (isarg(1, "init"))
+                eo_init();
+        else if (isarg(1, "kleene")) {
+                if ((kleene(argv[2], argv[3]))) printf("match\n");
+                else                            printf("no match\n");
+        }
+        else {
+                /* If there is only one argument, assume the CWD. */
+                r = (argc==2) ? parse(scwd(), argv[1]) 
+                              : parse(argv[1], argv[2]);
+
+                eo_process(r);
+        }
+
+        return;
+}
+        
+                        
+                        
 
 
 /* MAIN ***********************************************************************/
@@ -189,27 +220,7 @@ int main(int argc, char *argv[])
         if (!ARG(1))
                 usage();
 
-        else if (isarg(1, "stat"))
-                print_config();
-
-        else if (isarg(1, "init"))
-                suc_init();
-
-        else if (isarg(1, "kleene")) {
-                if ((kleene(argv[2], argv[3])))
-                        printf("match\n");
-                else
-                        printf("no match\n");
-        }
-
-        else if (isarg(2, ":-"))
-                suc_pump(argc, argv);
-
-        else if (isarg(2, "::"))
-                suc_pump(argc, argv);
-
-        else if (isarg(2, ":"))
-                suc_process(argc, argv);
+        eo_prep(argc, argv);
 
         return 0;
 }

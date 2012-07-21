@@ -12,7 +12,7 @@ struct routine_t {
 };
 
 
-struct routine_t *parse(int argc, char *argv[]);
+struct routine_t *parse(char *dir, char *statement);
 
 
 #endif

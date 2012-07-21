@@ -2,7 +2,7 @@
 #define _PUMP_METADATA_H
 
 #include <stdbool.h>
-#include "../common/io/file.h"
+#include "common/io/file.h"
 
 struct env_t {
         char cwd[PATHSIZE];

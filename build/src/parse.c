@@ -6,26 +6,26 @@
 #include <signal.h>
 #include <string.h>
 
-#include "suc.h"
+#include "eo.h"
 #include "meta.h"
 #include "parse.h"
 #include "regex.h"
-#include "../common/io/file.h"
-#include "../common/io/dir.h"
-#include "../common/io/shell.h"
-#include "../common/ipc/daemon.h"
-#include "../common/ipc/channel.h"
+#include "common/io/file.h"
+#include "common/io/dir.h"
+#include "common/io/shell.h"
+#include "common/ipc/daemon.h"
+#include "common/ipc/channel.h"
 
-#include "../common/error.h"
-#include "../common/util.h"
-#include "../common/configfiles.h"
-#include "../common/textutils.h"
-#include "../common/lib/bloom/bloom.h"
+#include "common/error.h"
+#include "common/util.h"
+#include "common/configfiles.h"
+#include "common/textutils.h"
+#include "common/lib/bloom/bloom.h"
 
 /* DEBUG */
-//#define DEBUG_BREAK 
-//#define SHOW_PARSE 
-//#define SHOW_LOGIC
+#define DEBUG_BREAK 
+#define SHOW_PARSE 
+#define SHOW_LOGIC
 
 
 /******************************************************************************
@@ -140,12 +140,12 @@ struct routine_t *parser_analyzer(const char *input)
  * @argv: vector of argument strings
  * Return: a routine struct that will guide processing.
  */
-struct routine_t *parse(int argc, char *argv[])
+struct routine_t *parse(char *dir, char *statement)
 {
         static char logic[LINESIZE];
         struct routine_t *new;
 
-        catenate(logic, LINESIZE, argc, argv); 
+        slcpy(logic, statement, LINESIZE); 
 
         #if defined(SHOW_LOGIC)
         printf("LOGIC: %s\n\n", logic);
