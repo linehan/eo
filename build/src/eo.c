@@ -6,6 +6,7 @@
 #include <signal.h>
 
 #include "eo.h"
+#include "lex.h"
 #include "meta.h"
 #include "parse.h"
 #include "regex.h"
@@ -165,11 +166,12 @@ void eo_process(struct routine_t *r)
 {
         char *filename;
         int i;
+        int j=0;
 
+        printf("path: %s\n", r->path);
 
-
-        while (r->op[0]->op(r->op[0]->operand, &filename), filename) {
-                for (i=1; i<r->n; i++) {
+        while (eo_nextfile(r->path, &filename), filename) {
+                for (i=0; i<r->n; i++) {
                         r->op[i]->op(r->op[i]->operand, &filename);
                 }
         } 
@@ -188,6 +190,8 @@ void eo_process(struct routine_t *r)
 void eo_prep(int argc, char *argv[])
 {
         struct routine_t *r;
+        static int tree[30];
+        int i;
 
         if (isarg(1, "stat"))
                 print_config();
@@ -199,8 +203,19 @@ void eo_prep(int argc, char *argv[])
         }
         else {
                 /* If there is only one argument, assume the CWD. */
-                r = (argc==2) ? parse(scwd(), argv[1]) 
-                              : parse(argv[1], argv[2]);
+                /*r = (argc==2) ? parse(scwd(), argv[1]) */
+                              /*: parse(argv[1], argv[2]);*/
+
+                if (argc == 2)
+
+                        build_tree(tree, argv[1]);
+                else
+                        build_tree(tree, argv[2]);
+
+                for (i=0; tree[i] != END; i++) {
+                        printf("%s (%d)\n", op_name[tree[i]], tree[i]);
+                }
+                return;
 
                 eo_process(r);
         }

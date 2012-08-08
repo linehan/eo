@@ -62,7 +62,7 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__dirstamp = $(am__leading_dot)dirstamp
-am_eo_OBJECTS = src/eo.$(OBJEXT) src/meta.$(OBJEXT) \
+am_eo_OBJECTS = src/eo.$(OBJEXT) src/lex.$(OBJEXT) src/meta.$(OBJEXT) \
 	src/parse.$(OBJEXT) src/ops.$(OBJEXT) src/regex.$(OBJEXT) \
 	src/common/ipc/daemon.$(OBJEXT) \
 	src/common/ipc/channel.$(OBJEXT) src/common/ipc/fifo.$(OBJEXT) \
@@ -229,6 +229,7 @@ AUTOMAKE_OPTIONS = foreign subdir-objects
 #             
 man1_MANS = doc/eod.man doc/eo.man
 eo_SOURCES = src/eo.c                     \
+             src/lex.c                    \
              src/meta.c                   \
              src/parse.c                  \
              src/ops.c                    \
@@ -340,6 +341,7 @@ src/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) src/$(DEPDIR)
 	@: > src/$(DEPDIR)/$(am__dirstamp)
 src/eo.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/lex.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/meta.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/parse.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/ops.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
@@ -422,6 +424,7 @@ mostlyclean-compile:
 	-rm -f src/common/util.$(OBJEXT)
 	-rm -f src/eo.$(OBJEXT)
 	-rm -f src/eod.$(OBJEXT)
+	-rm -f src/lex.$(OBJEXT)
 	-rm -f src/meta.$(OBJEXT)
 	-rm -f src/ops.$(OBJEXT)
 	-rm -f src/parse.$(OBJEXT)
@@ -433,6 +436,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/eo.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/eod.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/lex.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/meta.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/ops.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/parse.Po@am__quote@

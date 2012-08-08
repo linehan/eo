@@ -8,6 +8,7 @@
  */ 
 struct routine_t {
         int n;
+        char path[PATHSIZE];
         struct op_t **op;
 };
 

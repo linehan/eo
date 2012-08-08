@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "eo.h"
+#include "lex.h"
 #include "meta.h"
 #include "parse.h"
 #include "regex.h"
@@ -23,7 +24,7 @@
 #include "common/lib/bloom/bloom.h"
 
 /* DEBUG */
-#define DEBUG_BREAK 
+//#define DEBUG_BREAK 
 #define SHOW_PARSE 
 #define SHOW_LOGIC
 
@@ -40,6 +41,7 @@
  *
  ******************************************************************************/
 
+
 /**
  * semantic_analyzer 
  * `````````````````
@@ -53,36 +55,29 @@ struct op_t *semantic_analyzer(const char *statement)
         struct op_t *new; 
         char *tmp;
         char *arg;
+        char *look;
         int s;
 
         new = calloc(1, sizeof(struct op_t)); 
 
         /* Search for tokens in the logic statement. */
-        for (s=0; s<8; s++) {
-                if ((tmp = strstr(statement, SYMBOL[s]))) {
-                        switch (new->tag = s) {
-                        case SUB:
-                                trimcpy(new->operand, statement);
-                                break;
-                        case SUC:
-                                new->operand[strlen(new->operand)-1] = '\0'; // remove trailing }
-                                trimcpy(new->operand, (tmp+strlen(SYMBOL[s])));
-                                make_path_absolute(new->operand);
-                                break;
-                        default:
-                                new->operand[strlen(new->operand)-1] = '\0'; // remove trailing }
-                                trimcpy(new->operand, (tmp+strlen(SYMBOL[s])));
-                                break;
-                        }
-                        new->op  = OPERATION[s];
-                        #if defined(SHOW_PARSE)
-                        printf("%d (%s): %s\n", s, op_name[s], new->operand);
-                        #endif
-
-                        return new;
-                } else {
-                        continue;
+        while (s = next_lex(&look, statement), s != END) {
+                switch (new->tag = s) {
+                case SEL:
+                        trimcpy(new->operand, statement);
+                        break;
+                default:
+                        new->operand[strlen(new->operand)-1] = '\0'; // remove trailing }
+                        trimcpy(new->operand, (tmp+strlen(SYMBOL[s])));
+                        *(tail(new->operand)) = '\0';
+                        break;
                 }
+                new->op  = OP[s];
+                #if defined(SHOW_PARSE)
+                printf("%d (%s): %s\n", s, op_name[s], new->operand);
+                #endif
+
+                return new;
         }
         /* The statement contained no symbols from the table. */
         slcpy(new->operand, op_name[VOI], 4096); 
@@ -152,6 +147,9 @@ struct routine_t *parse(char *dir, char *statement)
         #endif
 
         new = parser_analyzer(logic);
+
+        slcpy(new->path, dir, PATHSIZE);
+        make_path_absolute(new->path);
 
         #if defined (DEBUG_BREAK)
         exit(1);

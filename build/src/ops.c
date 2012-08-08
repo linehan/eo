@@ -23,7 +23,7 @@
 #include "common/lib/bloom/bloom.h"
 
 /* DEBUG */
-#define DEBUG_BREAK 
+//#define DEBUG_BREAK 
 #define SHOW_PARSE 
 #define SHOW_LOGIC
 
@@ -51,6 +51,36 @@
 
 
 /**
+ * eo_nextfile 
+ * ```````````
+ * Yield filenames from a directory.
+ * 
+ * @directory: Path to a directory 
+ * @filename : Name of the current file (altered by eo_nextfile).
+ * Return    : 0 on success, -1 on failure.
+ */
+int eo_nextfile(char *directory, char **filename)
+{
+        static DIR *dir;
+
+        /* First invocation */
+        if (dir == NULL) {
+                make_path_absolute(directory);
+                dir = sdopen(directory); // open the directory
+        }
+
+        if ((*filename = getfile(dir, F_REG))) {
+                return 1;
+        } else {
+                sdclose(dir);
+                return -1;
+        }
+}
+
+
+
+
+/**
  * op_voi
  * ``````
  * A do-nothing function stub for when there is no operation. 
@@ -62,34 +92,6 @@
 int op_voi(char *operand, char **filename)
 {
         return 1;
-}
-
-
-/**
- * op_suc
- * ``````
- * Yield filenames from a directory.
- * 
- * @operand : Path to a directory 
- * @filename: name of the current file (may be altered).
- * Return   : 0 on success, -1 on failure.
- */
-int op_suc(char *operand, char **filename)
-{
-        static DIR *dir;
-
-        /* First invocation */
-        if (dir == NULL) {
-                make_path_absolute(operand);
-                dir = sdopen(operand); // open the directory
-        }
-
-        if ((*filename = getfile(dir, F_REG))) {
-                return 1;
-        } else {
-                sdclose(dir);
-                return -1;
-        }
 }
 
 
@@ -221,6 +223,9 @@ int op_sub(char *operand, char **filename)
 
                 first = false;
         }
+
+        if (STREMPTY(match))
+                match[0] = '*';
 
         if (kleene(match, *filename)) {
                 echo("%s %s %s", lside, *filename, rside);

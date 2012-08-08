@@ -58,7 +58,10 @@ char *emsg[]={
 
 
 /**
- * abort_report -- clean up and exit, printing a brief diagnostic report
+ * abort_report 
+ * ````````````
+ * Print a formatted report to stderr and exit. 
+ *
  * @fmt: a printf-style format string
  * @...: the variable argument list to the format string
  */
@@ -74,12 +77,42 @@ void abort_report(const char *fmt, ...)
 
         #ifdef USE_ERRNO_H
         if (errno)
-                printf("%s (%d): %s\n", etag[errno], errno, emsg[errno]);
+                fprintf(stderr, "%s (%d): %s\n", etag[errno],errno,emsg[errno]);
         #endif
 
-        printf("The handler reported: \"%s\"\n", buf);
+        fprintf(stderr, "The handler reported: \"%s\"\n", buf);
 
         exit(1);
+}
+
+
+/**
+ * raise_report
+ * ````````````
+ * Print a formatted report to stderr and raise a signal.
+ *
+ * @signo: POSIX signal number to raise.
+ * @fmt  : printf-style format string.
+ * @...  : the variable argument list to the format string.
+ */
+void raise_report(sig_t signo, const char *fmt, ...)
+{
+        char buf[1000];
+        va_list args;
+
+        /* Write formatted output to stream */
+        va_start(args, fmt);
+        vsprintf(buf, fmt, args);
+        va_end(args);
+
+        #ifdef USE_ERRNO_H
+        if (errno)
+                fprintf(stderr, "%s (%d): %s\n", etag[errno],errno,emsg[errno]);
+        #endif
+
+        fprintf(stderr, "The handler reported: \"%s\"\n", buf);
+
+        raise(signo);
 }
 
 

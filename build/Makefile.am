@@ -17,6 +17,7 @@ man1_MANS     = doc/eod.man doc/eo.man
 bin_PROGRAMS  = eo eod 
 
 eo_SOURCES = src/eo.c                     \
+             src/lex.c                    \
              src/meta.c                   \
              src/parse.c                  \
              src/ops.c                    \

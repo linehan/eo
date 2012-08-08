@@ -28,6 +28,10 @@ void pumpf(char **strp, const char *fmt, ...);
 size_t trimcpy(char *dst, const char *src);
 char *trimws(char *str);
 
+
+char *tail(char *string);
+
+
 /* Raw memory --------------------------------------------------------------- */
 #define memmem textutils_memmem
 #define strstr textutils_strstr 
@@ -42,6 +46,11 @@ void *textutils_memchr(const void *src_void, int c, size_t len);
 #define STRCMP(a,b) (strcmp((a),(b)) == 0) ? true : false
 #define isarg(n, string) (STRCMP(argv[(n)], (string)))
 #define ARG(n)           (argv[(n)])
+
+#define STREMPTY(s) (STRCMP((s),""))
+
+
+
 
 
 /**

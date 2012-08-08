@@ -573,6 +573,17 @@ bool is_ws(char c) {
 
 
 /**
+ * tail 
+ * ````
+ * Return pointer to the last character of a string (not including newline).
+ */
+char *tail(char *string)
+{
+        return string + strlen(string)-1;
+}
+
+
+/**
  * trimcpy
  * ```````
  * Trim leading/trailing whitespace at src and copy result to dst
